@@ -14,16 +14,385 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
+      custom_requests: {
+        Row: {
+          admin_notes: string | null
+          budget_range: string | null
+          created_at: string
+          customer_name: string
+          deadline: string | null
+          description: string
+          email: string | null
+          id: string
+          phone: string | null
+          preferred_colors: string[] | null
+          preferred_size: string | null
+          quote_amount: number | null
+          reference_image_url: string | null
+          status: Database["public"]["Enums"]["custom_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          budget_range?: string | null
+          created_at?: string
+          customer_name: string
+          deadline?: string | null
+          description: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          preferred_colors?: string[] | null
+          preferred_size?: string | null
+          quote_amount?: number | null
+          reference_image_url?: string | null
+          status?: Database["public"]["Enums"]["custom_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          budget_range?: string | null
+          created_at?: string
+          customer_name?: string
+          deadline?: string | null
+          description?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          preferred_colors?: string[] | null
+          preferred_size?: string | null
+          quote_amount?: number | null
+          reference_image_url?: string | null
+          status?: Database["public"]["Enums"]["custom_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      product_images: {
+        Row: {
+          alt: string | null
+          id: string
+          product_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          alt?: string | null
+          id?: string
+          product_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          alt?: string | null
+          id?: string
+          product_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_sizes: {
+        Row: {
+          height_cm: number | null
+          id: string
+          label: string
+          price_rwf: number | null
+          price_usd: number | null
+          product_id: string
+          sort_order: number
+          width_cm: number | null
+        }
+        Insert: {
+          height_cm?: number | null
+          id?: string
+          label: string
+          price_rwf?: number | null
+          price_usd?: number | null
+          product_id: string
+          sort_order?: number
+          width_cm?: number | null
+        }
+        Update: {
+          height_cm?: number | null
+          id?: string
+          label?: string
+          price_rwf?: number | null
+          price_usd?: number | null
+          product_id?: string
+          sort_order?: number
+          width_cm?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_sizes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          base_price_rwf: number | null
+          base_price_usd: number | null
+          category_id: string | null
+          color_palette: string[] | null
+          created_at: string
+          description: string | null
+          featured: boolean
+          featured_order: number
+          id: string
+          is_published: boolean
+          main_image_url: string | null
+          material: string | null
+          name: string
+          production_time: string | null
+          shape: Database["public"]["Enums"]["rug_shape"]
+          short_description: string | null
+          slug: string
+          stock_status: Database["public"]["Enums"]["stock_status"]
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          base_price_rwf?: number | null
+          base_price_usd?: number | null
+          category_id?: string | null
+          color_palette?: string[] | null
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          featured_order?: number
+          id?: string
+          is_published?: boolean
+          main_image_url?: string | null
+          material?: string | null
+          name: string
+          production_time?: string | null
+          shape?: Database["public"]["Enums"]["rug_shape"]
+          short_description?: string | null
+          slug: string
+          stock_status?: Database["public"]["Enums"]["stock_status"]
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          base_price_rwf?: number | null
+          base_price_usd?: number | null
+          category_id?: string | null
+          color_palette?: string[] | null
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          featured_order?: number
+          id?: string
+          is_published?: boolean
+          main_image_url?: string | null
+          material?: string | null
+          name?: string
+          production_time?: string | null
+          shape?: Database["public"]["Enums"]["rug_shape"]
+          short_description?: string | null
+          slug?: string
+          stock_status?: Database["public"]["Enums"]["stock_status"]
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          created_at: string
+          customer_name: string
+          id: string
+          is_visible: boolean
+          location: string | null
+          quote: string
+          rating: number
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          id?: string
+          is_visible?: boolean
+          location?: string | null
+          quote: string
+          rating?: number
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          id?: string
+          is_visible?: boolean
+          location?: string | null
+          quote?: string
+          rating?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "customer"
+      custom_status:
+        | "new"
+        | "reviewing"
+        | "quoted"
+        | "accepted"
+        | "in_production"
+        | "complete"
+        | "declined"
+      rug_shape: "rectangle" | "circular" | "runner" | "organic"
+      stock_status: "in_stock" | "made_to_order" | "out_of_stock"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +519,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "customer"],
+      custom_status: [
+        "new",
+        "reviewing",
+        "quoted",
+        "accepted",
+        "in_production",
+        "complete",
+        "declined",
+      ],
+      rug_shape: ["rectangle", "circular", "runner", "organic"],
+      stock_status: ["in_stock", "made_to_order", "out_of_stock"],
+    },
   },
 } as const
