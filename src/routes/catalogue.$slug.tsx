@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useState } from "react";
-import { Nav, Footer, FloatingWhatsApp, WhatsAppIcon, WHATSAPP_URL, formatPrice } from "@/components/site-chrome";
+import { Nav, Footer, FloatingWhatsApp, WhatsAppIcon, WHATSAPP_URL, formatPrice, resolveImage } from "@/components/site-chrome";
 import { getProduct } from "@/lib/catalogue.functions";
 
 const productQO = (slug: string) =>
@@ -47,7 +47,7 @@ function ProductPage() {
   const sizes = (p.sizes ?? []).slice().sort((a, b) => (a as any).sort_order - (b as any).sort_order);
   const [selectedSize, setSelectedSize] = useState(sizes[0]?.id ?? "");
   const images = (p.images ?? []).slice().sort((a, b) => (a as any).sort_order - (b as any).sort_order);
-  const gallery = images.length > 0 ? images.map((i) => i.url) : p.main_image_url ? [p.main_image_url] : [];
+  const gallery = (images.length > 0 ? images.map((i) => i.url) : p.main_image_url ? [p.main_image_url] : []).map((u) => resolveImage(u)).filter((u): u is string => Boolean(u));
   const [active, setActive] = useState(0);
   const chosen = sizes.find((s) => s.id === selectedSize);
   const price = chosen

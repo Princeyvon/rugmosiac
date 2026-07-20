@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { Nav, Footer, FloatingWhatsApp, formatPrice } from "@/components/site-chrome";
+import { Nav, Footer, FloatingWhatsApp, formatPrice, resolveImage } from "@/components/site-chrome";
 import { listCategories, listProducts } from "@/lib/catalogue.functions";
 
 const catalogueQO = (categorySlug?: string) =>
@@ -77,8 +77,8 @@ function CataloguePage() {
             {data.products.map((p) => (
               <Link key={p.id} to="/catalogue/$slug" params={{ slug: p.slug }} className="group block">
                 <div className="relative aspect-square overflow-hidden rounded-sm bg-muted">
-                  {p.main_image_url && (
-                    <img src={p.main_image_url} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  {resolveImage(p.main_image_url) && (
+                    <img src={resolveImage(p.main_image_url)} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   )}
                 </div>
                 <div className="mt-5 flex items-start justify-between gap-4">
