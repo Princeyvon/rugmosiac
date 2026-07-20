@@ -122,3 +122,17 @@ export function formatPrice({ rwf, usd }: { rwf?: number | null; usd?: number | 
   if (usd) return `$${Number(usd).toLocaleString()}`;
   return "Price on request";
 }
+
+// Resolves seed-time asset paths (/src/assets/foo.jpg) to bundled Vite URLs.
+const bundledAssets = import.meta.glob("/src/assets/*.{jpg,png,webp,jpeg}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+
+export function resolveImage(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("/src/assets/")) return bundledAssets[url];
+  return url;
+}
