@@ -5,8 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -21,6 +22,8 @@
   --color-card-foreground: var(--card-foreground);
   --color-whatsapp: var(--whatsapp);
   --color-whatsapp-foreground: var(--whatsapp-foreground);
+  --color-marquee: var(--marquee);
+  --color-marquee-foreground: var(--marquee-foreground);
 
   --radius-sm: 2px;
   --radius-md: 4px;
@@ -29,19 +32,21 @@
 }
 
 :root {
-  --background: oklch(0.16 0.007 60);
-  --foreground: oklch(0.94 0.015 80);
-  --muted: oklch(0.22 0.008 60);
-  --muted-foreground: oklch(0.72 0.02 80);
-  --card: oklch(0.19 0.008 60);
-  --card-foreground: oklch(0.94 0.015 80);
-  --primary: oklch(0.68 0.14 55);
-  --primary-foreground: oklch(0.14 0.01 60);
-  --accent: oklch(0.68 0.14 55);
-  --accent-foreground: oklch(0.14 0.01 60);
-  --border: oklch(0.28 0.008 60);
+  --background: oklch(0.985 0 0);        /* #FBFBFB */
+  --foreground: oklch(0.15 0 0);         /* #111 */
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.15 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.68 0.14 55);         /* warm gold, brand continuity */
+  --accent-foreground: oklch(0.15 0 0);
+  --border: oklch(0.9 0 0);              /* #E5E5E5 */
   --whatsapp: oklch(0.62 0.16 145);
   --whatsapp-foreground: oklch(1 0 0);
+  --marquee: oklch(0.15 0 0);
+  --marquee-foreground: oklch(0.985 0 0);
 }
 
 @layer base {
@@ -58,9 +63,9 @@
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4 {
-    font-family: var(--font-serif);
+    font-family: var(--font-display);
     font-weight: 500;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -79,4 +84,9 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
   font-weight: 500;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
