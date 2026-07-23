@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Menu, Search, ShoppingBag, X, ChevronDown } from "lucide-react";
+import { listProducts, type Product } from "@/lib/catalogue.functions";
 
 export const WHATSAPP_URL = "https://wa.me/250780000000";
 
@@ -31,52 +32,165 @@ export function AnnouncementTicker() {
 
 const SHOP_LINKS: Array<{ label: string; to: string; search?: { category: string } }> = [
   { label: "Shop All", to: "/catalogue" },
-  { label: "Sports", to: "/catalogue", search: { category: "sports" } },
-  { label: "Cartoon", to: "/catalogue", search: { category: "cartoon" } },
-  { label: "Animals", to: "/catalogue", search: { category: "animals" } },
+  { label: "Brands", to: "/catalogue", search: { category: "brands" } },
+  { label: "Area Rugs", to: "/catalogue", search: { category: "area-rugs" } },
+  { label: "Runners", to: "/catalogue", search: { category: "runners" } },
   { label: "Custom", to: "/catalogue", search: { category: "custom" } },
 ];
 
-export function Nav() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [shopOpen, setShopOpen] = useState(false);
-
+function useScrollProgress(range = 480) {
+  const [p, setP] = useState(0);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setP(Math.max(0, Math.min(1, y / range)));
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, [range]);
+  return p;
+}
+
+function SearchOverlay({ onClose }: { onClose: () => void }) {
+  const [q, setQ] = useState("");
+  const [items, setItems] = useState<Product[] | null>(null);
+  const navigate = useNavigate();
+  useEffect(() => {
+    let cancelled = false;
+    listProducts().then((res) => {
+      if (!cancelled) setItems(res as Product[]);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const results = useMemo(() => {
+    if (!items) return [];
+    const needle = q.trim().toLowerCase();
+    if (!needle) return items.slice(0, 6);
+    return items
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(needle) ||
+          p.short_description?.toLowerCase().includes(needle) ||
+          p.category?.name.toLowerCase().includes(needle),
+      )
+      .slice(0, 8);
+  }, [items, q]);
+  return (
+    <div className="fixed inset-0 z-[70] bg-background/95 backdrop-blur-md animate-fade-in" onClick={onClose}>
+      <div
+        className="mx-auto mt-24 max-w-2xl px-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (results[0]) {
+              navigate({ to: "/catalogue/$slug", params: { slug: results[0].slug } });
+              onClose();
+            }
+          }}
+          className="flex items-center gap-3 border-b-2 border-foreground pb-3"
+        >
+          <Search className="h-6 w-6" />
+          <input
+            autoFocus
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search rugs, categories…"
+            className="flex-1 bg-transparent text-2xl outline-none placeholder:text-muted-foreground"
+          />
+          <button type="button" onClick={onClose} aria-label="Close search" className="p-2">
+            <X className="h-5 w-5" />
+          </button>
+        </form>
+        <div className="mt-6 max-h-[60vh] overflow-y-auto">
+          {items === null ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
+          ) : results.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">No matches. Try another word.</div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {results.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    to="/catalogue/$slug"
+                    params={{ slug: p.slug }}
+                    onClick={onClose}
+                    className="flex items-center gap-4 py-3 transition-opacity hover:opacity-70"
+                  >
+                    {resolveImage(p.main_image_url) && (
+                      <img src={resolveImage(p.main_image_url)} alt="" className="h-14 w-14 rounded-sm object-cover" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-display text-base font-medium">{p.name}</div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {p.category?.name ?? "Rug"}
+                      </div>
+                    </div>
+                    <span className="eyebrow text-muted-foreground">View</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function Nav() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const p = useScrollProgress(500);
+  const scrolled = p > 0.02;
+
+  // Interpolated brand transforms
+  // Start: huge, positioned above hero (top ~ 110px on desktop). End: nav-size, centered in header (~top 60px accounting for ticker).
+  const size = 220 - (220 - 26) * p; // px
+  const top = 110 - (110 - 18) * p; // px from viewport top
+
+  const pillCls = `rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all duration-300 ${
+    scrolled ? "bg-background/60 backdrop-blur-md" : "bg-transparent"
+  }`;
 
   return (
     <>
       <AnnouncementTicker />
-      <header
-        className={`sticky top-0 z-40 bg-background transition-shadow duration-300 ${scrolled ? "shadow-[0_1px_0_0_var(--color-border)]" : ""}`}
-      >
+      <header className="sticky top-0 z-40 bg-transparent">
         <div className="container-x mx-auto grid max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center py-4">
           {/* Left */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
-              className="md:hidden -ml-2 p-2"
+              className={`md:hidden -ml-2 p-2 rounded-full transition-all ${scrolled ? "bg-background/60 backdrop-blur-md" : ""}`}
             >
               <Menu className="h-5 w-5" />
             </button>
-            <nav className="hidden md:flex items-center gap-8 text-[13px] font-medium tracking-wide">
+            <nav className="hidden md:flex items-center gap-2">
               <div
                 className="relative"
                 onMouseEnter={() => setShopOpen(true)}
                 onMouseLeave={() => setShopOpen(false)}
               >
-                <button className="inline-flex items-center gap-1 uppercase transition-opacity hover:opacity-60">
+                <button className={`${pillCls} inline-flex items-center gap-1`}>
                   Shop <ChevronDown className="h-3.5 w-3.5" />
                 </button>
                 {shopOpen && (
                   <div className="absolute left-0 top-full pt-3">
-                    <div className="min-w-[180px] rounded-sm border border-border bg-card p-2 shadow-lg">
+                    <div className="min-w-[200px] rounded-lg border border-border bg-card/95 p-2 shadow-lg backdrop-blur-md">
                       {SHOP_LINKS.map((l) => (
                         <Link
                           key={l.label}
@@ -91,24 +205,26 @@ export function Nav() {
                   </div>
                 )}
               </div>
-              <Link to="/story" className="uppercase transition-opacity hover:opacity-60">Explore</Link>
-              <Link to="/how-it-works" className="uppercase transition-opacity hover:opacity-60">About</Link>
+              <Link to="/story" className={pillCls}>Explore</Link>
+              <Link to="/how-it-works" className={pillCls}>About</Link>
             </nav>
           </div>
 
-          {/* Center */}
-          <Link to="/" className="justify-self-center font-display text-xl font-semibold tracking-tight md:text-2xl">
-            Mosiac
-          </Link>
+          {/* Center: placeholder to reserve grid width; actual brand is fixed-positioned overlay below */}
+          <div aria-hidden className="h-8 w-32 md:w-44" />
 
           {/* Right */}
-          <div className="flex items-center justify-end gap-2 md:gap-4">
-            <button aria-label="Search" className="p-2 transition-opacity hover:opacity-60">
+          <div className="flex items-center justify-end gap-2">
+            <button
+              aria-label="Search"
+              onClick={() => setSearchOpen(true)}
+              className={`p-2 rounded-full transition-all ${scrolled ? "bg-background/60 backdrop-blur-md" : ""}`}
+            >
               <Search className="h-5 w-5" />
             </button>
             <button
               aria-label="Cart"
-              className="inline-flex items-center gap-2 p-2 text-[13px] font-medium uppercase tracking-wide transition-opacity hover:opacity-60"
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all ${scrolled ? "bg-background/60 backdrop-blur-md" : ""}`}
             >
               <ShoppingBag className="h-5 w-5" />
               <span className="hidden sm:inline">Cart (0)</span>
@@ -117,11 +233,28 @@ export function Nav() {
         </div>
       </header>
 
+      {/* Animated brand — fixed, transitions from huge above hero to small nav-center */}
+      <Link
+        to="/"
+        aria-label="Mosiac home"
+        className="fixed left-1/2 z-50 -translate-x-1/2 font-script leading-none text-foreground pointer-events-auto"
+        style={{
+          top: `${top}px`,
+          fontSize: `clamp(28px, ${size}px, 22vw)`,
+          transition: "font-size 120ms linear, top 120ms linear",
+          textShadow: p < 0.4 ? "0 2px 24px rgba(0,0,0,0.15)" : "none",
+        }}
+      >
+        Mosiac
+      </Link>
+
+      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
+
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 bg-background md:hidden">
+        <div className="fixed inset-0 z-[60] bg-background md:hidden">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <span className="font-display text-xl font-semibold">Mosiac</span>
+            <span className="font-script text-3xl">Mosiac</span>
             <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="p-2">
               <X className="h-5 w-5" />
             </button>
@@ -179,7 +312,7 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-[1fr_1fr_1fr_2fr] md:gap-12">
           {/* Brand */}
           <div>
-            <Link to="/" className="font-display text-xl font-semibold tracking-tight">Mosiac</Link>
+            <Link to="/" className="font-script text-3xl">Mosiac</Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               We dream up rugs that bring otherworldly comfort to the home. Hand-tufted in Kigali since 2021.
             </p>
