@@ -99,7 +99,6 @@ function RecognitionSlider() {
 function Home() {
   const { data } = useSuspenseQuery(homeQO);
   const featured = data.featured.slice(0, 3);
-  const cats = data.categories;
 
   const ctaBase =
     "group inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:bg-background hover:text-foreground";
@@ -108,8 +107,30 @@ function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
       <main>
-        {/* Brand intro */}
-        <section className="py-16 md:py-28">
+        {/* Hero card with background image */}
+        <section className="pt-6 md:pt-10">
+          <div className="container-x mx-auto max-w-[1400px]">
+            <div className="relative overflow-hidden rounded-2xl bg-muted">
+              <div className="relative aspect-[16/10] w-full md:aspect-[21/9]">
+                <img
+                  src={homeHero}
+                  alt="A hand-tufted Mosiac rug anchoring a modern living room"
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-12">
+                  <span className="eyebrow text-white/80">Hand-tufted in Kigali</span>
+                  <h1 className="mt-3 max-w-3xl font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-6xl">
+                    Floor art, <span className="italic">made to order</span>.
+                  </h1>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Brand intro beneath hero */}
+        <section className="py-16 md:py-24">
           <div className="container-x mx-auto max-w-[1100px] text-center">
             <p className="mx-auto max-w-3xl font-display text-2xl font-medium leading-[1.15] tracking-tight md:text-[44px]">
               Welcome to a new dimension of home decor — Mosiac blends intricate design, considered function, and luxury materials to transform your home and awaken your senses.
@@ -117,38 +138,66 @@ function Home() {
           </div>
         </section>
 
-        {/* Category showcase grid */}
-        <section className="pb-20 md:pb-28">
+        {/* Three category cards */}
+        <section className="pb-16 md:pb-24">
           <div className="container-x mx-auto max-w-[1400px]">
-            <div className="grid gap-3 md:gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-              {cats.map((c) => {
-                const count = data.counts[c.slug] ?? 0;
-                return (
-                  <Link
-                    key={c.id}
-                    to="/catalogue"
-                    search={{ category: c.slug }}
-                    className="group relative aspect-[4/5] overflow-hidden rounded-sm bg-muted"
-                  >
-                    <img
-                      src={c.image_url || CATEGORY_IMAGES[c.slug] || catCustom}
-                      alt={`${c.name} rugs`}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-90" />
-                    <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-5 text-white">
-                      <h3 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{c.name}</h3>
-                      <span className="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider backdrop-blur">
-                        {count} {count === 1 ? "product" : "products"}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
+            <div className="grid gap-4 md:grid-cols-3 md:gap-6">
+              {HOME_CATEGORIES.map((c) => (
+                <Link
+                  key={c.slug}
+                  to="/catalogue"
+                  search={{ category: c.slug }}
+                  className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted"
+                >
+                  <img
+                    src={c.image}
+                    alt={`${c.name} rugs`}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-95" />
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-6 text-white">
+                    <h3 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">{c.name}</h3>
+                    <ArrowUpRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
+
+        {/* Heritage banner card */}
+        <section className="pb-20 md:pb-28">
+          <div className="container-x mx-auto max-w-[1400px]">
+            <Link
+              to="/catalogue"
+              className="group relative block overflow-hidden rounded-2xl bg-muted"
+            >
+              <div className="relative aspect-[21/10] w-full md:aspect-[24/9]">
+                <img
+                  src={heritageBanner}
+                  alt="Heritage rugs collection"
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/10" />
+                <div className="absolute inset-y-0 left-0 flex max-w-2xl flex-col justify-center p-6 text-white md:p-14">
+                  <span className="eyebrow text-white/80">New collection</span>
+                  <h2 className="mt-3 font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-6xl">
+                    Introducing the <span className="italic">Heritage</span> rugs
+                  </h2>
+                  <div className="mt-8">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white bg-white px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 group-hover:bg-transparent group-hover:text-white">
+                      Explore Heritage
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </section>
+
 
         <RecognitionSlider />
 
