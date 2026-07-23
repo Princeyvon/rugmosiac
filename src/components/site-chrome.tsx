@@ -98,7 +98,7 @@ export function Nav() {
 
           {/* Center */}
           <Link to="/" className="justify-self-center font-display text-xl font-semibold tracking-tight md:text-2xl">
-            Rug Mosiac
+            Mosiac
           </Link>
 
           {/* Right */}
@@ -121,7 +121,7 @@ export function Nav() {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 bg-background md:hidden">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <span className="font-display text-xl font-semibold">Rug Mosiac</span>
+            <span className="font-display text-xl font-semibold">Mosiac</span>
             <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="p-2">
               <X className="h-5 w-5" />
             </button>
@@ -179,11 +179,11 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-[1fr_1fr_1fr_2fr] md:gap-12">
           {/* Brand */}
           <div>
-            <Link to="/" className="font-display text-xl font-semibold tracking-tight">Rug Mosiac</Link>
+            <Link to="/" className="font-display text-xl font-semibold tracking-tight">Mosiac</Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               We dream up rugs that bring otherworldly comfort to the home. Hand-tufted in Kigali since 2021.
             </p>
-            <p className="mt-6 text-xs text-muted-foreground">© 2025 Rug Mosiac</p>
+            <p className="mt-6 text-xs text-muted-foreground">© 2025 Mosiac</p>
           </div>
 
           {/* About */}

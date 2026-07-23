@@ -4,9 +4,9 @@ import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
     meta: [
-      { title: "How It Works — Rug Mosiac" },
-      { name: "description", content: "From sketch to doorstep. Every Rug Mosiac piece is hand-tufted to order in Kigali — usually ready in 3–4 weeks." },
-      { property: "og:title", content: "How It Works — Rug Mosiac" },
+      { title: "How It Works — Mosiac" },
+      { name: "description", content: "From sketch to doorstep. Every Mosiac piece is hand-tufted to order in Kigali — usually ready in 3–4 weeks." },
+      { property: "og:title", content: "How It Works — Mosiac" },
       { property: "og:description", content: "Design, tuft, deliver. That's it." },
     ],
   }),
