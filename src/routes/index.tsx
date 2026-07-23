@@ -4,17 +4,17 @@ import { useEffect, useState } from "react";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Nav, Footer, FloatingWhatsApp, resolveImage } from "@/components/site-chrome";
 import { listCategories, listFeatured, listProducts, listReviews } from "@/lib/catalogue.functions";
-import catSports from "@/assets/cat-sports.jpg";
-import catCartoon from "@/assets/cat-cartoon.jpg";
-import catAnimals from "@/assets/cat-animals.jpg";
-import catCustom from "@/assets/cat-custom.jpg";
+import homeHero from "@/assets/home-hero.jpg";
+import heritageBanner from "@/assets/heritage-banner.jpg";
+import catBrands from "@/assets/cat-brands.jpg";
+import catAreaRugs from "@/assets/cat-area-rugs.jpg";
+import catRunners from "@/assets/cat-runners.jpg";
 
-const CATEGORY_IMAGES: Record<string, string> = {
-  sports: catSports,
-  cartoon: catCartoon,
-  animals: catAnimals,
-  custom: catCustom,
-};
+const HOME_CATEGORIES = [
+  { slug: "brands", name: "Brands", image: catBrands },
+  { slug: "area-rugs", name: "Area Rugs", image: catAreaRugs },
+  { slug: "runners", name: "Runners", image: catRunners },
+];
 
 const PRESS = [
   { quote: "Playful, vibrant, and bizarrely compelling.", source: "Kigali Design Weekly" },
