@@ -7,9 +7,9 @@ import { submitCustomRequest } from "@/lib/forms.functions";
 export const Route = createFileRoute("/custom")({
   head: () => ({
     meta: [
-      { title: "Custom Rug Order — Rug Mosiac" },
+      { title: "Custom Rug Order — Mosiac" },
       { name: "description", content: "Commission a hand-tufted custom rug. Any design, any size — from sketch to doorstep in 3–4 weeks." },
-      { property: "og:title", content: "Custom Rug Order — Rug Mosiac" },
+      { property: "og:title", content: "Custom Rug Order — Mosiac" },
       { property: "og:description", content: "Bring us your design. We tuft it in wool." },
     ],
   }),

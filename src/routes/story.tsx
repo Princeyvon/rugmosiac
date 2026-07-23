@@ -6,9 +6,9 @@ import craft2 from "@/assets/craft-2.jpg";
 export const Route = createFileRoute("/story")({
   head: () => ({
     meta: [
-      { title: "Our Story — Rug Mosiac" },
-      { name: "description", content: "Since 2021, Rug Mosiac has been turning ideas into floor art — hand-tufted in Kigali, built to last." },
-      { property: "og:title", content: "Our Story — Rug Mosiac" },
+      { title: "Our Story — Mosiac" },
+      { name: "description", content: "Since 2021, Mosiac has been turning ideas into floor art — hand-tufted in Kigali, built to last." },
+      { property: "og:title", content: "Our Story — Mosiac" },
       { property: "og:description", content: "The Kigali studio hand-tufting one-of-one rugs." },
     ],
   }),
@@ -26,7 +26,7 @@ function StoryPage() {
             Every rug is a <em>one-of-a-kind</em>.
           </h1>
           <p className="mt-8 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-            Rug Mosiac started in 2021 in a small Kigali studio, with a tufting gun, a few kilos of wool,
+            Mosiac started in 2021 in a small Kigali studio, with a tufting gun, a few kilos of wool,
             and a stubborn idea: that a rug should be a piece of art, not a filler. Four years later,
             we're still hand-tufting every piece ourselves — no factories, no shortcuts.
           </p>

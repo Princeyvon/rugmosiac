@@ -19,13 +19,13 @@ export const Route = createFileRoute("/catalogue/$slug")({
   head: ({ loaderData }) => ({
     meta: loaderData
       ? [
-          { title: `${loaderData.name} — Rug Mosiac` },
+          { title: `${loaderData.name} — Mosiac` },
           { name: "description", content: loaderData.short_description ?? "Hand-tufted rug, made to order in Kigali." },
-          { property: "og:title", content: `${loaderData.name} — Rug Mosiac` },
+          { property: "og:title", content: `${loaderData.name} — Mosiac` },
           { property: "og:description", content: loaderData.short_description ?? "" },
           ...(loaderData.main_image_url ? [{ property: "og:image", content: loaderData.main_image_url }] : []),
         ]
-      : [{ title: "Rug — Rug Mosiac" }, { name: "robots", content: "noindex" }],
+      : [{ title: "Rug — Mosiac" }, { name: "robots", content: "noindex" }],
   }),
   notFoundComponent: () => (
     <div className="min-h-screen bg-background text-foreground">
@@ -55,7 +55,7 @@ function ProductPage() {
     : formatPrice({ rwf: p.base_price_rwf, usd: p.base_price_usd });
 
   const waMsg = encodeURIComponent(
-    `Hi Rug Mosiac — I'm interested in "${p.name}"${chosen ? ` (${chosen.label})` : ""}. Can we chat?`,
+    `Hi Mosiac — I'm interested in "${p.name}"${chosen ? ` (${chosen.label})` : ""}. Can we chat?`,
   );
 
   return (

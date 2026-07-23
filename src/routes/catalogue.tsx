@@ -26,9 +26,9 @@ export const Route = createFileRoute("/catalogue")({
     context.queryClient.ensureQueryData(catalogueQO(deps.category)),
   head: () => ({
     meta: [
-      { title: "Catalogue — Rug Mosiac" },
+      { title: "Catalogue — Mosiac" },
       { name: "description", content: "Browse our hand-tufted rug catalogue — sports, cartoon, animals, art, and fully custom pieces." },
-      { property: "og:title", content: "Catalogue — Rug Mosiac" },
+      { property: "og:title", content: "Catalogue — Mosiac" },
       { property: "og:description", content: "Hand-tufted rugs made to order in Kigali." },
     ],
   }),

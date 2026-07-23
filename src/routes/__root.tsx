@@ -77,13 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Rug Mosiac — Handmade Custom Rugs, Tufted in Kigali" },
+      { title: "Mosiac — Handmade Custom Rugs, Tufted in Kigali" },
       {
         name: "description",
         content:
           "Handmade custom rugs, hand-tufted to order in Kigali. Any design, any size, yours forever.",
       },
-      { property: "og:title", content: "Rug Mosiac — Handmade Custom Rugs" },
+      { property: "og:title", content: "Mosiac — Handmade Custom Rugs" },
       {
         property: "og:description",
         content:

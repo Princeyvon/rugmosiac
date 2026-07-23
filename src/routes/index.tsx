@@ -46,9 +46,9 @@ export const Route = createFileRoute("/")({
   component: Home,
   head: () => ({
     meta: [
-      { title: "Rug Mosiac — Handmade custom rugs, tufted in Kigali" },
+      { title: "Mosiac — Handmade custom rugs, tufted in Kigali" },
       { name: "description", content: "A new dimension of home decor. Hand-tufted wool rugs made to order in Kigali since 2021." },
-      { property: "og:title", content: "Rug Mosiac — Handmade custom rugs" },
+      { property: "og:title", content: "Mosiac — Handmade custom rugs" },
       { property: "og:description", content: "A new dimension of home decor. Hand-tufted wool rugs made to order in Kigali." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -112,7 +112,7 @@ function Home() {
         <section className="py-16 md:py-28">
           <div className="container-x mx-auto max-w-[1100px] text-center">
             <p className="mx-auto max-w-3xl font-display text-2xl font-medium leading-[1.15] tracking-tight md:text-[44px]">
-              Welcome to a new dimension of home decor — Rug Mosiac blends intricate design, considered function, and luxury materials to transform your home and awaken your senses.
+              Welcome to a new dimension of home decor — Mosiac blends intricate design, considered function, and luxury materials to transform your home and awaken your senses.
             </p>
           </div>
         </section>
@@ -204,7 +204,7 @@ function Home() {
             </h2>
             <div className="mt-12">
               <Link to="/catalogue" className={ctaBase}>
-                Explore Rug Mosiac
+                Explore Mosiac
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>

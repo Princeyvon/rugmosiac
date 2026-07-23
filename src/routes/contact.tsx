@@ -7,9 +7,9 @@ import { submitContact } from "@/lib/forms.functions";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Rug Mosiac" },
-      { name: "description", content: "Get in touch with Rug Mosiac — Kigali's hand-tufted rug studio." },
-      { property: "og:title", content: "Contact — Rug Mosiac" },
+      { title: "Contact — Mosiac" },
+      { name: "description", content: "Get in touch with Mosiac — Kigali's hand-tufted rug studio." },
+      { property: "og:title", content: "Contact — Mosiac" },
       { property: "og:description", content: "Message us on WhatsApp or drop a note." },
     ],
   }),
