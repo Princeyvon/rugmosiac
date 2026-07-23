@@ -108,10 +108,10 @@ function Home() {
       <Nav />
       <main>
         {/* Hero card with background image */}
-        <section className="pt-6 md:pt-10">
+        <section className="pt-40 md:pt-56">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
-              <div className="relative aspect-[16/10] w-full md:aspect-[21/9]">
+              <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">
                 <img
                   src={homeHero}
                   alt="A hand-tufted Mosiac rug anchoring a modern living room"
