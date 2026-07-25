@@ -243,12 +243,13 @@ export function Nav() {
         style={{
           top: `${top}px`,
           fontSize: `clamp(28px, ${size}px, 22vw)`,
-          transition: "font-size 120ms linear, top 120ms linear",
+          letterSpacing: "-0.04em",
           textShadow: p < 0.4 ? "0 2px 24px rgba(0,0,0,0.15)" : "none",
         }}
       >
         Mosiac
       </Link>
+
 
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
 
