@@ -123,9 +123,83 @@ function RecognitionSlider() {
   );
 }
 
+function HeritageSlider() {
+  const [i, setI] = useState(0);
+  const total = HERITAGE_SLIDES.length;
+  useEffect(() => {
+    const t = setInterval(() => setI((v) => (v + 1) % total), 6000);
+    return () => clearInterval(t);
+  }, [total]);
+  const prev = () => setI((v) => (v - 1 + total) % total);
+  const next = () => setI((v) => (v + 1) % total);
+  return (
+    <section className="pb-20 md:pb-28">
+      <div className="container-x mx-auto max-w-[1400px]">
+        <div className="group relative overflow-hidden rounded-2xl bg-muted">
+          <div className="relative aspect-[21/10] w-full md:aspect-[24/9]">
+            {HERITAGE_SLIDES.map((s, idx) => (
+              <div
+                key={idx}
+                className={`absolute inset-0 transition-opacity duration-700 ease-out ${i === idx ? "opacity-100" : "opacity-0"}`}
+                aria-hidden={i !== idx}
+              >
+                <img
+                  src={s.image}
+                  alt={`Heritage rug slide ${idx + 1}`}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/10" />
+                <div className="absolute inset-y-0 left-0 flex max-w-2xl flex-col justify-center p-6 text-white md:p-14">
+                  <span className="eyebrow text-white/80">{s.kicker}</span>
+                  <h2 className="mt-3 font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-6xl">
+                    {s.title} <span className="italic">{s.italic}</span>
+                    {s.suffix ? ` ${s.suffix}` : ""}
+                  </h2>
+                  <div className="mt-8">
+                    <Link
+                      to="/catalogue"
+                      className="inline-flex items-center gap-2 rounded-full border border-white bg-white px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 hover:bg-transparent hover:text-white"
+                    >
+                      Explore Heritage
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Controls — bottom left, close together */}
+          <div className="absolute bottom-5 left-5 z-10 flex items-center gap-2 md:bottom-8 md:left-8">
+            <button
+              onClick={prev}
+              aria-label="Previous slide"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white backdrop-blur-md transition-all hover:bg-white hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={next}
+              aria-label="Next slide"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white backdrop-blur-md transition-all hover:bg-white hover:text-foreground"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <div className="ml-3 text-xs font-semibold uppercase tracking-wider text-white/80">
+              {String(i + 1).padStart(2, "0")}
+              <span className="mx-1.5 opacity-50">/</span>
+              {String(total).padStart(2, "0")}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Home() {
   const { data } = useSuspenseQuery(homeQO);
-  const featured = data.featured.slice(0, 3);
 
   const ctaBase =
     "group inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:bg-background hover:text-foreground";
@@ -134,8 +208,9 @@ function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
       <main>
-        {/* Hero card with background image */}
-        <section className="pt-40 md:pt-56">
+        {/* Hero card with background image — extra top padding so the huge Mosiac wordmark
+            has generous whitespace above the card, and the card visually "pushes" it up on scroll. */}
+        <section className="pt-56 md:pt-72">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">
@@ -156,10 +231,10 @@ function Home() {
           </div>
         </section>
 
-        {/* Brand intro beneath hero */}
-        <section className="py-16 md:py-24">
-          <div className="container-x mx-auto max-w-[1100px] text-center">
-            <p className="mx-auto max-w-3xl font-display text-2xl font-medium leading-[1.15] tracking-tight md:text-[44px]">
+        {/* Brand intro beneath hero — smaller, still visible */}
+        <section className="py-14 md:py-20">
+          <div className="container-x mx-auto max-w-[900px] text-center">
+            <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
               Welcome to a new dimension of home decor — Mosiac blends intricate design, considered function, and luxury materials to transform your home and awaken your senses.
             </p>
           </div>
@@ -193,84 +268,10 @@ function Home() {
           </div>
         </section>
 
-        {/* Heritage banner card */}
-        <section className="pb-20 md:pb-28">
-          <div className="container-x mx-auto max-w-[1400px]">
-            <Link
-              to="/catalogue"
-              className="group relative block overflow-hidden rounded-2xl bg-muted"
-            >
-              <div className="relative aspect-[21/10] w-full md:aspect-[24/9]">
-                <img
-                  src={heritageBanner}
-                  alt="Heritage rugs collection"
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/10" />
-                <div className="absolute inset-y-0 left-0 flex max-w-2xl flex-col justify-center p-6 text-white md:p-14">
-                  <span className="eyebrow text-white/80">New collection</span>
-                  <h2 className="mt-3 font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-6xl">
-                    Introducing the <span className="italic">Heritage</span> rugs
-                  </h2>
-                  <div className="mt-8">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-white bg-white px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 group-hover:bg-transparent group-hover:text-white">
-                      Explore Heritage
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </section>
-
+        {/* Heritage slideshow — 3 slides with paired controls */}
+        <HeritageSlider />
 
         <RecognitionSlider />
-
-        {/* Featured product hero blocks — alternating */}
-        {featured.map((p, idx) => {
-          const reverse = idx % 2 === 1;
-          const kicker = idx === 0 ? "Meet the" : idx === 1 ? "Introducing the" : "Meet the";
-          const shopLabel = `Shop ${p.name.split(" ")[0]}`;
-          return (
-            <section key={p.id} className="py-20 md:py-28">
-              <div className={`container-x mx-auto grid max-w-[1400px] items-stretch gap-10 md:grid-cols-2 md:gap-16 ${reverse ? "md:[&>*:first-child]:order-2" : ""}`}>
-                <Link to="/catalogue/$slug" params={{ slug: p.slug }} className="group block overflow-hidden rounded-sm bg-muted">
-                  <div className="relative aspect-[4/5] w-full overflow-hidden md:aspect-[5/6]">
-                    {resolveImage(p.main_image_url) && (
-                      <img
-                        src={resolveImage(p.main_image_url)}
-                        alt={p.name}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                      />
-                    )}
-                  </div>
-                </Link>
-                <div className="flex flex-col justify-between py-4 md:py-8">
-                  <div>
-                    <span className="eyebrow text-muted-foreground">{p.category?.name ?? "Featured"}</span>
-                    <h2 className="mt-4 font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-6xl">
-                      {kicker} <span className="italic">{p.name}</span>
-                    </h2>
-                    {p.short_description && (
-                      <p className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground">
-                        {p.short_description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-10 md:mt-0 md:pt-12">
-                    <Link to="/catalogue/$slug" params={{ slug: p.slug }} className={ctaBase}>
-                      {shopLabel}
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-          );
-        })}
 
         {/* Dreamscape / Explore hero */}
         <section className="border-y border-border bg-muted py-28 md:py-40">
@@ -287,48 +288,44 @@ function Home() {
           </div>
         </section>
 
-        {/* Reviews */}
-        {data.reviews.length > 0 && (
-          <section className="py-24 md:py-32">
-            <div className="container-x mx-auto max-w-[1400px]">
-              <div className="mb-12 text-center">
-                <div className="text-accent text-base tracking-[0.4em]">★★★★★</div>
-                <h2 className="mt-4 font-display text-3xl font-medium tracking-tight md:text-5xl">Our happy clients.</h2>
-              </div>
-              <div className="grid gap-6 md:grid-cols-3 md:gap-8">
-                {data.reviews.slice(0, 3).map((r) => (
-                  <figure key={r.id} className="flex h-full flex-col justify-between rounded-sm border border-border bg-card p-8">
-                    <blockquote className="font-display text-lg leading-relaxed">"{r.quote}"</blockquote>
-                    <figcaption className="mt-8 text-sm">
-                      <div className="font-semibold">{r.customer_name}</div>
-                      <div className="text-muted-foreground">{r.location}</div>
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Social conversion banner */}
-        <section className="border-t border-border bg-foreground py-24 text-background md:py-32">
-          <div className="container-x mx-auto max-w-[1200px] text-center">
-            <h2 className="font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-6xl">
-              Seeing is believing.
+        {/* Seeing is believing — enhanced editorial banner */}
+        <section className="relative overflow-hidden border-t border-border bg-foreground py-28 text-background md:py-40">
+          {/* subtle radial glow accents */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-40 top-1/2 h-[520px] w-[520px] -translate-y-1/2 rounded-full opacity-30 blur-3xl"
+            style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-40 top-0 h-[520px] w-[520px] rounded-full opacity-20 blur-3xl"
+            style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
+          />
+          <div className="container-x relative mx-auto max-w-[1200px] text-center">
+            <span className="eyebrow text-background/60">@rugmosiac on Instagram</span>
+            <h2 className="mt-5 font-display text-5xl font-medium leading-[1.0] tracking-tight md:text-8xl">
+              Seeing is <span className="italic">believing</span>.
             </h2>
-            <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-background/70">
-              Follow us on Instagram to stay up to date on promotions and limited edition releases.
+            <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-background/70 md:text-lg">
+              Follow along for behind-the-scenes tufting, finished commissions in real homes, and first looks at limited drops.
             </p>
-            <div className="mt-10">
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
               <a
                 href="https://instagram.com/rugmosiac"
                 target="_blank"
                 rel="noreferrer"
                 className="group inline-flex items-center gap-2 rounded-full border border-background bg-background px-8 py-4 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 hover:bg-transparent hover:text-background"
               >
-                Follow us @rugmosiac
+                Follow @rugmosiac
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" />
               </a>
+              <Link
+                to="/custom"
+                className="group inline-flex items-center gap-2 rounded-full border border-background/40 px-8 py-4 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:border-background hover:bg-background hover:text-foreground"
+              >
+                Commission a rug
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
             </div>
           </div>
         </section>
@@ -338,3 +335,4 @@ function Home() {
     </div>
   );
 }
+
