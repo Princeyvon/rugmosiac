@@ -38,19 +38,28 @@ const SHOP_LINKS: Array<{ label: string; to: string; search?: { category: string
   { label: "Custom", to: "/catalogue", search: { category: "custom" } },
 ];
 
-function useScrollProgress(range = 480) {
+function useScrollProgress(range = 360) {
   const [p, setP] = useState(0);
   useEffect(() => {
-    const onScroll = () => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
       const y = window.scrollY;
       setP(Math.max(0, Math.min(1, y / range)));
     };
-    onScroll();
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, [range]);
   return p;
 }
+
 
 function SearchOverlay({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState("");
