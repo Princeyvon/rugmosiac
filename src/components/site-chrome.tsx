@@ -38,19 +38,28 @@ const SHOP_LINKS: Array<{ label: string; to: string; search?: { category: string
   { label: "Custom", to: "/catalogue", search: { category: "custom" } },
 ];
 
-function useScrollProgress(range = 480) {
+function useScrollProgress(range = 360) {
   const [p, setP] = useState(0);
   useEffect(() => {
-    const onScroll = () => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
       const y = window.scrollY;
       setP(Math.max(0, Math.min(1, y / range)));
     };
-    onScroll();
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, [range]);
   return p;
 }
+
 
 function SearchOverlay({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState("");
@@ -153,17 +162,19 @@ export function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const p = useScrollProgress(500);
+  const p = useScrollProgress(360);
   const scrolled = p > 0.02;
 
-  // Interpolated brand transforms
-  // Start: huge, positioned above hero (top ~ 110px on desktop). End: nav-size, centered in header (~top 60px accounting for ticker).
-  const size = 220 - (220 - 26) * p; // px
-  const top = 110 - (110 - 18) * p; // px from viewport top
+  // Interpolated brand transforms — driven directly by scroll for a seamless
+  // "card pushes the wordmark up into the nav" feel. No CSS transition on
+  // these values so they track scroll 1:1.
+  const size = 220 - (220 - 36) * p; // px — settles a touch larger in the nav
+  const top = 150 - (150 - 14) * p; // px from viewport top — more headroom at rest
 
   const pillCls = `rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all duration-300 ${
     scrolled ? "bg-background/60 backdrop-blur-md" : "bg-transparent"
   }`;
+
 
   return (
     <>
@@ -241,12 +252,13 @@ export function Nav() {
         style={{
           top: `${top}px`,
           fontSize: `clamp(28px, ${size}px, 22vw)`,
-          transition: "font-size 120ms linear, top 120ms linear",
+          letterSpacing: "-0.04em",
           textShadow: p < 0.4 ? "0 2px 24px rgba(0,0,0,0.15)" : "none",
         }}
       >
         Mosiac
       </Link>
+
 
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
 
