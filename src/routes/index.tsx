@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { Nav, Footer, FloatingWhatsApp, resolveImage } from "@/components/site-chrome";
+import { ArrowRight, ArrowLeft, ArrowUpRight } from "lucide-react";
+import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
 import { listCategories, listFeatured, listProducts, listReviews } from "@/lib/catalogue.functions";
 import homeHero from "@/assets/home-hero.jpg";
 import heritageBanner from "@/assets/heritage-banner.jpg";
+import heritage2 from "@/assets/heritage-2.jpg";
+import heritage3 from "@/assets/heritage-3.jpg";
 import catBrands from "@/assets/cat-brands.jpg";
 import catAreaRugs from "@/assets/cat-area-rugs.jpg";
 import catRunners from "@/assets/cat-runners.jpg";
@@ -15,6 +17,31 @@ const HOME_CATEGORIES = [
   { slug: "area-rugs", name: "Area Rugs", image: catAreaRugs },
   { slug: "runners", name: "Runners", image: catRunners },
 ];
+
+const HERITAGE_SLIDES = [
+  {
+    image: heritageBanner,
+    kicker: "New collection",
+    title: "Introducing the",
+    italic: "Heritage",
+    suffix: "rugs",
+  },
+  {
+    image: heritage2,
+    kicker: "Traditional patterns",
+    title: "Woven with",
+    italic: "intention",
+    suffix: "",
+  },
+  {
+    image: heritage3,
+    kicker: "Made in Kigali",
+    title: "Tufted by",
+    italic: "hand",
+    suffix: "",
+  },
+];
+
 
 const PRESS = [
   { quote: "Playful, vibrant, and bizarrely compelling.", source: "Kigali Design Weekly" },
