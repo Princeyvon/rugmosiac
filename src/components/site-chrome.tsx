@@ -153,17 +153,19 @@ export function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const p = useScrollProgress(500);
+  const p = useScrollProgress(360);
   const scrolled = p > 0.02;
 
-  // Interpolated brand transforms
-  // Start: huge, positioned above hero (top ~ 110px on desktop). End: nav-size, centered in header (~top 60px accounting for ticker).
-  const size = 220 - (220 - 26) * p; // px
-  const top = 110 - (110 - 18) * p; // px from viewport top
+  // Interpolated brand transforms — driven directly by scroll for a seamless
+  // "card pushes the wordmark up into the nav" feel. No CSS transition on
+  // these values so they track scroll 1:1.
+  const size = 220 - (220 - 36) * p; // px — settles a touch larger in the nav
+  const top = 150 - (150 - 14) * p; // px from viewport top — more headroom at rest
 
   const pillCls = `rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all duration-300 ${
     scrolled ? "bg-background/60 backdrop-blur-md" : "bg-transparent"
   }`;
+
 
   return (
     <>
