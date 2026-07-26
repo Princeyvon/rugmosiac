@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Menu, Search, ShoppingBag, X, ChevronDown } from "lucide-react";
+import { Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, Heart, User } from "lucide-react";
 import { listProducts, type Product } from "@/lib/catalogue.functions";
 
 export const WHATSAPP_URL = "https://wa.me/250780000000";
@@ -264,32 +264,134 @@ export function Nav() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] bg-background md:hidden">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <span className="font-script text-3xl">Mosiac</span>
-            <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="p-2">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <nav className="flex flex-col divide-y divide-border">
-            {SHOP_LINKS.map((l) => (
-              <Link
-                key={l.label}
-                to={l.to}
-                search={l.search as never}
-                onClick={() => setMobileOpen(false)}
-                className="px-6 py-4 text-base"
-              >
-                {l.label}
-              </Link>
-            ))}
-            <Link to="/story" onClick={() => setMobileOpen(false)} className="px-6 py-4 text-base uppercase tracking-wide">Explore</Link>
-            <Link to="/how-it-works" onClick={() => setMobileOpen(false)} className="px-6 py-4 text-base uppercase tracking-wide">About</Link>
-            <Link to="/contact" onClick={() => setMobileOpen(false)} className="px-6 py-4 text-base uppercase tracking-wide">Contact</Link>
-          </nav>
-        </div>
+        <MobileMenu onClose={() => setMobileOpen(false)} />
       )}
     </>
+  );
+}
+
+const MOBILE_SECTIONS: Array<{ label: string; to?: string; search?: { category: string }; children?: Array<{ label: string; to: string; search?: { category: string } }> }> = [
+  {
+    label: "Featured",
+    children: [
+      { label: "New Arrivals", to: "/catalogue" },
+      { label: "Best Sellers", to: "/catalogue" },
+      { label: "Heritage Collection", to: "/catalogue", search: { category: "heritage" } },
+    ],
+  },
+  { label: "Shop by size", to: "/catalogue" },
+  { label: "Shop by color", to: "/catalogue" },
+  { label: "Shop by style", to: "/catalogue" },
+  { label: "Shop by space", to: "/catalogue" },
+  { label: "Art & Decor", to: "/catalogue" },
+  { label: "Pricing", to: "/how-it-works" },
+  { label: "Trade Program", to: "/story" },
+];
+
+function MobileMenu({ onClose }: { onClose: () => void }) {
+  const [expanded, setExpanded] = useState<string | null>("Featured");
+  return (
+    <div className="fixed inset-0 z-[60] flex flex-col bg-background md:hidden">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-5 pt-5 pb-4">
+        <button
+          aria-label="Close menu"
+          onClick={onClose}
+          className="grid h-11 w-11 place-items-center rounded-md bg-muted"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <Link to="/" onClick={onClose} className="font-script text-4xl leading-none">
+          Mosiac<span className="text-accent">.</span>
+        </Link>
+        <div className="flex items-center gap-3">
+          <button aria-label="Search" className="p-1"><Search className="h-5 w-5" /></button>
+          <button aria-label="Wishlist" className="p-1"><Heart className="h-5 w-5" /></button>
+          <button aria-label="Cart" className="relative p-1">
+            <ShoppingBag className="h-5 w-5" />
+            <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-foreground text-[9px] font-semibold text-background">0</span>
+          </button>
+        </div>
+      </div>
+      <div className="border-t border-border" />
+
+      {/* Pill row */}
+      <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 px-5 py-4">
+        <Link
+          to="/catalogue"
+          onClick={onClose}
+          className="flex items-center justify-between rounded-full border border-border px-5 py-3 text-sm"
+        >
+          <span>Shop All</span>
+          <ShoppingBag className="h-4 w-4" />
+        </Link>
+        <button className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm">
+          RWF <ChevronDown className="h-4 w-4" />
+        </button>
+        <button aria-label="Account" className="grid h-11 w-11 place-items-center rounded-full border border-border">
+          <User className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="border-t border-border" />
+
+      {/* Nav list */}
+      <nav className="flex-1 overflow-y-auto px-6 pt-6">
+        <ul className="space-y-1">
+          {MOBILE_SECTIONS.map((s) => {
+            const isOpen = expanded === s.label;
+            const hasChildren = !!s.children?.length;
+            return (
+              <li key={s.label}>
+                {hasChildren ? (
+                  <>
+                    <button
+                      onClick={() => setExpanded(isOpen ? null : s.label)}
+                      className="flex w-full items-center justify-between py-4 text-left text-[22px] font-semibold"
+                    >
+                      <span>{s.label}</span>
+                      <ChevronDown className={`h-6 w-6 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {isOpen && (
+                      <ul className="pb-2 pl-2">
+                        {s.children!.map((c) => (
+                          <li key={c.label}>
+                            <Link
+                              to={c.to}
+                              search={c.search as never}
+                              onClick={onClose}
+                              className="block py-2 text-base text-muted-foreground"
+                            >
+                              {c.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    to={s.to!}
+                    search={s.search as never}
+                    onClick={onClose}
+                    className="flex items-center justify-between py-4 text-[22px] font-semibold"
+                  >
+                    <span>{s.label}</span>
+                    <ChevronRight className="h-6 w-6" />
+                  </Link>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Bottom wordmark */}
+      <div className="flex items-end justify-center pb-8 pt-4">
+        <Link to="/" onClick={onClose} className="font-script text-6xl leading-none">
+          Mosiac<span className="text-accent">.</span>
+        </Link>
+      </div>
+    </div>
   );
 }
 
