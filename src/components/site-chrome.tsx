@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Menu, Search, ShoppingBag, X, ChevronDown } from "lucide-react";
+import { Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, Heart, User } from "lucide-react";
 import { listProducts, type Product } from "@/lib/catalogue.functions";
 
 export const WHATSAPP_URL = "https://wa.me/250780000000";
