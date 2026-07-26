@@ -264,30 +264,7 @@ export function Nav() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] bg-background md:hidden">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <span className="font-script text-3xl">Mosiac</span>
-            <button aria-label="Close menu" onClick={() => setMobileOpen(false)} className="p-2">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <nav className="flex flex-col divide-y divide-border">
-            {SHOP_LINKS.map((l) => (
-              <Link
-                key={l.label}
-                to={l.to}
-                search={l.search as never}
-                onClick={() => setMobileOpen(false)}
-                className="px-6 py-4 text-base"
-              >
-                {l.label}
-              </Link>
-            ))}
-            <Link to="/story" onClick={() => setMobileOpen(false)} className="px-6 py-4 text-base uppercase tracking-wide">Explore</Link>
-            <Link to="/how-it-works" onClick={() => setMobileOpen(false)} className="px-6 py-4 text-base uppercase tracking-wide">About</Link>
-            <Link to="/contact" onClick={() => setMobileOpen(false)} className="px-6 py-4 text-base uppercase tracking-wide">Contact</Link>
-          </nav>
-        </div>
+        <MobileMenu onClose={() => setMobileOpen(false)} />
       )}
     </>
   );
