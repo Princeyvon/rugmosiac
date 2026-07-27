@@ -193,7 +193,6 @@ export function Nav() {
 
   return (
     <>
-      <AnnouncementTicker />
       <header className="sticky top-0 z-40 bg-transparent">
         <div className="container-x mx-auto grid max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center py-4">
           {/* Left */}
@@ -241,6 +240,7 @@ export function Nav() {
 
           {/* Right */}
           <div className="flex items-center justify-end gap-2">
+            <AnnouncementTicker compact />
             <button
               aria-label="Search"
               onClick={() => setSearchOpen(true)}
@@ -258,6 +258,7 @@ export function Nav() {
           </div>
         </div>
       </header>
+
 
       {/* Animated brand — fixed, transitions from huge above hero to small nav-center */}
       <Link
