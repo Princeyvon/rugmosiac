@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, Heart, User } from "lucide-react";
 import { listProducts, type Product } from "@/lib/catalogue.functions";
@@ -177,7 +177,12 @@ export function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const p = useScrollProgress(360);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isHome = pathname === "/";
+  const pScroll = useScrollProgress(360);
+  // Off the home page the wordmark stays small and centered in the nav —
+  // no huge-hero-to-nav shrink animation.
+  const p = isHome ? pScroll : 1;
   const scrolled = p > 0.02;
 
   // Interpolated brand transforms — driven directly by scroll for a seamless
