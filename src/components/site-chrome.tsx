@@ -13,9 +13,23 @@ export function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-export function AnnouncementTicker() {
+export function AnnouncementTicker({ compact = false }: { compact?: boolean }) {
   const msg = "Sign up to our newsletter for 10% off your first order";
   const items = Array.from({ length: 8 });
+  if (compact) {
+    return (
+      <div className="hidden lg:flex items-center overflow-hidden rounded-full bg-foreground text-background max-w-[260px] h-9 px-1">
+        <div className="flex gap-10 whitespace-nowrap will-change-transform" style={{ animation: "marquee 32s linear infinite" }}>
+          {items.map((_, i) => (
+            <span key={i} className="flex items-center gap-10 text-[10px] font-semibold uppercase tracking-[0.18em]">
+              {msg}
+              <span aria-hidden className="opacity-40">✦</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="overflow-hidden bg-marquee text-marquee-foreground">
       <div className="flex gap-16 whitespace-nowrap py-2.5 will-change-transform" style={{ animation: "marquee 42s linear infinite" }}>
@@ -29,6 +43,7 @@ export function AnnouncementTicker() {
     </div>
   );
 }
+
 
 const SHOP_LINKS: Array<{ label: string; to: string; search?: { category: string } }> = [
   { label: "Shop All", to: "/catalogue" },
@@ -178,7 +193,6 @@ export function Nav() {
 
   return (
     <>
-      <AnnouncementTicker />
       <header className="sticky top-0 z-40 bg-transparent">
         <div className="container-x mx-auto grid max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center py-4">
           {/* Left */}
@@ -226,6 +240,7 @@ export function Nav() {
 
           {/* Right */}
           <div className="flex items-center justify-end gap-2">
+            <AnnouncementTicker compact />
             <button
               aria-label="Search"
               onClick={() => setSearchOpen(true)}
@@ -243,6 +258,7 @@ export function Nav() {
           </div>
         </div>
       </header>
+
 
       {/* Animated brand — fixed, transitions from huge above hero to small nav-center */}
       <Link
