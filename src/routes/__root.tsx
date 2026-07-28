@@ -79,20 +79,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Mosiac — Handmade Custom Rugs, Tufted in Kigali" },
+      { title: "Mosiac — Handmade custom rugs, tufted in Kigali" },
       {
         name: "description",
         content:
-          "Handmade custom rugs, hand-tufted to order in Kigali. Any design, any size, yours forever.",
+          "A new dimension of home decor. Hand-tufted wool rugs made to order in Kigali since 2021.",
       },
-      { property: "og:title", content: "Mosiac — Handmade Custom Rugs" },
+      { property: "og:title", content: "Mosiac — Handmade custom rugs, tufted in Kigali" },
       {
         property: "og:description",
         content:
-          "Hand-tufted custom rugs made to order in Kigali. Bring us a design, we'll turn it into floor art.",
+          "A new dimension of home decor. Hand-tufted wool rugs made to order in Kigali since 2021.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Mosiac — Handmade custom rugs, tufted in Kigali" },
+      { name: "twitter:description", content: "A new dimension of home decor. Hand-tufted wool rugs made to order in Kigali since 2021." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1da7995c-85eb-4540-96e6-e8751f947f39/id-preview-64f15abb--6c7df263-ed48-4ee9-a3da-16fc4d6c90d1.lovable.app-1785243597560.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1da7995c-85eb-4540-96e6-e8751f947f39/id-preview-64f15abb--6c7df263-ed48-4ee9-a3da-16fc4d6c90d1.lovable.app-1785243597560.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

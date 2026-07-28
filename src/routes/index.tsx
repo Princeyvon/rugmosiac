@@ -75,8 +75,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Mosiac — Handmade custom rugs, tufted in Kigali" },
       { name: "description", content: "A new dimension of home decor. Hand-tufted wool rugs made to order in Kigali since 2021." },
-      { property: "og:title", content: "Mosiac — Handmade custom rugs" },
-      { property: "og:description", content: "A new dimension of home decor. Hand-tufted wool rugs made to order in Kigali." },
+      { property: "og:title", content: "Mosiac — Handmade custom rugs, tufted in Kigali" },
+      { property: "og:description", content: "A new dimension of home decor. Hand-tufted wool rugs made to order in Kigali since 2021." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
