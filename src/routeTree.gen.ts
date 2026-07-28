@@ -13,8 +13,8 @@ import { Route as StoryRouteImport } from './routes/story'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as CustomRouteImport } from './routes/custom'
 import { Route as ContactRouteImport } from './routes/contact'
-import { Route as CatalogueRouteImport } from './routes/catalogue'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CatalogueIndexRouteImport } from './routes/catalogue.index'
 import { Route as CatalogueSlugRouteImport } from './routes/catalogue.$slug'
 
 const StoryRoute = StoryRouteImport.update({
@@ -37,87 +37,88 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CatalogueRoute = CatalogueRouteImport.update({
-  id: '/catalogue',
-  path: '/catalogue',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CatalogueIndexRoute = CatalogueIndexRouteImport.update({
+  id: '/catalogue/',
+  path: '/catalogue/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CatalogueSlugRoute = CatalogueSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => CatalogueRoute,
+  id: '/catalogue/$slug',
+  path: '/catalogue/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/catalogue': typeof CatalogueRouteWithChildren
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
   '/how-it-works': typeof HowItWorksRoute
   '/story': typeof StoryRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
+  '/catalogue/': typeof CatalogueIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/catalogue': typeof CatalogueRouteWithChildren
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
   '/how-it-works': typeof HowItWorksRoute
   '/story': typeof StoryRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
+  '/catalogue': typeof CatalogueIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/catalogue': typeof CatalogueRouteWithChildren
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
   '/how-it-works': typeof HowItWorksRoute
   '/story': typeof StoryRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
+  '/catalogue/': typeof CatalogueIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/catalogue'
     | '/contact'
     | '/custom'
     | '/how-it-works'
     | '/story'
     | '/catalogue/$slug'
+    | '/catalogue/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/catalogue'
     | '/contact'
     | '/custom'
     | '/how-it-works'
     | '/story'
     | '/catalogue/$slug'
+    | '/catalogue'
   id:
     | '__root__'
     | '/'
-    | '/catalogue'
     | '/contact'
     | '/custom'
     | '/how-it-works'
     | '/story'
     | '/catalogue/$slug'
+    | '/catalogue/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CatalogueRoute: typeof CatalogueRouteWithChildren
   ContactRoute: typeof ContactRoute
   CustomRoute: typeof CustomRoute
   HowItWorksRoute: typeof HowItWorksRoute
   StoryRoute: typeof StoryRoute
+  CatalogueSlugRoute: typeof CatalogueSlugRoute
+  CatalogueIndexRoute: typeof CatalogueIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,13 +151,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/catalogue': {
-      id: '/catalogue'
-      path: '/catalogue'
-      fullPath: '/catalogue'
-      preLoaderRoute: typeof CatalogueRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -164,46 +158,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/catalogue/': {
+      id: '/catalogue/'
+      path: '/catalogue'
+      fullPath: '/catalogue/'
+      preLoaderRoute: typeof CatalogueIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/catalogue/$slug': {
       id: '/catalogue/$slug'
-      path: '/$slug'
+      path: '/catalogue/$slug'
       fullPath: '/catalogue/$slug'
       preLoaderRoute: typeof CatalogueSlugRouteImport
-      parentRoute: typeof CatalogueRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface CatalogueRouteChildren {
-  CatalogueSlugRoute: typeof CatalogueSlugRoute
-}
-
-const CatalogueRouteChildren: CatalogueRouteChildren = {
-  CatalogueSlugRoute: CatalogueSlugRoute,
-}
-
-const CatalogueRouteWithChildren = CatalogueRoute._addFileChildren(
-  CatalogueRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CatalogueRoute: CatalogueRouteWithChildren,
   ContactRoute: ContactRoute,
   CustomRoute: CustomRoute,
   HowItWorksRoute: HowItWorksRoute,
   StoryRoute: StoryRoute,
+  CatalogueSlugRoute: CatalogueSlugRoute,
+  CatalogueIndexRoute: CatalogueIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

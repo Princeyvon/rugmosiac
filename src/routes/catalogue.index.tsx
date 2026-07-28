@@ -17,7 +17,7 @@ const catalogueQO = (categorySlug?: string) =>
 
 type Search = { category?: string };
 
-export const Route = createFileRoute("/catalogue")({
+export const Route = createFileRoute("/catalogue/")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     category: typeof s.category === "string" ? s.category : undefined,
   }),
