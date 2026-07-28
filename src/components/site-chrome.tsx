@@ -2,8 +2,11 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, Heart, User } from "lucide-react";
 import { listProducts, type Product } from "@/lib/catalogue.functions";
+import { CURRENCIES, useCurrency, type Currency } from "@/lib/currency";
 
-export const WHATSAPP_URL = "https://wa.me/250780000000";
+export const WHATSAPP_NUMBER = "250796664868";
+export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+
 
 export function WhatsAppIcon({ className }: { className?: string }) {
   return (
