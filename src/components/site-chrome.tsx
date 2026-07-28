@@ -182,7 +182,7 @@ export function Nav() {
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === "/";
-  const pScroll = useScrollProgress(360);
+  const pScroll = useScrollProgress(220);
   // Off the home page the wordmark stays small and centered in the nav —
   // no huge-hero-to-nav shrink animation.
   const p = isHome ? pScroll : 1;
@@ -191,8 +191,9 @@ export function Nav() {
   // Interpolated brand transforms — driven directly by scroll for a seamless
   // "card pushes the wordmark up into the nav" feel. No CSS transition on
   // these values so they track scroll 1:1.
-  const size = 220 - (220 - 36) * p; // px — settles a touch larger in the nav
-  const top = 150 - (150 - 14) * p; // px from viewport top — more headroom at rest
+  const size = 240 - (240 - 36) * p; // px — settles a touch larger in the nav
+  const top = 220 - (220 - 14) * p; // px from viewport top — more headroom at rest
+
 
   const pillCls = `rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all duration-300 ${
     scrolled ? "bg-background/60 backdrop-blur-md" : "bg-transparent"
