@@ -210,7 +210,7 @@ function Home() {
       <main>
         {/* Hero card with background image — extra top padding so the huge Mosiac wordmark
             has generous whitespace above the card, and the card visually "pushes" it up on scroll. */}
-        <section className="pt-56 md:pt-72">
+        <section className="pt-[26rem] md:pt-[32rem]">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">

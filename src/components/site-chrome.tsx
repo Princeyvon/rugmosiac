@@ -2,8 +2,11 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, Heart, User } from "lucide-react";
 import { listProducts, type Product } from "@/lib/catalogue.functions";
+import { CURRENCIES, useCurrency, type Currency } from "@/lib/currency";
 
-export const WHATSAPP_URL = "https://wa.me/250780000000";
+export const WHATSAPP_NUMBER = "250796664868";
+export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+
 
 export function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -179,7 +182,7 @@ export function Nav() {
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === "/";
-  const pScroll = useScrollProgress(360);
+  const pScroll = useScrollProgress(220);
   // Off the home page the wordmark stays small and centered in the nav —
   // no huge-hero-to-nav shrink animation.
   const p = isHome ? pScroll : 1;
@@ -188,8 +191,9 @@ export function Nav() {
   // Interpolated brand transforms — driven directly by scroll for a seamless
   // "card pushes the wordmark up into the nav" feel. No CSS transition on
   // these values so they track scroll 1:1.
-  const size = 220 - (220 - 36) * p; // px — settles a touch larger in the nav
-  const top = 150 - (150 - 14) * p; // px from viewport top — more headroom at rest
+  const size = 240 - (240 - 36) * p; // px — settles a touch larger in the nav
+  const top = 220 - (220 - 14) * p; // px from viewport top — more headroom at rest
+
 
   const pillCls = `rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all duration-300 ${
     scrolled ? "bg-background/60 backdrop-blur-md" : "bg-transparent"
@@ -346,9 +350,8 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
           <span>Shop All</span>
           <ShoppingBag className="h-4 w-4" />
         </Link>
-        <button className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm">
-          RWF <ChevronDown className="h-4 w-4" />
-        </button>
+        <CurrencySelect className="rounded-full border border-border px-4 py-3 text-sm bg-transparent" />
+
         <button aria-label="Account" className="grid h-11 w-11 place-items-center rounded-full border border-border">
           <User className="h-5 w-5" />
         </button>
@@ -451,7 +454,7 @@ export function Footer() {
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               We dream up rugs that bring otherworldly comfort to the home. Hand-tufted in Kigali since 2021.
             </p>
-            <p className="mt-6 text-xs text-muted-foreground">© 2025 Mosiac</p>
+            <p className="mt-6 text-xs text-muted-foreground">© 2026 Mosiac</p>
           </div>
 
           {/* About */}
@@ -500,12 +503,9 @@ export function Footer() {
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <label className="flex items-center gap-2 text-xs">
                 <span className="eyebrow text-muted-foreground">Currency</span>
-                <select className="border border-border bg-card px-2 py-1.5 text-xs" defaultValue="USD">
-                  <option>USD</option>
-                  <option>RWF</option>
-                  <option>EUR</option>
-                </select>
+                <CurrencySelect className="border border-border bg-card px-2 py-1.5 text-xs" />
               </label>
+
               <div className="flex flex-wrap items-center gap-1.5">
                 <PaymentBadge label="Visa" />
                 <PaymentBadge label="Amex" />
@@ -519,8 +519,9 @@ export function Footer() {
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row">
           <span>Kigali, Rwanda · Made to order</span>
           <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 transition-opacity hover:opacity-60">
-            <WhatsAppIcon className="h-3.5 w-3.5" /> +250 780 000 000
+            <WhatsAppIcon className="h-3.5 w-3.5" /> +250 796 664 868
           </a>
+
         </div>
       </div>
     </footer>
@@ -541,11 +542,31 @@ export function FloatingWhatsApp() {
   );
 }
 
+/** @deprecated Prefer useCurrency().format for live-currency prices. */
 export function formatPrice({ rwf, usd }: { rwf?: number | null; usd?: number | null }) {
-  if (rwf) return `${rwf.toLocaleString()} RWF`;
   if (usd) return `$${Number(usd).toLocaleString()}`;
+  if (rwf) return `${rwf.toLocaleString()} RWF`;
   return "Price on request";
 }
+
+function CurrencySelect({ className = "" }: { className?: string }) {
+  const { currency, setCurrency } = useCurrency();
+  return (
+    <select
+      aria-label="Currency"
+      value={currency}
+      onChange={(e) => setCurrency(e.target.value as Currency)}
+      className={className}
+    >
+      {CURRENCIES.map((c) => (
+        <option key={c} value={c}>
+          {c}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 
 const bundledAssets = import.meta.glob("/src/assets/*.{jpg,png,webp,jpeg}", {
   eager: true,
