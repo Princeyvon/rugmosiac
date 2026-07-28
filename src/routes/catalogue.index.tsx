@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { Nav, Footer, FloatingWhatsApp, formatPrice, resolveImage } from "@/components/site-chrome";
+import { Nav, Footer, FloatingWhatsApp, resolveImage } from "@/components/site-chrome";
+import { useCurrency } from "@/lib/currency";
+
 import { listCategories, listProducts } from "@/lib/catalogue.functions";
 
 const catalogueQO = (categorySlug?: string) =>
@@ -38,6 +40,8 @@ export const Route = createFileRoute("/catalogue/")({
 function CataloguePage() {
   const { category } = Route.useSearch();
   const { data } = useSuspenseQuery(catalogueQO(category));
+  const { format } = useCurrency();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
@@ -86,7 +90,8 @@ function CataloguePage() {
                     <div className="eyebrow text-muted-foreground">{p.category?.name ?? "Custom"}</div>
                     <h3 className="mt-1.5 font-serif text-2xl">{p.name}</h3>
                     <p className="mt-1 text-sm text-muted-foreground italic">
-                      {formatPrice({ rwf: p.base_price_rwf, usd: p.base_price_usd })}
+                      {format({ rwf: p.base_price_rwf, usd: p.base_price_usd })}
+
                     </p>
                   </div>
                   <span className="mt-2 text-sm transition-transform group-hover:translate-x-1">View →</span>

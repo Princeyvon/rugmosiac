@@ -6,12 +6,12 @@ import {
   Nav,
   Footer,
   FloatingWhatsApp,
-  WhatsAppIcon,
   WHATSAPP_URL,
-  formatPrice,
   resolveImage,
 } from "@/components/site-chrome";
+import { useCurrency } from "@/lib/currency";
 import { getProduct } from "@/lib/catalogue.functions";
+
 
 const productQO = (slug: string) =>
   queryOptions({
@@ -62,7 +62,9 @@ type Tab = (typeof TABS)[number];
 function ProductPage() {
   const { slug } = Route.useParams();
   const { data: p } = useSuspenseQuery(productQO(slug));
+  const { format, currency } = useCurrency();
   if (!p) return null;
+
 
   const sizes = useMemo(
     () => (p.sizes ?? []).slice().sort((a, b) => (a as any).sort_order - (b as any).sort_order),
@@ -83,13 +85,11 @@ function ProductPage() {
 
   const chosen = sizes.find((s) => s.id === selectedSize);
   const priceLabel = chosen
-    ? formatPrice({ rwf: chosen.price_rwf, usd: chosen.price_usd })
-    : formatPrice({ rwf: p.base_price_rwf, usd: p.base_price_usd });
-  const shortPrice = chosen?.price_usd
-    ? `$${Math.round(Number(chosen.price_usd))}`
-    : p.base_price_usd
-      ? `$${Math.round(Number(p.base_price_usd))}`
-      : priceLabel;
+    ? format({ rwf: chosen.price_rwf, usd: chosen.price_usd })
+    : format({ rwf: p.base_price_rwf, usd: p.base_price_usd });
+  const shortPrice = priceLabel;
+  void currency;
+
 
   const waMsg = encodeURIComponent(
     `Hi Mosiac — I'd like to order "${p.name}"${chosen ? ` (${chosen.label})` : ""} in ${selectedColor}, qty ${qty}.`,
