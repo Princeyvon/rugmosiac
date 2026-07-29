@@ -1,17 +1,16 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery, queryOptions } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Minus, Plus, Ruler, Heart, Truck, RotateCcw, ShieldCheck } from "lucide-react";
+import { Minus, Plus, Ruler, Heart, Truck, RotateCcw, ShieldCheck, Droplet, Scissors, Sparkles, Wind } from "lucide-react";
 import {
   Nav,
   Footer,
   FloatingWhatsApp,
-  WHATSAPP_URL,
   resolveImage,
 } from "@/components/site-chrome";
 import { useCurrency } from "@/lib/currency";
-import { getProduct } from "@/lib/catalogue.functions";
-
+import { useCart, useWishlist } from "@/lib/store";
+import { getProduct, listRelated, type Product } from "@/lib/catalogue.functions";
 
 const productQO = (slug: string) =>
   queryOptions({
@@ -19,10 +18,17 @@ const productQO = (slug: string) =>
     queryFn: () => getProduct({ data: { slug } }),
   });
 
+const relatedQO = (slug: string) =>
+  queryOptions({
+    queryKey: ["related", slug],
+    queryFn: () => listRelated({ data: { slug } }),
+  });
+
 export const Route = createFileRoute("/catalogue/$slug")({
   loader: async ({ context, params }) => {
     const p = await context.queryClient.ensureQueryData(productQO(params.slug));
     if (!p) throw notFound();
+    context.queryClient.prefetchQuery(relatedQO(params.slug));
     return p;
   },
   head: ({ loaderData }) => ({
@@ -59,21 +65,34 @@ const COLOR_SWATCHES: Array<{ name: string; gradient: string }> = [
 const TABS = ["Description", "Find your size", "Care instructions", "Shipping"] as const;
 type Tab = (typeof TABS)[number];
 
+type SizeRow = {
+  id: string;
+  label: string;
+  width_cm?: number | null;
+  height_cm?: number | null;
+  weight_kg?: number | null;
+  price_rwf?: number | null;
+  price_usd?: number | null;
+};
+
 function ProductPage() {
   const { slug } = Route.useParams();
   const { data: p } = useSuspenseQuery(productQO(slug));
+  const { data: related } = useQuery(relatedQO(slug));
   const { format, currency } = useCurrency();
+  const cart = useCart();
+  const wishlist = useWishlist();
   if (!p) return null;
 
-
-  const sizes = useMemo(
-    () => (p.sizes ?? []).slice().sort((a, b) => (a as any).sort_order - (b as any).sort_order),
+  const sizes = useMemo<SizeRow[]>(
+    () => ((p.sizes ?? []) as SizeRow[]).slice().sort((a, b) => ((a as any).sort_order ?? 0) - ((b as any).sort_order ?? 0)),
     [p.sizes],
   );
   const [selectedSize, setSelectedSize] = useState(sizes[0]?.id ?? "");
   const [selectedColor, setSelectedColor] = useState(COLOR_SWATCHES[0].name);
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<Tab>("Description");
+  const [units, setUnits] = useState<"imperial" | "metric">("imperial");
 
   const images = useMemo(
     () => (p.images ?? []).slice().sort((a, b) => (a as any).sort_order - (b as any).sort_order),
@@ -82,18 +101,34 @@ function ProductPage() {
   const gallery = (images.length > 0 ? images.map((i) => i.url) : p.main_image_url ? [p.main_image_url] : [])
     .map((u) => resolveImage(u))
     .filter((u): u is string => Boolean(u));
+  const mainImage = gallery[0];
 
   const chosen = sizes.find((s) => s.id === selectedSize);
   const priceLabel = chosen
     ? format({ rwf: chosen.price_rwf, usd: chosen.price_usd })
     : format({ rwf: p.base_price_rwf, usd: p.base_price_usd });
-  const shortPrice = priceLabel;
   void currency;
 
+  const isWished = wishlist.has(p.id);
 
-  const waMsg = encodeURIComponent(
-    `Hi Mosiac — I'd like to order "${p.name}"${chosen ? ` (${chosen.label})` : ""} in ${selectedColor}, qty ${qty}.`,
-  );
+  const handleAddToCart = () => {
+    cart.add({
+      productId: p.id,
+      slug: p.slug,
+      name: p.name,
+      image: mainImage,
+      sizeId: chosen?.id,
+      sizeLabel: chosen?.label,
+      color: selectedColor,
+      qty,
+      unitPriceUsd: chosen?.price_usd ?? p.base_price_usd,
+      unitPriceRwf: chosen?.price_rwf ?? p.base_price_rwf,
+    });
+  };
+
+  const handleWishlistToggle = () => {
+    wishlist.toggle({ productId: p.id, slug: p.slug, name: p.name, image: mainImage });
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -108,16 +143,16 @@ function ProductPage() {
           {/* Left column — sticky info */}
           <aside className="lg:sticky lg:top-28 self-start">
             <div className="eyebrow text-muted-foreground">{p.category?.name ?? "Rug"}</div>
-            <h1 className="mt-3 font-display text-4xl font-medium tracking-tight md:text-5xl">{p.name}</h1>
-            <div className="mt-4 font-display text-2xl">{priceLabel}</div>
+            <h1 className="mt-3 font-display text-2xl font-medium tracking-tight md:text-3xl">{p.name}</h1>
+            <div className="mt-3 font-display text-xl">{priceLabel}</div>
             {p.short_description && (
-              <p className="mt-6 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-5 max-w-xs text-sm leading-relaxed text-muted-foreground">
                 {p.short_description}
               </p>
             )}
           </aside>
 
-          {/* Center — stacked image cards on soft cream backgrounds */}
+          {/* Center — stacked image cards */}
           <div className="flex flex-col gap-6">
             {gallery.length === 0 && (
               <div className="aspect-[4/5] rounded-3xl bg-muted" />
@@ -144,9 +179,12 @@ function ProductPage() {
             <div>
               <div className="flex items-center gap-3">
                 <span className="font-display text-sm font-medium">Size</span>
-                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <button
+                  onClick={() => setTab("Find your size")}
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
                   <Ruler className="h-3.5 w-3.5" /> Sizing Guide
-                </span>
+                </button>
               </div>
               <div className="mt-3 grid grid-cols-4 gap-2">
                 {(sizes.length > 0
@@ -215,24 +253,26 @@ function ProductPage() {
               </div>
             </div>
 
-            {/* Add to cart (opens WhatsApp for now) */}
-            <a
-              href={`${WHATSAPP_URL}?text=${waMsg}`}
-              target="_blank"
-              rel="noreferrer"
+            {/* Add to cart */}
+            <button
+              onClick={handleAddToCart}
               className="mt-6 flex h-14 w-full items-center justify-between rounded-full bg-[#9c8a76] px-6 text-sm font-medium text-background transition-transform hover:scale-[1.01]"
             >
               <span>Add to cart</span>
-              <span className="font-display text-base">{shortPrice}</span>
-            </a>
+              <span className="font-display text-base">{priceLabel}</span>
+            </button>
 
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
-              Only a few remaining
+              Made to order · {p.production_time ?? "3–4 weeks"}
             </div>
 
-            <button className="mt-6 inline-flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
-              <Heart className="h-4 w-4" /> Save to wishlist
+            <button
+              onClick={handleWishlistToggle}
+              className="mt-6 inline-flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Heart className={`h-4 w-4 ${isWished ? "fill-current text-accent" : ""}`} />
+              {isWished ? "Saved to wishlist" : "Save to wishlist"}
             </button>
 
             <ul className="mt-8 space-y-3 border-t border-border pt-6 text-xs text-muted-foreground">
@@ -263,56 +303,232 @@ function ProductPage() {
             })}
           </div>
 
-          <div className="mx-auto mt-10 max-w-3xl text-center">
+          <div className="mx-auto mt-10">
             {tab === "Description" && (
-              <p className="font-display text-xl leading-relaxed md:text-2xl">
+              <p className="mx-auto max-w-3xl text-center font-display text-xl leading-relaxed md:text-2xl">
                 {p.description ?? p.short_description ?? "A hand-tufted piece made to order in Kigali — designed to live with you for decades."}
               </p>
             )}
+
             {tab === "Find your size" && (
-              <div className="text-left text-sm text-muted-foreground">
-                <p className="text-center font-display text-xl text-foreground">Find your fit.</p>
-                <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-4">
-                  {(sizes.length > 0 ? sizes : [
-                    { id: "s", label: "S", width_cm: 120, height_cm: 180 },
-                    { id: "m", label: "M", width_cm: 160, height_cm: 230 },
-                    { id: "l", label: "L", width_cm: 200, height_cm: 290 },
-                    { id: "xl", label: "XL", width_cm: 240, height_cm: 340 },
-                  ]).map((s: any) => (
-                    <div key={s.id} className="rounded-2xl bg-[#f0eadf] p-4 text-center">
-                      <div className="font-display text-lg text-foreground">{s.label}</div>
-                      <div className="mt-1 text-xs">{s.width_cm ?? "—"} × {s.height_cm ?? "—"} cm</div>
+              <SizingGuide
+                sizes={sizes}
+                selectedSize={selectedSize}
+                setSelectedSize={setSelectedSize}
+                units={units}
+                setUnits={setUnits}
+                material={p.material ?? "New Zealand Wool"}
+              />
+            )}
+
+            {tab === "Care instructions" && (
+              <div className="mx-auto max-w-5xl">
+                <h3 className="text-center font-display text-xl md:text-2xl">
+                  {p.material ?? "New Zealand Wool"} is a naturally self-cleaning fibre.
+                </h3>
+                <div className="mt-10 grid gap-8 sm:grid-cols-2 md:grid-cols-4">
+                  {[
+                    { Icon: Droplet, text: "Blot spills immediately with a damp cloth or paper towel and clean water — never rub." },
+                    { Icon: Wind, text: "Vacuum on a high-pile setting for regular cleaning and maintenance." },
+                    { Icon: Sparkles, text: "For a deep clean, consult a local rug-cleaning professional." },
+                    { Icon: Scissors, text: "Trim any loose threads with scissors — never pull them out." },
+                  ].map(({ Icon, text }, i) => (
+                    <div key={i} className="flex flex-col items-center text-center">
+                      <Icon className="h-8 w-8 text-muted-foreground" strokeWidth={1.25} />
+                      <p className="mt-4 max-w-[220px] text-sm leading-relaxed text-muted-foreground">{text}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            {tab === "Care instructions" && (
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Vacuum weekly on low suction without a beater bar. Blot spills immediately with a clean, dry cloth — never rub. Rotate 180° every six months for even wear. For deep cleans, book a professional rug cleaner familiar with hand-tufted wool.
-              </p>
-            )}
+
             {tab === "Shipping" && (
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Every Mosiac rug is hand-tufted to order in Kigali. Production takes {p.production_time ?? "4–6 weeks"}. We ship worldwide via DHL; you'll receive a tracking link the day it leaves the studio.
+              <p className="mx-auto max-w-3xl text-center text-sm leading-relaxed text-muted-foreground">
+                Every Mosiac rug is hand-tufted to order in Kigali. Production takes {p.production_time ?? "3–4 weeks"}. We ship worldwide via DHL; you'll receive a tracking link the day it leaves the studio.
               </p>
             )}
           </div>
 
-          {/* Lifestyle image pair */}
-          {gallery.length > 0 && (
-            <div className="mt-16 grid gap-6 md:grid-cols-2">
-              {gallery.slice(0, 2).map((src, i) => (
-                <div key={`life-${i}`} className="aspect-[4/3] overflow-hidden rounded-3xl bg-muted">
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Related Products */}
+          <section className="mt-24">
+            <h2 className="text-center text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">Related Products</h2>
+            {related && related.length > 0 ? (
+              <div className="mt-8 grid grid-cols-2 gap-6 md:grid-cols-4">
+                {related.map((r: Product) => {
+                  const img = resolveImage(r.main_image_url);
+                  return (
+                    <Link
+                      key={r.id}
+                      to="/catalogue/$slug"
+                      params={{ slug: r.slug }}
+                      className="group block"
+                    >
+                      <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-[#f0eadf]">
+                        {img && <img src={img} alt={r.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
+                      </div>
+                      <div className="mt-3">
+                        <div className="font-display text-sm font-medium">{r.name}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">{format({ rwf: r.base_price_rwf, usd: r.base_price_usd })}</div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-6 text-center text-sm text-muted-foreground">More rugs coming soon.</p>
+            )}
+          </section>
         </section>
       </main>
       <Footer />
       <FloatingWhatsApp />
     </div>
   );
+}
+
+// ---------- Sizing guide ----------
+
+function SizingGuide({
+  sizes, selectedSize, setSelectedSize, units, setUnits, material,
+}: {
+  sizes: SizeRow[];
+  selectedSize: string;
+  setSelectedSize: (id: string) => void;
+  units: "imperial" | "metric";
+  setUnits: (u: "imperial" | "metric") => void;
+  material: string;
+}) {
+  const fallbackSizes: SizeRow[] = [
+    { id: "s", label: "S", width_cm: 90, height_cm: 150, weight_kg: 3.6 },
+    { id: "m", label: "M", width_cm: 160, height_cm: 230, weight_kg: 9.9 },
+    { id: "l", label: "L", width_cm: 200, height_cm: 300, weight_kg: 16.2 },
+    { id: "xl", label: "XL", width_cm: 240, height_cm: 340, weight_kg: 22 },
+  ];
+  const list = sizes.length > 0 ? sizes : fallbackSizes;
+  const active = list.find((s) => s.id === selectedSize) ?? list[0];
+  const wCm = active?.width_cm ?? 160;
+  const hCm = active?.height_cm ?? 230;
+  const kg = active?.weight_kg ?? 0;
+
+  const cmToIn = (v: number) => Math.round(v / 2.54);
+  const kgToLb = (v: number) => Math.round(v * 2.2046 * 10) / 10;
+
+  const wLabel = units === "metric" ? `${wCm} cm` : `${cmToIn(wCm)} in`;
+  const hLabel = units === "metric" ? `${hCm} cm` : `${cmToIn(hCm)} in`;
+  const weightLabel = units === "metric" ? `${kg.toFixed(2)} kg` : `${kgToLb(kg)} lb`;
+
+  // Scale rug to fit within a viewbox while preserving aspect ratio
+  const maxW = 900;
+  const maxH = 420;
+  const ratio = wCm / hCm;
+  const boxRatio = maxW / maxH;
+  const rectW = ratio > boxRatio ? maxW : maxH * ratio;
+  const rectH = ratio > boxRatio ? maxW / ratio : maxH;
+  const cx = 1080 / 2;
+  const cy = 560 / 2 + 20;
+  const x = cx - rectW / 2;
+  const y = cy - rectH / 2;
+
+  return (
+    <div className="mx-auto max-w-6xl rounded-3xl bg-[#f4ede2] p-6 md:p-10">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="inline-flex rounded-2xl bg-[#e9dfcc] p-1">
+          {(["imperial", "metric"] as const).map((u) => (
+            <button
+              key={u}
+              onClick={() => setUnits(u)}
+              className={`rounded-xl px-4 py-2 text-sm font-medium capitalize transition-all ${
+                units === u ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              {u}
+            </button>
+          ))}
+        </div>
+        <div className="inline-flex gap-2">
+          {list.map((s) => {
+            const isActive = s.id === active?.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setSelectedSize(s.id)}
+                className={`grid h-12 w-12 place-items-center rounded-xl text-sm font-medium transition-all ${
+                  isActive ? "bg-background shadow-sm" : "bg-[#e9dfcc] text-muted-foreground"
+                }`}
+              >
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <svg viewBox="0 0 1080 620" className="w-full h-auto">
+          {/* Top dimension label */}
+          <text x={cx} y={y - 26} textAnchor="middle" className="fill-muted-foreground" style={{ fontSize: 22 }}>
+            {wLabel}
+          </text>
+          <line x1={x} x2={x + rectW} y1={y - 12} y2={y - 12} stroke="currentColor" strokeOpacity={0.25} />
+          {/* Left dimension label */}
+          <text x={x - 28} y={cy + 6} textAnchor="end" className="fill-muted-foreground" style={{ fontSize: 22 }}>
+            {hLabel}
+          </text>
+          <line x1={x - 12} x2={x - 12} y1={y} y2={y + rectH} stroke="currentColor" strokeOpacity={0.25} />
+
+          {/* Rug outline sketch — cream fill with subtle irregular notches at the corners */}
+          <path
+            d={rugPath(x, y, rectW, rectH)}
+            fill="#efe6d0"
+            stroke="#c9bda2"
+            strokeWidth={1.2}
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-3">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Weight</div>
+          <div className="mt-1 font-display text-xl">{weightLabel}</div>
+        </div>
+        <div className="col-span-2">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Material</div>
+          <div className="mt-1 font-display text-xl">{material}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Sketchy rug outline path — rectangle with small irregular "hand-drawn" notches
+function rugPath(x: number, y: number, w: number, h: number): string {
+  const n = 10; // notch inset
+  return [
+    `M ${x + 20} ${y}`,
+    `L ${x + w * 0.35} ${y}`,
+    `L ${x + w * 0.4} ${y + n * 1.4}`,
+    `L ${x + w * 0.45} ${y}`,
+    `L ${x + w * 0.7} ${y}`,
+    `L ${x + w * 0.74} ${y + n * 1.6}`,
+    `L ${x + w * 0.8} ${y}`,
+    `L ${x + w - 20} ${y}`,
+    `L ${x + w} ${y + 20}`,
+    `L ${x + w - n * 1.4} ${y + h * 0.4}`,
+    `L ${x + w} ${y + h * 0.45}`,
+    `L ${x + w} ${y + h - 20}`,
+    `L ${x + w - 20} ${y + h}`,
+    `L ${x + w * 0.75} ${y + h}`,
+    `L ${x + w * 0.7} ${y + h - n * 1.4}`,
+    `L ${x + w * 0.65} ${y + h}`,
+    `L ${x + w * 0.4} ${y + h}`,
+    `L ${x + w * 0.36} ${y + h - n * 1.4}`,
+    `L ${x + w * 0.3} ${y + h}`,
+    `L ${x + 20} ${y + h}`,
+    `L ${x} ${y + h - 20}`,
+    `L ${x + n * 1.4} ${y + h * 0.6}`,
+    `L ${x} ${y + h * 0.55}`,
+    `L ${x} ${y + 20}`,
+    `Z`,
+  ].join(" ");
 }
