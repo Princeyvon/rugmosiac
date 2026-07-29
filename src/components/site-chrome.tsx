@@ -260,13 +260,8 @@ export function Nav() {
             >
               <Search className="h-5 w-5" />
             </button>
-            <button
-              aria-label="Cart"
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all ${scrolled ? "bg-background/60 backdrop-blur-md" : ""}`}
-            >
-              <ShoppingBag className="h-5 w-5" />
-              <span className="hidden sm:inline">Cart (0)</span>
-            </button>
+            <WishlistNavButton scrolled={scrolled} />
+            <CartNavButton scrolled={scrolled} />
           </div>
         </div>
       </header>
@@ -294,6 +289,9 @@ export function Nav() {
       {mobileOpen && (
         <MobileMenu onClose={() => setMobileOpen(false)} />
       )}
+
+      <CartDrawer />
+      <WishlistDrawer />
     </>
   );
 }
@@ -475,7 +473,7 @@ export function Footer() {
               <li><Link to="/contact" className="transition-opacity hover:opacity-60">Contact</Link></li>
               <li><Link to="/custom" className="transition-opacity hover:opacity-60">Custom</Link></li>
               <li><Link to="/custom" className="transition-opacity hover:opacity-60">Samples</Link></li>
-              <li><Link to="/how-it-works" className="transition-opacity hover:opacity-60">FAQ</Link></li>
+              <li><Link to="/faq" className="transition-opacity hover:opacity-60">FAQ</Link></li>
             </ul>
           </FooterAccordion>
 
@@ -485,23 +483,9 @@ export function Footer() {
             <p className="mt-3 text-sm text-muted-foreground">
               Join the list for early access to drops and a 10% welcome discount on your first order.
             </p>
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="mt-4 flex items-center gap-0 border border-border bg-card focus-within:border-foreground transition-colors"
-            >
-              <input
-                type="email"
-                required
-                placeholder="Email address"
-                className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground"
-              />
-              <button
-                type="submit"
-                className="h-full whitespace-nowrap bg-foreground px-5 py-3 text-xs font-semibold uppercase tracking-wider text-background transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                Join
-              </button>
-            </form>
+            <NewsletterForm />
+
+
 
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <label className="flex items-center gap-2 text-xs">
