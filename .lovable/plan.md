@@ -1,49 +1,42 @@
-# Rug Mosiac — Full Platform Build Plan
+# Build plan
 
-This is a large scope (11 customer pages + full admin + payments + auth + storage). It's not a one-shot build — I'll ship it in phases so you can review and course-correct along the way. Note: we're on **TanStack Start** (not Next.js) with **Lovable Cloud** (Postgres, Auth, Storage, server functions) — same capabilities as your spec, just the Lovable-native stack. Cloudinary/Resend/Africa's Talking can be swapped in later if you want, but defaults below use built-ins.
+## 1. Newsletter → 10% off coupon email
+- Add `promo_coupons` table (code, discount_percent, active, expires_at) and `newsletter_subscribers.coupon_code` column. Seed one active code `WELCOME10` (10%, all rugs).
+- Scaffold Lovable app-email templates. Create `welcome-coupon.tsx` React Email template (dark editorial style matching brand): headline "Welcome to Mosiac — here's 10% off", the coupon code in a big pill, expiry, CTA to catalogue, note it applies to all rugs.
+- Wire `subscribeNewsletter` server function to: insert subscriber, look up an active coupon, call `sendTemplateEmail("welcome-coupon", email, { templateData: { code, expires } })`. Handle already-subscribed (resend nothing) and suppressed recipient gracefully.
+- Prerequisite: needs an email domain. If none configured, surface the email-setup dialog to the user before wiring send.
+- Cart/checkout coupon redemption itself is out of scope for this pass (no checkout exists yet); the code is delivered and stored for later use.
 
-## Design system (applies to every page)
-- Tokens already in place: bg `#171513`, cream `#f2ede6`, gold accent `#c97d3a`, Playfair + DM Sans. Keep.
-- Add: product card, size selector, quantity stepper, filter chip, status badge, step tracker, admin table components — all as reusable pieces.
+## 2. Product page polish
+- Reduce product name from `text-5xl` to `text-3xl md:text-4xl` so it doesn't overlap gallery.
+- Rewrite "Care instructions" tab to the New Zealand wool structure from the reference (4-item icon grid: blot spills, vacuum high pile, professional cleaning, trim loose threads) with lucide icons and centered heading.
+- Add "Related Products" section under the tabs: fetch up to 4 other published products in the same category, render as small cards linking to `/catalogue/$slug`.
 
-## Phase 1 — Foundation (backend + storefront browsing)
-1. Enable Lovable Cloud.
-2. Schema (migrations, with GRANTs + RLS):
-   - `categories`, `products`, `product_sizes`, `product_images`, `colors`, `product_colors`
-   - `reviews`, `homepage_featured` (ordering table)
-   - `profiles` + `user_roles` (enum: `admin`, `customer`) + `has_role()` security-definer fn
-   - `custom_requests`
-   - `orders`, `order_items`, `order_status_events`
-   - `addresses`, `wishlist`, `newsletter_subscribers`, `contact_messages`, `promo_codes`
-3. Storage bucket for product images (public read).
-4. Routes: `/catalogue`, `/catalogue/$slug`, `/how-it-works`, `/story`, `/contact`, `/custom` — all wired to real data via server functions + TanStack Query.
-5. Home page: replace hard-coded rugs/categories/reviews with DB data; keep current layout.
-6. SEO `head()` per route with unique titles/descriptions/OG.
+## 3. Sizing guide (Find your size tab)
+- Rebuild the tab as an interactive diagram:
+  - Imperial / Metric toggle (pill switch, top-left).
+  - S / M / L / XL selector (top-right) driven by the product's own `product_sizes` rows.
+  - Center: SVG rug outline that scales proportionally to the selected size's width/height, with dimension labels (e.g. "213 cm" / "84 in") on top and left edges. Outline uses soft cream fill (`#f0eadf`) with subtle notch marks matching the reference sketch.
+  - Bottom-left: Weight (converted lb/kg) and Material.
+- Add `weight_kg` numeric column to `product_sizes` and backfill sensible values for existing seeded rugs so weights render.
 
-## Phase 2 — Accounts, cart, checkout (payments-lite)
-1. Auth: email/password + Google (Lovable Cloud managed). `/auth`, `_authenticated/` gate.
-2. `/account` dashboard: orders list, order detail with status tracker, addresses, wishlist, profile.
-3. Cart: client state (Zustand) + persisted for logged-in users.
-4. `/cart`, `/checkout` (contact → delivery → payment → review), `/order/$id` confirmation.
-5. Payments: **Stripe** via Lovable's built-in seamless integration (cards). MTN MoMo, Airtel Money, and bank transfer added as manual/pending methods that create an order with `payment_status = awaiting_confirmation` and notify admin — real MoMo/Airtel API integration is a separate later phase (their APIs need merchant onboarding).
-6. Transactional emails via Lovable Emails: order confirmation, status updates, custom-quote replies. (Requires you to set up a sender domain — I'll prompt when we get there.)
+## 4. Wishlist + Cart (local, no WhatsApp)
+- Create `src/lib/store.tsx`: `CartProvider` and `WishlistProvider` backed by localStorage + React context. Cart items: `{ productId, slug, name, image, sizeId, sizeLabel, color, qty, unitPriceUsd, unitPriceRwf }`. Wishlist: `{ productId, slug, name, image }`.
+- Mount both providers in `__root.tsx` alongside `CurrencyProvider`.
+- Nav cart icon shows live count from `useCart()`. Add heart icon next to cart showing wishlist count; click opens a slide-over drawer (shadcn `Sheet`) listing items with remove.
+- Cart drawer (shadcn `Sheet`) opens from nav cart click: line items, qty +/-, remove, subtotal in current currency, "Checkout coming soon — message on WhatsApp" fallback link.
+- Product page:
+  - "Add to cart" no longer opens WhatsApp; it calls `cart.add(...)` and opens the cart drawer.
+  - "Save to wishlist" toggles `wishlist.toggle(...)` and turns the heart filled when active.
 
-## Phase 3 — Admin portal (`/_authenticated/admin`, gated by `admin` role)
-1. Dashboard home: stats, quick actions, recent orders.
-2. Products: list, create/edit form with drag-and-drop image upload + reorder, sizes/prices matrix, featured toggle, stock state. Bulk actions.
-3. Orders: table with filters, detail view with status stepper, internal notes, "send update" action.
-4. Custom requests: table, detail, status workflow, send-quote (email + creates a draft order).
-5. Content: reorder featured rugs, manage reviews, edit How-It-Works steps + Story rich text.
-6. Analytics: sales over time, top rugs, AOV, conversion, customer locations (charts from `orders`).
+## 5. FAQ page
+- New route `/faq` (`src/routes/faq.tsx`) with head metadata.
+- Sections: Orders & Returns, Shipping, Care, General. Use shadcn `Accordion` for questions.
+- Content adapted for Mosiac: replace `hello@mushstudios.co` → `hello@mosiac.rw`, "Mush Studios" → "Mosiac", swap India → Kigali, Rwanda in the handmade answer, keep the rest of the substance. Link FAQ from the footer.
 
-## Phase 4 — Polish
-Sitemap.xml, robots, JSON-LD product schema, per-image responsive srcset, wishlist share, Instagram feed (manual curated images since IG Graph API needs a business account), light-mode toggle w/ persisted preference, SMS OTP (Africa's Talking) if you still want it after email OTP is live.
+## Technical notes
+- Migration: add `promo_coupons`, `newsletter_subscribers.coupon_code`, `product_sizes.weight_kg`; GRANT + RLS (coupons: public SELECT only where active; inserts admin/service only).
+- Email: use `email_domain--scaffold_transactional_email_templates` then create the welcome-coupon template; `sendTemplateEmail` called inside `subscribeNewsletter` server fn.
+- All new UI uses existing design tokens; no new colors. No changes to home hero / diminishing wordmark logic.
 
-## What I need from you before I start Phase 1
-1. **Confirm the phased approach** — I'll ship Phase 1 in one go, then check in before Phase 2. OK?
-2. **Seed data**: should I generate placeholder rug photos + categories + prices to fill the DB, or will you provide real product photos and a price list? (Placeholder is fine to start — you can replace via admin later.)
-3. **Currency**: RWF, USD, or both?
-4. **Payments now or later**: OK to enable Lovable's built-in Stripe in Phase 2 (requires Pro plan)? MoMo/Airtel start as manual-confirmation until we do real API integration.
-5. **Reviews**: seed with the 3 quotes already on the page, or start empty and add via admin?
-
-Reply with answers (or "go" to accept defaults: phased, placeholder seed, RWF+USD, Stripe in P2 + manual MoMo, seed existing reviews) and I'll start Phase 1.
+Reply "go" and I'll build it, or tell me which parts to trim.
