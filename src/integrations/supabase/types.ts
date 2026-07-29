@@ -127,19 +127,25 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          coupon_code: string | null
           created_at: string
           email: string
           id: string
+          welcomed_at: string | null
         }
         Insert: {
+          coupon_code?: string | null
           created_at?: string
           email: string
           id?: string
+          welcomed_at?: string | null
         }
         Update: {
+          coupon_code?: string | null
           created_at?: string
           email?: string
           id?: string
+          welcomed_at?: string | null
         }
         Relationships: []
       }
@@ -184,6 +190,7 @@ export type Database = {
           price_usd: number | null
           product_id: string
           sort_order: number
+          weight_kg: number | null
           width_cm: number | null
         }
         Insert: {
@@ -194,6 +201,7 @@ export type Database = {
           price_usd?: number | null
           product_id: string
           sort_order?: number
+          weight_kg?: number | null
           width_cm?: number | null
         }
         Update: {
@@ -204,6 +212,7 @@ export type Database = {
           price_usd?: number | null
           product_id?: string
           sort_order?: number
+          weight_kg?: number | null
           width_cm?: number | null
         }
         Relationships: [
@@ -314,6 +323,36 @@ export type Database = {
           id?: string
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      promo_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          discount_percent: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_percent: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
         }
         Relationships: []
       }
