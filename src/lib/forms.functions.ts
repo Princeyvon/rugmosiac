@@ -70,7 +70,28 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => newsletterSchema.parse(d))
   .handler(async ({ data }) => {
     const s = getClient();
-    const { error } = await s.from("newsletter_subscribers").insert({ email: data.email });
-    if (error && !error.message.includes("duplicate")) throw new Error(error.message);
-    return { ok: true };
+    // Fetch an active coupon to gift the subscriber
+    const { data: coupon } = await s
+      .from("promo_coupons")
+      .select("code, discount_percent, expires_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const code = coupon?.code ?? "WELCOME10";
+    const discount = coupon?.discount_percent ?? 10;
+    const expires = coupon?.expires_at ?? null;
+
+    const { error } = await s.from("newsletter_subscribers").insert({
+      email: data.email,
+      coupon_code: code,
+      welcomed_at: new Date().toISOString(),
+    });
+    // Ignore duplicate email — still return the coupon
+    if (error && !error.message.toLowerCase().includes("duplicate")) {
+      throw new Error(error.message);
+    }
+
+    return { ok: true, code, discount, expires };
   });
