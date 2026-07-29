@@ -567,3 +567,237 @@ export function resolveImage(url: string | null | undefined): string | undefined
   if (url.startsWith("/src/assets/")) return bundledAssets[url];
   return url;
 }
+
+// -------- Cart / Wishlist nav buttons --------
+
+function CartNavButton({ scrolled }: { scrolled: boolean }) {
+  const { setOpen } = useCart();
+  const { cartCount } = useHydratedCounts();
+  return (
+    <button
+      aria-label="Cart"
+      onClick={() => setOpen(true)}
+      className={`relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all ${scrolled ? "bg-background/60 backdrop-blur-md" : ""}`}
+    >
+      <ShoppingBag className="h-5 w-5" />
+      <span className="hidden sm:inline">Cart ({cartCount})</span>
+      {cartCount > 0 && (
+        <span className="sm:hidden absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-foreground text-[9px] font-semibold text-background">{cartCount}</span>
+      )}
+    </button>
+  );
+}
+
+function WishlistNavButton({ scrolled }: { scrolled: boolean }) {
+  const { setOpen } = useWishlist();
+  const { wishCount } = useHydratedCounts();
+  return (
+    <button
+      aria-label="Wishlist"
+      onClick={() => setOpen(true)}
+      className={`relative p-2 rounded-full transition-all ${scrolled ? "bg-background/60 backdrop-blur-md" : ""}`}
+    >
+      <Heart className="h-5 w-5" />
+      {wishCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-foreground text-[9px] font-semibold text-background">{wishCount}</span>
+      )}
+    </button>
+  );
+}
+
+// -------- Cart drawer --------
+
+function CartDrawer() {
+  const { items, open, setOpen, remove, setQty } = useCart();
+  const { format } = useCurrency();
+  const subtotalUsd = items.reduce((s, i) => {
+    const p = i.unitPriceUsd ?? (i.unitPriceRwf ? i.unitPriceRwf / 1380 : 0);
+    return s + p * i.qty;
+  }, 0);
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
+        <SheetHeader>
+          <SheetTitle className="font-display text-2xl">Your cart</SheetTitle>
+        </SheetHeader>
+        <div className="mt-4 flex-1 overflow-y-auto">
+          {items.length === 0 ? (
+            <p className="py-16 text-center text-sm text-muted-foreground">Your cart is empty.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {items.map((i) => (
+                <li key={i.key} className="flex gap-3 py-4">
+                  {i.image && <img src={i.image} alt="" className="h-20 w-20 rounded-md object-cover bg-muted" />}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <Link to="/catalogue/$slug" params={{ slug: i.slug }} onClick={() => setOpen(false)} className="font-display text-base font-medium hover:opacity-70">{i.name}</Link>
+                        <div className="text-xs text-muted-foreground">
+                          {i.sizeLabel && <>Size {i.sizeLabel}</>}{i.sizeLabel && i.color ? " · " : ""}{i.color}
+                        </div>
+                      </div>
+                      <button onClick={() => remove(i.key)} aria-label="Remove" className="text-muted-foreground hover:text-foreground">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setQty(i.key, i.qty - 1)} aria-label="Decrease" className="grid h-7 w-7 place-items-center rounded-full border border-border"><Minus className="h-3 w-3" /></button>
+                        <span className="w-4 text-center text-sm">{i.qty}</span>
+                        <button onClick={() => setQty(i.key, i.qty + 1)} aria-label="Increase" className="grid h-7 w-7 place-items-center rounded-full border border-border"><Plus className="h-3 w-3" /></button>
+                      </div>
+                      <div className="font-display text-sm">
+                        {format({ rwf: (i.unitPriceRwf ?? 0) * i.qty, usd: (i.unitPriceUsd ?? 0) * i.qty })}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {items.length > 0 && (
+          <div className="border-t border-border pt-4">
+            <div className="flex items-center justify-between">
+              <span className="eyebrow text-muted-foreground">Subtotal</span>
+              <span className="font-display text-lg">{format({ usd: subtotalUsd })}</span>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Shipping calculated at checkout.</p>
+            <button
+              disabled
+              className="mt-4 w-full rounded-full bg-foreground py-3 text-xs font-semibold uppercase tracking-wider text-background opacity-90"
+            >
+              Checkout — coming soon
+            </button>
+            <a
+              href={`${WHATSAPP_URL}?text=${encodeURIComponent(
+                "Hi Mosiac — I'd like to place this order:\n" +
+                items.map((i) => `• ${i.name}${i.sizeLabel ? ` (${i.sizeLabel})` : ""}${i.color ? ` — ${i.color}` : ""} × ${i.qty}`).join("\n")
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <WhatsAppIcon className="h-3.5 w-3.5" /> Or complete on WhatsApp
+            </a>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// -------- Wishlist drawer --------
+
+function WishlistDrawer() {
+  const { items, open, setOpen, remove } = useWishlist();
+  const cart = useCart();
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
+        <SheetHeader>
+          <SheetTitle className="font-display text-2xl">Wishlist</SheetTitle>
+        </SheetHeader>
+        <div className="mt-4 flex-1 overflow-y-auto">
+          {items.length === 0 ? (
+            <p className="py-16 text-center text-sm text-muted-foreground">No rugs saved yet. Tap the heart on any rug to save it here.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {items.map((i) => (
+                <li key={i.productId} className="flex gap-3 py-4">
+                  {i.image && <img src={i.image} alt="" className="h-20 w-20 rounded-md object-cover bg-muted" />}
+                  <div className="flex-1 min-w-0">
+                    <Link to="/catalogue/$slug" params={{ slug: i.slug }} onClick={() => setOpen(false)} className="font-display text-base font-medium hover:opacity-70">
+                      {i.name}
+                    </Link>
+                    <div className="mt-2 flex items-center gap-3">
+                      <button
+                        onClick={() => { cart.add({ productId: i.productId, slug: i.slug, name: i.name, image: i.image }); setOpen(false); }}
+                        className="text-xs font-semibold uppercase tracking-wider underline underline-offset-4 hover:text-accent"
+                      >
+                        Add to cart
+                      </button>
+                      <button onClick={() => remove(i.productId)} className="text-xs text-muted-foreground hover:text-foreground">Remove</button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// -------- Newsletter form --------
+
+function NewsletterForm() {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState("");
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setState("loading");
+        setErr("");
+        try {
+          const res = await subscribeNewsletter({ data: { email } });
+          setCoupon({ code: res.code, discount: res.discount });
+          setState("done");
+        } catch (e: any) {
+          setErr(e?.message ?? "Could not subscribe. Try again.");
+          setState("error");
+        }
+      }}
+      className="mt-4"
+    >
+      {state !== "done" ? (
+        <>
+          <div className="flex items-center border border-border bg-card focus-within:border-foreground transition-colors">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email address"
+              className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground"
+            />
+            <button
+              type="submit"
+              disabled={state === "loading"}
+              className="h-full whitespace-nowrap bg-foreground px-5 py-3 text-xs font-semibold uppercase tracking-wider text-background transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-60"
+            >
+              {state === "loading" ? "…" : "Join"}
+            </button>
+          </div>
+          {err && <p className="mt-2 text-xs text-destructive">{err}</p>}
+        </>
+      ) : coupon ? (
+        <div className="rounded-md border border-border bg-card p-4">
+          <div className="eyebrow text-accent">Welcome to Mosiac</div>
+          <p className="mt-2 text-sm text-foreground">
+            Here's <strong>{coupon.discount}% off</strong> your first rug. We've sent this to <strong>{email}</strong> too — use the code at checkout.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(coupon.code);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
+            className="mt-3 inline-flex items-center gap-2 rounded-full border-2 border-dashed border-foreground bg-background px-4 py-2 font-mono text-sm font-semibold tracking-widest"
+          >
+            {coupon.code}
+            {copied ? <Check className="h-4 w-4 text-accent" /> : <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Tap to copy</span>}
+          </button>
+        </div>
+      ) : null}
+    </form>
+  );
+}
+
