@@ -102,3 +102,28 @@ export const listReviews = createServerFn({ method: "GET" }).handler(async () =>
   if (error) throw new Error(error.message);
   return data ?? [];
 });
+
+export const listRelated = createServerFn({ method: "GET" })
+  .inputValidator((d: { slug: string }) => d)
+  .handler(async ({ data }) => {
+    const s = getClient();
+    const { data: current } = await s.from("products").select("id, category_id").eq("slug", data.slug).maybeSingle();
+    if (!current) return [] as Product[];
+    let q = s
+      .from("products")
+      .select("id, slug, name, short_description, main_image_url, base_price_rwf, base_price_usd, stock_status, tags, category:categories(slug, name)")
+      .eq("is_published", true)
+      .neq("id", current.id)
+      .limit(4);
+    if (current.category_id) q = q.eq("category_id", current.category_id);
+    const { data: rows } = await q;
+    if (rows && rows.length > 0) return rows as unknown as Product[];
+    // Fallback: any other 4 rugs
+    const { data: fallback } = await s
+      .from("products")
+      .select("id, slug, name, short_description, main_image_url, base_price_rwf, base_price_usd, stock_status, tags, category:categories(slug, name)")
+      .eq("is_published", true)
+      .neq("id", current.id)
+      .limit(4);
+    return (fallback ?? []) as unknown as Product[];
+  });
