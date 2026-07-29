@@ -1,8 +1,11 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, Heart, User } from "lucide-react";
+import { Menu, Search, ShoppingBag, X, ChevronDown, ChevronRight, Heart, User, Minus, Plus, Trash2, Check } from "lucide-react";
 import { listProducts, type Product } from "@/lib/catalogue.functions";
+import { subscribeNewsletter } from "@/lib/forms.functions";
 import { CURRENCIES, useCurrency, type Currency } from "@/lib/currency";
+import { useCart, useWishlist, useHydratedCounts } from "@/lib/store";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const WHATSAPP_NUMBER = "250796664868";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
