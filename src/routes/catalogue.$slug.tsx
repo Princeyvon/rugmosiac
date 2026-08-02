@@ -104,9 +104,10 @@ function ProductPage() {
   const mainImage = gallery[0];
 
   const chosen = sizes.find((s) => s.id === selectedSize);
-  const priceLabel = chosen
-    ? format({ rwf: chosen.price_rwf, usd: chosen.price_usd })
-    : format({ rwf: p.base_price_rwf, usd: p.base_price_usd });
+  const unitRwf = chosen?.price_rwf ?? p.base_price_rwf;
+  const unitUsd = chosen?.price_usd ?? p.base_price_usd;
+  const priceLabel = format({ rwf: unitRwf, usd: unitUsd });
+  const totalLabel = format({ rwf: unitRwf ? unitRwf * qty : null, usd: unitUsd ? unitUsd * qty : null });
   void currency;
 
   const isWished = wishlist.has(p.id);
