@@ -199,6 +199,84 @@ function HeritageSlider() {
   );
 }
 
+/** Featured rugs — sticky horizontal scroll-jack through 10 rugs. */
+function FeaturedRugsSticky({ items }: { items: Product[] }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [p, setP] = useState(0);
+  const { format } = useCurrency();
+
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const el = wrapRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const total = el.offsetHeight - window.innerHeight;
+      if (total <= 0) return;
+      setP(Math.max(0, Math.min(1, -rect.top / total)));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [items.length]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <section ref={wrapRef} className="relative" style={{ height: `${items.length * 45 + 100}vh` }}>
+      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+        <div className="container-x mx-auto mb-8 flex max-w-[1400px] items-end justify-between">
+          <div>
+            <span className="eyebrow text-muted-foreground">Featured rugs</span>
+            <h2 className="mt-2 font-display text-3xl font-medium tracking-tight md:text-5xl">
+              Ten pieces we're <span className="italic">obsessed</span> with.
+            </h2>
+          </div>
+          <span className="hidden text-xs font-semibold uppercase tracking-wider text-muted-foreground md:block">
+            {String(Math.min(items.length, Math.floor(p * items.length) + 1)).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
+          </span>
+        </div>
+        <div
+          className="flex gap-6 pl-[max(1.5rem,calc((100vw-1400px)/2))] will-change-transform"
+          style={{ transform: `translate3d(${-p * (items.length - 1) * 340}px,0,0)` }}
+        >
+          {items.map((r) => {
+            const img = resolveImage(r.main_image_url);
+            return (
+              <Link
+                key={r.id}
+                to="/catalogue/$slug"
+                params={{ slug: r.slug }}
+                className="group block w-[300px] shrink-0 md:w-[320px]"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
+                  <WishlistHeart product={{ productId: r.id, slug: r.slug, name: r.name, image: img }} />
+                  {img && (
+                    <img src={img} alt={r.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  )}
+                </div>
+                <div className="mt-3 flex items-start justify-between gap-3">
+                  <h3 className="font-display text-base font-medium">{r.name}</h3>
+                  <span className="text-sm text-muted-foreground">{format({ rwf: r.base_price_rwf, usd: r.base_price_usd })}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Home() {
   const { data } = useSuspenseQuery(homeQO);
 
