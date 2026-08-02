@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { Nav, Footer, FloatingWhatsApp, resolveImage } from "@/components/site-chrome";
+import { Nav, Footer, FloatingWhatsApp, resolveImage, WishlistHeart } from "@/components/site-chrome";
 import { useCurrency } from "@/lib/currency";
 
 import { listCategories, listProducts } from "@/lib/catalogue.functions";
@@ -81,6 +81,7 @@ function CataloguePage() {
             {data.products.map((p) => (
               <Link key={p.id} to="/catalogue/$slug" params={{ slug: p.slug }} className="group block">
                 <div className="relative aspect-square overflow-hidden rounded-sm bg-muted">
+                  <WishlistHeart product={{ productId: p.id, slug: p.slug, name: p.name, image: resolveImage(p.main_image_url) }} />
                   {resolveImage(p.main_image_url) && (
                     <img src={resolveImage(p.main_image_url)} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   )}
