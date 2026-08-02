@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
+import { NewsletterWeekly, RequestCallback } from "@/components/blocks";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const EMAIL = "hello@mosiac.rw";
