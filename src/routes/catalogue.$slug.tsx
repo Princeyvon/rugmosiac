@@ -274,13 +274,13 @@ function ProductPage() {
               onClick={handleAddToCart}
               className="mt-6 flex h-14 w-full items-center justify-between rounded-full bg-[#9c8a76] px-6 text-sm font-medium text-background transition-transform hover:scale-[1.01]"
             >
-              <span>Add to cart</span>
-              <span className="font-display text-base">{priceLabel}</span>
+              <span>Add to cart{qty > 1 ? ` · ${qty}` : ""}</span>
+              <span className="font-display text-base">{totalLabel}</span>
             </button>
 
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
-              Made to order · {p.production_time ?? "3–4 weeks"}
+              Made to order · Less than 4 weeks
             </div>
 
             <button
@@ -291,8 +291,32 @@ function ProductPage() {
               {isWished ? "Saved to wishlist" : "Save to wishlist"}
             </button>
 
+            {/* Live currency converter */}
+            <div className="mt-5 rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Show price in
+                </span>
+                <select
+                  aria-label="Display currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as Currency)}
+                  className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-3 flex items-baseline justify-between">
+                <span className="text-xs text-muted-foreground">{qty} × {priceLabel}</span>
+                <span className="font-display text-lg">{totalLabel}</span>
+              </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">Converted at today's live exchange rate.</p>
+            </div>
+
             <ul className="mt-8 space-y-3 border-t border-border pt-6 text-xs text-muted-foreground">
-              <li className="flex items-center gap-3"><Truck className="h-4 w-4" /> Free worldwide shipping over $500</li>
+              <li className="flex items-center gap-3"><Truck className="h-4 w-4" /> Free worldwide shipping over $2,000 USD</li>
               <li className="flex items-center gap-3"><RotateCcw className="h-4 w-4" /> 30-day returns on in-stock rugs</li>
               <li className="flex items-center gap-3"><ShieldCheck className="h-4 w-4" /> Hand-tufted in Kigali, guaranteed</li>
             </ul>
