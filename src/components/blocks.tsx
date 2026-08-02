@@ -20,8 +20,8 @@ export function NewsletterWeekly() {
     if (!email) return;
     setStatus("loading");
     try {
-      const res = (await subscribe({ data: { email } })) as { coupon_code?: string | null } | null;
-      setCode(res?.coupon_code ?? null);
+      const res = (await subscribe({ data: { email } })) as { code?: string | null } | null;
+      setCode(res?.code ?? null);
       setStatus("done");
     } catch {
       setStatus("error");
