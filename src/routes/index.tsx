@@ -64,7 +64,8 @@ const homeQO = queryOptions({
       const slug = p.category?.slug;
       if (slug) counts[slug] = (counts[slug] ?? 0) + 1;
     }
-    return { categories, featured, reviews, counts };
+    const pool = [...featured, ...allProducts.filter((p) => !featured.some((f) => f.id === p.id))];
+    return { categories, featured, reviews, counts, slider: pool.slice(0, 10) };
   },
 });
 
