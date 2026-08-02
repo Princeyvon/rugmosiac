@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowLeft, ArrowUpRight } from "lucide-react";
-import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
-import { listCategories, listFeatured, listProducts, listReviews } from "@/lib/catalogue.functions";
+import { Nav, Footer, FloatingWhatsApp, resolveImage, WishlistHeart } from "@/components/site-chrome";
+import { useCurrency } from "@/lib/currency";
+import { listCategories, listFeatured, listProducts, listReviews, type Product } from "@/lib/catalogue.functions";
 import homeHero from "@/assets/home-hero.jpg";
 import heritageBanner from "@/assets/heritage-banner.jpg";
 import heritage2 from "@/assets/heritage-2.jpg";
@@ -11,6 +12,14 @@ import heritage3 from "@/assets/heritage-3.jpg";
 import catBrands from "@/assets/cat-brands.jpg";
 import catAreaRugs from "@/assets/cat-area-rugs.jpg";
 import catRunners from "@/assets/cat-runners.jpg";
+import ig1 from "@/assets/ig-1.jpg";
+import ig2 from "@/assets/ig-2.jpg";
+import ig3 from "@/assets/ig-3.jpg";
+import ig4 from "@/assets/ig-4.jpg";
+import ig5 from "@/assets/ig-5.jpg";
+import ig6 from "@/assets/ig-6.jpg";
+
+const IG_GRID: string[] = [ig1, ig2, ig3, ig4, ig5, ig6];
 
 const HOME_CATEGORIES = [
   { slug: "brands", name: "Brands", image: catBrands },
@@ -64,7 +73,8 @@ const homeQO = queryOptions({
       const slug = p.category?.slug;
       if (slug) counts[slug] = (counts[slug] ?? 0) + 1;
     }
-    return { categories, featured, reviews, counts };
+    const pool = [...featured, ...allProducts.filter((p) => !featured.some((f) => f.id === p.id))];
+    return { categories, featured, reviews, counts, slider: pool.slice(0, 10) };
   },
 });
 
@@ -198,19 +208,94 @@ function HeritageSlider() {
   );
 }
 
+/** Featured rugs — sticky horizontal scroll-jack through 10 rugs. */
+function FeaturedRugsSticky({ items }: { items: Product[] }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [p, setP] = useState(0);
+  const { format } = useCurrency();
+
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const el = wrapRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const total = el.offsetHeight - window.innerHeight;
+      if (total <= 0) return;
+      setP(Math.max(0, Math.min(1, -rect.top / total)));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [items.length]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <section ref={wrapRef} className="relative" style={{ height: `${items.length * 45 + 100}vh` }}>
+      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+        <div className="container-x mx-auto mb-8 flex max-w-[1400px] items-end justify-between">
+          <div>
+            <span className="eyebrow text-muted-foreground">Featured rugs</span>
+            <h2 className="mt-2 font-display text-3xl font-medium tracking-tight md:text-5xl">
+              Ten pieces we're <span className="italic">obsessed</span> with.
+            </h2>
+          </div>
+          <span className="hidden text-xs font-semibold uppercase tracking-wider text-muted-foreground md:block">
+            {String(Math.min(items.length, Math.floor(p * items.length) + 1)).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
+          </span>
+        </div>
+        <div
+          className="flex gap-6 pl-[max(1.5rem,calc((100vw-1400px)/2))] will-change-transform"
+          style={{ transform: `translate3d(${-p * (items.length - 1) * 340}px,0,0)` }}
+        >
+          {items.map((r) => {
+            const img = resolveImage(r.main_image_url);
+            return (
+              <Link
+                key={r.id}
+                to="/catalogue/$slug"
+                params={{ slug: r.slug }}
+                className="group block w-[300px] shrink-0 md:w-[320px]"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
+                  <WishlistHeart product={{ productId: r.id, slug: r.slug, name: r.name, image: img }} />
+                  {img && (
+                    <img src={img} alt={r.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  )}
+                </div>
+                <div className="mt-3 flex items-start justify-between gap-3">
+                  <h3 className="font-display text-base font-medium">{r.name}</h3>
+                  <span className="text-sm text-muted-foreground">{format({ rwf: r.base_price_rwf, usd: r.base_price_usd })}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Home() {
   const { data } = useSuspenseQuery(homeQO);
-
-  const ctaBase =
-    "group inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:bg-background hover:text-foreground";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
       <main>
-        {/* Hero card with background image — extra top padding so the huge Mosiac wordmark
-            has generous whitespace above the card, and the card visually "pushes" it up on scroll. */}
-        <section className="pt-[26rem] md:pt-[32rem]">
+        {/* Hero card — top padding is tuned to the nav wordmark scroll range so the card
+            rises directly beneath "Mosiac" with no dead whitespace mid-transition. */}
+        <section className="pt-[19rem] md:pt-[22rem]">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">
@@ -239,6 +324,9 @@ function Home() {
             </p>
           </div>
         </section>
+
+        {/* Featured rugs — sticky horizontal scroll-jack */}
+        <FeaturedRugsSticky items={data.slider as Product[]} />
 
         {/* Three category cards */}
         <section className="pb-16 md:pb-24">
@@ -273,24 +361,8 @@ function Home() {
 
         <RecognitionSlider />
 
-        {/* Dreamscape / Explore hero */}
-        <section className="border-y border-border bg-muted py-28 md:py-40">
-          <div className="container-x mx-auto max-w-[1200px] text-center">
-            <h2 className="mx-auto max-w-4xl font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-7xl">
-              Turn your living room into a <span className="italic">dreamscape</span>.
-            </h2>
-            <div className="mt-12">
-              <Link to="/catalogue" className={ctaBase}>
-                Explore Mosiac
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Seeing is believing — enhanced editorial banner */}
-        <section className="relative overflow-hidden border-t border-border bg-foreground py-28 text-background md:py-40">
-          {/* subtle radial glow accents */}
+        {/* Seeing is believing — editorial banner + Instagram grid */}
+        <section className="relative overflow-hidden border-t border-border bg-foreground py-24 text-background md:py-32">
           <div
             aria-hidden
             className="pointer-events-none absolute -left-40 top-1/2 h-[520px] w-[520px] -translate-y-1/2 rounded-full opacity-30 blur-3xl"
@@ -301,31 +373,56 @@ function Home() {
             className="pointer-events-none absolute -right-40 top-0 h-[520px] w-[520px] rounded-full opacity-20 blur-3xl"
             style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
           />
-          <div className="container-x relative mx-auto max-w-[1200px] text-center">
-            <span className="eyebrow text-background/60">@rugmosiac on Instagram</span>
-            <h2 className="mt-5 font-display text-5xl font-medium leading-[1.0] tracking-tight md:text-8xl">
-              Seeing is <span className="italic">believing</span>.
-            </h2>
-            <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-background/70 md:text-lg">
-              Follow along for behind-the-scenes tufting, finished commissions in real homes, and first looks at limited drops.
-            </p>
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
-              <a
-                href="https://instagram.com/rugmosiac"
-                target="_blank"
-                rel="noreferrer"
-                className="group inline-flex items-center gap-2 rounded-full border border-background bg-background px-8 py-4 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 hover:bg-transparent hover:text-background"
-              >
-                Follow @rugmosiac
-                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-              </a>
-              <Link
-                to="/custom"
-                className="group inline-flex items-center gap-2 rounded-full border border-background/40 px-8 py-4 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:border-background hover:bg-background hover:text-foreground"
-              >
-                Commission a rug
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
+          <div className="container-x relative mx-auto grid max-w-[1300px] items-center gap-14 lg:grid-cols-[1fr_1fr]">
+            <div className="text-center lg:text-left">
+              <span className="eyebrow text-background/60">@rugmosiac on Instagram</span>
+              <h2 className="mt-5 font-display text-5xl font-medium leading-[1.0] tracking-tight md:text-7xl">
+                Seeing is <span className="italic">believing</span>.
+              </h2>
+              <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-background/70 md:text-lg lg:mx-0">
+                Follow along for behind-the-scenes tufting, finished commissions in real homes, and first looks at limited drops.
+              </p>
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                <a
+                  href="https://instagram.com/rugmosiac"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group inline-flex items-center gap-2 rounded-full border border-background bg-background px-8 py-4 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 hover:bg-transparent hover:text-background"
+                >
+                  Follow @rugmosiac
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" />
+                </a>
+                <Link
+                  to="/catalogue"
+                  className="group inline-flex items-center gap-2 rounded-full border border-background/40 px-8 py-4 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:border-background hover:bg-background hover:text-foreground"
+                >
+                  Explore Mosaic
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </div>
+
+            {/* 2 × 3 Instagram grid */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              {IG_GRID.map((src, i) => (
+                <a
+                  key={i}
+                  href="https://instagram.com/rugmosiac"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative aspect-square overflow-hidden rounded-xl bg-background/10"
+                >
+                  <img
+                    src={src}
+                    alt="Mosiac rug on Instagram"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <span className="absolute inset-0 grid place-items-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <ArrowUpRight className="h-6 w-6 text-white" />
+                  </span>
+                </a>
+              ))}
             </div>
           </div>
         </section>

@@ -49,7 +49,7 @@ async function fetchRates(): Promise<Record<Currency, number> | null> {
 }
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrencyState] = useState<Currency>("USD");
+  const [currency, setCurrencyState] = useState<Currency>("RWF");
   const [rates, setRates] = useState<Record<Currency, number>>(FALLBACK);
 
   // Hydrate from localStorage after mount to avoid SSR mismatch

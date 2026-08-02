@@ -8,7 +8,7 @@ import {
   FloatingWhatsApp,
   resolveImage,
 } from "@/components/site-chrome";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, CURRENCIES, type Currency } from "@/lib/currency";
 import { useCart, useWishlist } from "@/lib/store";
 import { getProduct, listRelated, type Product } from "@/lib/catalogue.functions";
 
@@ -65,6 +65,16 @@ const COLOR_SWATCHES: Array<{ name: string; gradient: string }> = [
 const TABS = ["Description", "Find your size", "Care instructions", "Shipping"] as const;
 type Tab = (typeof TABS)[number];
 
+/** Compress a verbose size label ("Small · 120 × 180 cm") into S / M / L / XL. */
+function shortSize(label: string, index: number): string {
+  const l = label.toLowerCase();
+  if (l.includes("extra") || l.startsWith("xl")) return "XL";
+  if (l.includes("small") || l.startsWith("s")) return "S";
+  if (l.includes("medium") || l.startsWith("m")) return "M";
+  if (l.includes("large") || l.startsWith("l")) return "L";
+  return ["S", "M", "L", "XL"][index] ?? label;
+}
+
 type SizeRow = {
   id: string;
   label: string;
@@ -79,7 +89,7 @@ function ProductPage() {
   const { slug } = Route.useParams();
   const { data: p } = useSuspenseQuery(productQO(slug));
   const { data: related } = useQuery(relatedQO(slug));
-  const { format, currency } = useCurrency();
+  const { format, currency, setCurrency } = useCurrency();
   const cart = useCart();
   const wishlist = useWishlist();
   if (!p) return null;
@@ -104,9 +114,10 @@ function ProductPage() {
   const mainImage = gallery[0];
 
   const chosen = sizes.find((s) => s.id === selectedSize);
-  const priceLabel = chosen
-    ? format({ rwf: chosen.price_rwf, usd: chosen.price_usd })
-    : format({ rwf: p.base_price_rwf, usd: p.base_price_usd });
+  const unitRwf = chosen?.price_rwf ?? p.base_price_rwf;
+  const unitUsd = chosen?.price_usd ?? p.base_price_usd;
+  const priceLabel = format({ rwf: unitRwf, usd: unitUsd });
+  const totalLabel = format({ rwf: unitRwf ? unitRwf * qty : null, usd: unitUsd ? unitUsd * qty : null });
   void currency;
 
   const isWished = wishlist.has(p.id);
@@ -177,18 +188,23 @@ function ProductPage() {
           <aside className="lg:sticky lg:top-28 self-start">
             {/* Size */}
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <span className="font-display text-sm font-medium">Size</span>
                 <button
-                  onClick={() => setTab("Find your size")}
-                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setTab("Find your size");
+                    requestAnimationFrame(() =>
+                      document.getElementById("sizing-guide")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                    );
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
                 >
                   <Ruler className="h-3.5 w-3.5" /> Sizing Guide
                 </button>
               </div>
               <div className="mt-3 grid grid-cols-4 gap-2">
                 {(sizes.length > 0
-                  ? sizes.map((s) => ({ id: s.id, label: s.label }))
+                  ? sizes.map((s, i) => ({ id: s.id, label: shortSize(s.label, i) }))
                   : ["S", "M", "L", "XL"].map((l) => ({ id: l, label: l }))
                 ).map((s) => {
                   const active = selectedSize === s.id || (sizes.length === 0 && selectedSize === "" && s.id === "S");
@@ -196,7 +212,7 @@ function ProductPage() {
                     <button
                       key={s.id}
                       onClick={() => setSelectedSize(s.id)}
-                      className={`h-14 rounded-2xl text-sm font-medium transition-all ${
+                      className={`h-14 rounded-2xl text-sm font-semibold transition-all ${
                         active
                           ? "bg-background shadow-[0_2px_10px_rgba(0,0,0,0.08)] ring-1 ring-border"
                           : "bg-[#f0eadf] text-muted-foreground hover:text-foreground"
@@ -258,13 +274,13 @@ function ProductPage() {
               onClick={handleAddToCart}
               className="mt-6 flex h-14 w-full items-center justify-between rounded-full bg-[#9c8a76] px-6 text-sm font-medium text-background transition-transform hover:scale-[1.01]"
             >
-              <span>Add to cart</span>
-              <span className="font-display text-base">{priceLabel}</span>
+              <span>Add to cart{qty > 1 ? ` · ${qty}` : ""}</span>
+              <span className="font-display text-base">{totalLabel}</span>
             </button>
 
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
-              Made to order · {p.production_time ?? "3–4 weeks"}
+              Made to order · Less than 4 weeks
             </div>
 
             <button
@@ -275,8 +291,32 @@ function ProductPage() {
               {isWished ? "Saved to wishlist" : "Save to wishlist"}
             </button>
 
+            {/* Live currency converter */}
+            <div className="mt-5 rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Show price in
+                </span>
+                <select
+                  aria-label="Display currency"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as Currency)}
+                  className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-3 flex items-baseline justify-between">
+                <span className="text-xs text-muted-foreground">{qty} × {priceLabel}</span>
+                <span className="font-display text-lg">{totalLabel}</span>
+              </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">Converted at today's live exchange rate.</p>
+            </div>
+
             <ul className="mt-8 space-y-3 border-t border-border pt-6 text-xs text-muted-foreground">
-              <li className="flex items-center gap-3"><Truck className="h-4 w-4" /> Free worldwide shipping over $500</li>
+              <li className="flex items-center gap-3"><Truck className="h-4 w-4" /> Free worldwide shipping over $2,000 USD</li>
               <li className="flex items-center gap-3"><RotateCcw className="h-4 w-4" /> 30-day returns on in-stock rugs</li>
               <li className="flex items-center gap-3"><ShieldCheck className="h-4 w-4" /> Hand-tufted in Kigali, guaranteed</li>
             </ul>
@@ -284,7 +324,7 @@ function ProductPage() {
         </div>
 
         {/* Tabs section */}
-        <section className="mt-28">
+        <section id="sizing-guide" className="mt-28 scroll-mt-28">
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 border-b border-border/60 pb-2">
             {TABS.map((t) => {
               const active = tab === t;
@@ -344,7 +384,7 @@ function ProductPage() {
 
             {tab === "Shipping" && (
               <p className="mx-auto max-w-3xl text-center text-sm leading-relaxed text-muted-foreground">
-                Every Mosiac rug is hand-tufted to order in Kigali. Production takes {p.production_time ?? "3–4 weeks"}. We ship worldwide via DHL; you'll receive a tracking link the day it leaves the studio.
+                Every Mosiac rug is hand-tufted to order in Kigali — made to order in less than 4 weeks. Free worldwide shipping on orders of $2,000 USD and above. We ship via DHL; you'll receive a tracking link the day it leaves the studio.
               </p>
             )}
           </div>

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
+import { NewsletterWeekly, RequestCallback } from "@/components/blocks";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const EMAIL = "hello@mosiac.rw";
@@ -60,7 +61,7 @@ function FaqPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
-      <main className="container-x mx-auto max-w-3xl px-6 pb-24 pt-32 md:pt-40">
+      <main className="container-x mx-auto max-w-3xl px-6 pb-24 pt-16 md:pt-20">
         <header className="text-center">
           <div className="eyebrow text-muted-foreground">Help</div>
           <h1 className="mt-3 font-display text-5xl md:text-6xl tracking-tight">FAQ</h1>
@@ -90,7 +91,9 @@ function FaqPage() {
         <p className="mt-16 text-center text-sm text-muted-foreground">
           Still need help? Email <a className="text-accent underline underline-offset-4" href={`mailto:${EMAIL}`}>{EMAIL}</a>.
         </p>
+        <div className="mt-8 flex justify-center"><RequestCallback /></div>
       </main>
+      <NewsletterWeekly />
       <Footer />
       <FloatingWhatsApp />
     </div>
