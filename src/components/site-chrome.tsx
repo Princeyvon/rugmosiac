@@ -252,7 +252,6 @@ export function Nav() {
 
           {/* Right */}
           <div className="flex items-center justify-end gap-2">
-            <AnnouncementTicker compact />
             <button
               aria-label="Search"
               onClick={() => setSearchOpen(true)}
@@ -264,6 +263,7 @@ export function Nav() {
             <CartNavButton scrolled={scrolled} />
           </div>
         </div>
+        <PromoBar />
       </header>
 
 
