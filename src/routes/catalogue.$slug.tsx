@@ -324,7 +324,7 @@ function ProductPage() {
         </div>
 
         {/* Tabs section */}
-        <section id="sizing-guide" className="mt-28 scroll-mt-28">ic
+        <section id="sizing-guide" className="mt-28 scroll-mt-28">
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 border-b border-border/60 pb-2">
             {TABS.map((t) => {
               const active = tab === t;
