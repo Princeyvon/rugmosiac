@@ -317,6 +317,9 @@ function Home() {
           </div>
         </section>
 
+        {/* Featured rugs — sticky horizontal scroll-jack */}
+        <FeaturedRugsSticky items={data.slider as Product[]} />
+
         {/* Three category cards */}
         <section className="pb-16 md:pb-24">
           <div className="container-x mx-auto max-w-[1400px]">
@@ -350,24 +353,8 @@ function Home() {
 
         <RecognitionSlider />
 
-        {/* Dreamscape / Explore hero */}
-        <section className="border-y border-border bg-muted py-28 md:py-40">
-          <div className="container-x mx-auto max-w-[1200px] text-center">
-            <h2 className="mx-auto max-w-4xl font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-7xl">
-              Turn your living room into a <span className="italic">dreamscape</span>.
-            </h2>
-            <div className="mt-12">
-              <Link to="/catalogue" className={ctaBase}>
-                Explore Mosiac
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Seeing is believing — enhanced editorial banner */}
-        <section className="relative overflow-hidden border-t border-border bg-foreground py-28 text-background md:py-40">
-          {/* subtle radial glow accents */}
+        {/* Seeing is believing — editorial banner + Instagram grid */}
+        <section className="relative overflow-hidden border-t border-border bg-foreground py-24 text-background md:py-32">
           <div
             aria-hidden
             className="pointer-events-none absolute -left-40 top-1/2 h-[520px] w-[520px] -translate-y-1/2 rounded-full opacity-30 blur-3xl"
@@ -378,31 +365,56 @@ function Home() {
             className="pointer-events-none absolute -right-40 top-0 h-[520px] w-[520px] rounded-full opacity-20 blur-3xl"
             style={{ background: "radial-gradient(closest-side, var(--accent), transparent)" }}
           />
-          <div className="container-x relative mx-auto max-w-[1200px] text-center">
-            <span className="eyebrow text-background/60">@rugmosiac on Instagram</span>
-            <h2 className="mt-5 font-display text-5xl font-medium leading-[1.0] tracking-tight md:text-8xl">
-              Seeing is <span className="italic">believing</span>.
-            </h2>
-            <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-background/70 md:text-lg">
-              Follow along for behind-the-scenes tufting, finished commissions in real homes, and first looks at limited drops.
-            </p>
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
-              <a
-                href="https://instagram.com/rugmosiac"
-                target="_blank"
-                rel="noreferrer"
-                className="group inline-flex items-center gap-2 rounded-full border border-background bg-background px-8 py-4 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 hover:bg-transparent hover:text-background"
-              >
-                Follow @rugmosiac
-                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-              </a>
-              <Link
-                to="/custom"
-                className="group inline-flex items-center gap-2 rounded-full border border-background/40 px-8 py-4 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:border-background hover:bg-background hover:text-foreground"
-              >
-                Commission a rug
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
+          <div className="container-x relative mx-auto grid max-w-[1300px] items-center gap-14 lg:grid-cols-[1fr_1fr]">
+            <div className="text-center lg:text-left">
+              <span className="eyebrow text-background/60">@rugmosiac on Instagram</span>
+              <h2 className="mt-5 font-display text-5xl font-medium leading-[1.0] tracking-tight md:text-7xl">
+                Seeing is <span className="italic">believing</span>.
+              </h2>
+              <p className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-background/70 md:text-lg lg:mx-0">
+                Follow along for behind-the-scenes tufting, finished commissions in real homes, and first looks at limited drops.
+              </p>
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                <a
+                  href="https://instagram.com/rugmosiac"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group inline-flex items-center gap-2 rounded-full border border-background bg-background px-8 py-4 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 hover:bg-transparent hover:text-background"
+                >
+                  Follow @rugmosiac
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" />
+                </a>
+                <Link
+                  to="/catalogue"
+                  className="group inline-flex items-center gap-2 rounded-full border border-background/40 px-8 py-4 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:border-background hover:bg-background hover:text-foreground"
+                >
+                  Explore Mosaic
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </div>
+
+            {/* 2 × 3 Instagram grid */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              {IG_GRID.map((src, i) => (
+                <a
+                  key={i}
+                  href="https://instagram.com/rugmosiac"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative aspect-square overflow-hidden rounded-xl bg-background/10"
+                >
+                  <img
+                    src={src}
+                    alt="Mosiac rug on Instagram"
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <span className="absolute inset-0 grid place-items-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <ArrowUpRight className="h-6 w-6 text-white" />
+                  </span>
+                </a>
+              ))}
             </div>
           </div>
         </section>
