@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowLeft, ArrowUpRight } from "lucide-react";
-import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
-import { listCategories, listFeatured, listProducts, listReviews } from "@/lib/catalogue.functions";
+import { Nav, Footer, FloatingWhatsApp, resolveImage, WishlistHeart } from "@/components/site-chrome";
+import { useCurrency } from "@/lib/currency";
+import { listCategories, listFeatured, listProducts, listReviews, type Product } from "@/lib/catalogue.functions";
 import homeHero from "@/assets/home-hero.jpg";
 import heritageBanner from "@/assets/heritage-banner.jpg";
 import heritage2 from "@/assets/heritage-2.jpg";
