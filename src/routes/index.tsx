@@ -281,16 +281,13 @@ function FeaturedRugsSticky({ items }: { items: Product[] }) {
 function Home() {
   const { data } = useSuspenseQuery(homeQO);
 
-  const ctaBase =
-    "group inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-background transition-all duration-300 hover:bg-background hover:text-foreground";
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
       <main>
-        {/* Hero card with background image — extra top padding so the huge Mosiac wordmark
-            has generous whitespace above the card, and the card visually "pushes" it up on scroll. */}
-        <section className="pt-[26rem] md:pt-[32rem]">
+        {/* Hero card — top padding is tuned to the nav wordmark scroll range so the card
+            rises directly beneath "Mosiac" with no dead whitespace mid-transition. */}
+        <section className="pt-[19rem] md:pt-[22rem]">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">
