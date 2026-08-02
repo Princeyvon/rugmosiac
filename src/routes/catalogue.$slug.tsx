@@ -178,18 +178,23 @@ function ProductPage() {
           <aside className="lg:sticky lg:top-28 self-start">
             {/* Size */}
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <span className="font-display text-sm font-medium">Size</span>
                 <button
-                  onClick={() => setTab("Find your size")}
-                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setTab("Find your size");
+                    requestAnimationFrame(() =>
+                      document.getElementById("sizing-guide")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                    );
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
                 >
                   <Ruler className="h-3.5 w-3.5" /> Sizing Guide
                 </button>
               </div>
               <div className="mt-3 grid grid-cols-4 gap-2">
                 {(sizes.length > 0
-                  ? sizes.map((s) => ({ id: s.id, label: s.label }))
+                  ? sizes.map((s, i) => ({ id: s.id, label: shortSize(s.label, i) }))
                   : ["S", "M", "L", "XL"].map((l) => ({ id: l, label: l }))
                 ).map((s) => {
                   const active = selectedSize === s.id || (sizes.length === 0 && selectedSize === "" && s.id === "S");
@@ -197,7 +202,7 @@ function ProductPage() {
                     <button
                       key={s.id}
                       onClick={() => setSelectedSize(s.id)}
-                      className={`h-14 rounded-2xl text-sm font-medium transition-all ${
+                      className={`h-14 rounded-2xl text-sm font-semibold transition-all ${
                         active
                           ? "bg-background shadow-[0_2px_10px_rgba(0,0,0,0.08)] ring-1 ring-border"
                           : "bg-[#f0eadf] text-muted-foreground hover:text-foreground"
