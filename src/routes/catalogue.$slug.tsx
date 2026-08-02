@@ -65,6 +65,16 @@ const COLOR_SWATCHES: Array<{ name: string; gradient: string }> = [
 const TABS = ["Description", "Find your size", "Care instructions", "Shipping"] as const;
 type Tab = (typeof TABS)[number];
 
+/** Compress a verbose size label ("Small · 120 × 180 cm") into S / M / L / XL. */
+function shortSize(label: string, index: number): string {
+  const l = label.toLowerCase();
+  if (l.includes("extra") || l.startsWith("xl")) return "XL";
+  if (l.includes("small") || l.startsWith("s")) return "S";
+  if (l.includes("medium") || l.startsWith("m")) return "M";
+  if (l.includes("large") || l.startsWith("l")) return "L";
+  return ["S", "M", "L", "XL"][index] ?? label;
+}
+
 type SizeRow = {
   id: string;
   label: string;
