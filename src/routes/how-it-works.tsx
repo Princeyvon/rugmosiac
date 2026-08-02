@@ -47,26 +47,14 @@ function HowPage() {
             ))}
           </div>
         </section>
-        <section className="border-t border-border/60 py-20 md:py-28">
-          <div className="container-x mx-auto max-w-[900px]">
-            <h2 className="font-serif text-4xl italic tracking-tight md:text-5xl">Common questions.</h2>
-            <div className="mt-10 divide-y divide-border/60">
-              {FAQ.map((f) => (
-                <details key={f.q} className="group py-5">
-                  <summary className="flex cursor-pointer items-center justify-between gap-4 font-serif text-xl">
-                    {f.q}
-                    <span className="text-accent transition-transform group-open:rotate-45">+</span>
-                  </summary>
-                  <p className="mt-3 text-muted-foreground leading-relaxed">{f.a}</p>
-                </details>
-              ))}
-            </div>
-            <div className="mt-14 flex flex-wrap gap-3">
-              <Link to="/custom" className="rounded-full bg-foreground px-6 py-3.5 text-sm font-medium text-background">Start a custom order →</Link>
-              <Link to="/catalogue" className="rounded-full border border-foreground/40 px-6 py-3.5 text-sm font-medium">Browse the catalogue</Link>
-            </div>
-          </div>
-        </section>
+        <div className="border-t border-border/60">
+          <FaqBlock items={FAQ} />
+        </div>
+        <div className="container-x mx-auto max-w-[900px] pb-4 flex flex-wrap gap-3">
+          <Link to="/custom" className="rounded-full bg-foreground px-6 py-3.5 text-sm font-medium text-background">Start a custom order →</Link>
+          <Link to="/catalogue" className="rounded-full border border-foreground/40 px-6 py-3.5 text-sm font-medium">Browse the catalogue</Link>
+        </div>
+        <NewsletterWeekly />
       </main>
       <Footer />
       <FloatingWhatsApp />
