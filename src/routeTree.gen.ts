@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoryRouteImport } from './routes/story'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CustomRouteImport } from './routes/custom'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as IndexRouteImport } from './routes/index'
@@ -31,6 +32,11 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomRoute = CustomRouteImport.update({
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
+  '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
   '/story': typeof StoryRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
+  '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
   '/story': typeof StoryRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/custom': typeof CustomRoute
+  '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
   '/story': typeof StoryRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/contact'
     | '/custom'
+    | '/explore'
     | '/faq'
     | '/how-it-works'
     | '/story'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/contact'
     | '/custom'
+    | '/explore'
     | '/faq'
     | '/how-it-works'
     | '/story'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/contact'
     | '/custom'
+    | '/explore'
     | '/faq'
     | '/how-it-works'
     | '/story'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContactRoute: typeof ContactRoute
   CustomRoute: typeof CustomRoute
+  ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
   HowItWorksRoute: typeof HowItWorksRoute
   StoryRoute: typeof StoryRoute
@@ -155,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/custom': {
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContactRoute: ContactRoute,
   CustomRoute: CustomRoute,
+  ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
   HowItWorksRoute: HowItWorksRoute,
   StoryRoute: StoryRoute,

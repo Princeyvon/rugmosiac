@@ -298,7 +298,7 @@ export function Nav() {
                   </div>
                 )}
               </div>
-              <Link to="/story" className={pillCls}>Explore</Link>
+              <Link to="/explore" className={pillCls}>Explore</Link>
               <Link to="/how-it-works" className={pillCls}>About</Link>
             </nav>
           </div>
