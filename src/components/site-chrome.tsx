@@ -6,6 +6,7 @@ import { subscribeNewsletter } from "@/lib/forms.functions";
 import { CURRENCIES, useCurrency, type Currency } from "@/lib/currency";
 import { useCart, useWishlist, useHydratedCounts } from "@/lib/store";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import promoBg from "@/assets/promo-green.jpg";
 
 export const WHATSAPP_NUMBER = "250796664868";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
@@ -19,34 +20,89 @@ export function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-export function AnnouncementTicker({ compact = false }: { compact?: boolean }) {
-  const msg = "Sign up to our newsletter for 10% off your first order";
-  const items = Array.from({ length: 8 });
-  if (compact) {
-    return (
-      <div className="hidden lg:flex items-center overflow-hidden rounded-full bg-foreground text-background max-w-[260px] h-9 px-1">
-        <div className="flex gap-10 whitespace-nowrap will-change-transform" style={{ animation: "marquee 32s linear infinite" }}>
-          {items.map((_, i) => (
-            <span key={i} className="flex items-center gap-10 text-[10px] font-semibold uppercase tracking-[0.18em]">
-              {msg}
-              <span aria-hidden className="opacity-40">✦</span>
-            </span>
-          ))}
+const PROMOS = [
+  {
+    text: "December Sales promotion active.. get 120K rwf off your order now",
+    cta: "Claim Now",
+    to: "/catalogue" as const,
+    tint: "linear-gradient(90deg, rgba(255,255,255,0.55), rgba(255,255,255,0.15))",
+  },
+  {
+    text: "Sign up to our newsletter for 10% off your first order",
+    cta: "Get 10% Off",
+    to: "/contact" as const,
+    tint: "linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.6))",
+  },
+];
+
+export function PromoBar() {
+  const [dismissed, setDismissed] = useState(false);
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (dismissed) return;
+    const t = setInterval(() => setI((v) => (v + 1) % PROMOS.length), 6500);
+    return () => clearInterval(t);
+  }, [dismissed]);
+  if (dismissed) return null;
+  const promo = PROMOS[i];
+  return (
+    <div className="container-x mx-auto max-w-[1400px] pb-3">
+      <div className="relative overflow-hidden rounded-2xl border border-white/40 shadow-sm">
+        <img
+          src={promoBg}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0" style={{ background: promo.tint }} />
+        <div className="relative flex items-center gap-3 px-4 py-3 md:px-6">
+          <p key={promo.text} className="min-w-0 flex-1 animate-fade-in text-[13px] font-medium leading-snug text-foreground md:text-sm">
+            {promo.text}
+          </p>
+          <Link
+            to={promo.to}
+            className="hidden whitespace-nowrap rounded-full border border-white/70 bg-white/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-foreground backdrop-blur-md transition-colors hover:bg-white/70 sm:inline-block"
+          >
+            {promo.cta}
+          </Link>
+          <button
+            onClick={() => setDismissed(true)}
+            aria-label="Dismiss promotion"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-foreground/70 transition-colors hover:bg-white/50 hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
-    );
-  }
-  return (
-    <div className="overflow-hidden bg-marquee text-marquee-foreground">
-      <div className="flex gap-16 whitespace-nowrap py-2.5 will-change-transform" style={{ animation: "marquee 42s linear infinite" }}>
-        {items.map((_, i) => (
-          <span key={i} className="eyebrow flex items-center gap-16">
-            {msg}
-            <span aria-hidden className="opacity-40">✦</span>
-          </span>
-        ))}
-      </div>
     </div>
+  );
+}
+
+/** Heart overlay for product cards. */
+export function WishlistHeart({
+  product,
+  className = "",
+}: {
+  product: { productId: string; slug: string; name: string; image?: string };
+  className?: string;
+}) {
+  const wishlist = useWishlist();
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+  const active = hydrated && wishlist.has(product.productId);
+  return (
+    <button
+      type="button"
+      aria-label={active ? "Remove from wishlist" : "Save to wishlist"}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        wishlist.toggle(product);
+      }}
+      className={`absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-background/80 text-foreground backdrop-blur-md transition-transform hover:scale-110 ${className}`}
+    >
+      <Heart className={`h-4 w-4 ${active ? "fill-current text-accent" : ""}`} />
+    </button>
   );
 }
 
