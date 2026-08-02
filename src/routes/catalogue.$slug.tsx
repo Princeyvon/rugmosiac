@@ -8,7 +8,7 @@ import {
   FloatingWhatsApp,
   resolveImage,
 } from "@/components/site-chrome";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, CURRENCIES, type Currency } from "@/lib/currency";
 import { useCart, useWishlist } from "@/lib/store";
 import { getProduct, listRelated, type Product } from "@/lib/catalogue.functions";
 
@@ -89,7 +89,7 @@ function ProductPage() {
   const { slug } = Route.useParams();
   const { data: p } = useSuspenseQuery(productQO(slug));
   const { data: related } = useQuery(relatedQO(slug));
-  const { format, currency } = useCurrency();
+  const { format, currency, setCurrency } = useCurrency();
   const cart = useCart();
   const wishlist = useWishlist();
   if (!p) return null;
