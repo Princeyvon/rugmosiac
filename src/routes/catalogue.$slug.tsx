@@ -384,7 +384,7 @@ function ProductPage() {
 
             {tab === "Shipping" && (
               <p className="mx-auto max-w-3xl text-center text-sm leading-relaxed text-muted-foreground">
-                Every Mosiac rug is hand-tufted to order in Kigali. Production takes {p.production_time ?? "3–4 weeks"}. We ship worldwide via DHL; you'll receive a tracking link the day it leaves the studio.
+                Every Mosiac rug is hand-tufted to order in Kigali — made to order in less than 4 weeks. Free worldwide shipping on orders of $2,000 USD and above. We ship via DHL; you'll receive a tracking link the day it leaves the studio.
               </p>
             )}
           </div>
