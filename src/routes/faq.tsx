@@ -90,7 +90,9 @@ function FaqPage() {
         <p className="mt-16 text-center text-sm text-muted-foreground">
           Still need help? Email <a className="text-accent underline underline-offset-4" href={`mailto:${EMAIL}`}>{EMAIL}</a>.
         </p>
+        <div className="mt-8 flex justify-center"><RequestCallback /></div>
       </main>
+      <NewsletterWeekly />
       <Footer />
       <FloatingWhatsApp />
     </div>
