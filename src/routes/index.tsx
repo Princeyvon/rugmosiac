@@ -293,7 +293,7 @@ function Home() {
       <main>
         {/* Hero card — top padding is tuned to the nav wordmark scroll range so the card
             rises directly beneath "Mosiac" with no dead whitespace mid-transition. */}
-        <section className="pt-[19rem] md:pt-[22rem]">
+        <section className="pt-[13rem] md:pt-[15rem]">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">
