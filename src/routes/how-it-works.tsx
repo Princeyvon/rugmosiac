@@ -20,13 +20,6 @@ const STEPS = [
   { n: "03", t: "Delivered to your door", d: "Rugs shipped or delivered across Kigali, and internationally on request. Most orders ready in 3–4 weeks." },
 ];
 
-const FAQ = [
-  { q: "How long does a custom rug take?", a: "3–4 weeks from design approval to delivery. Complex pieces or larger sizes can take up to 6 weeks — we'll always confirm a timeline before starting." },
-  { q: "What does it cost?", a: "Every piece is quoted individually based on size, complexity, and colour count. Small rugs typically start around 750,000 RWF; larger statement pieces 1.5M+." },
-  { q: "Can you match a specific colour?", a: "Yes. We keep a wide wool library and can dye custom colours when needed. We'll send you a physical sample before we start." },
-  { q: "Do you ship internationally?", a: "Yes. We regularly ship across East Africa, Europe, and the US. Shipping is quoted per order." },
-  { q: "What if I don't like it?", a: "We share progress photos throughout production. Every design is signed off before the final piece is finished — no surprises." },
-];
 
 function HowPage() {
   return (
