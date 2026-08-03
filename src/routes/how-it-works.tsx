@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
 import { FaqBlock, NewsletterWeekly } from "@/components/blocks";
+import { FAQ_SECTIONS, SUPPORT_EMAIL } from "@/lib/faq-content";
 
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
