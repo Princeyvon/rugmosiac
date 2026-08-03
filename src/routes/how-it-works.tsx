@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
 import { FaqBlock, NewsletterWeekly } from "@/components/blocks";
+import { FAQ_SECTIONS, SUPPORT_EMAIL } from "@/lib/faq-content";
 
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
@@ -20,13 +21,6 @@ const STEPS = [
   { n: "03", t: "Delivered to your door", d: "Rugs shipped or delivered across Kigali, and internationally on request. Most orders ready in 3–4 weeks." },
 ];
 
-const FAQ = [
-  { q: "How long does a custom rug take?", a: "3–4 weeks from design approval to delivery. Complex pieces or larger sizes can take up to 6 weeks — we'll always confirm a timeline before starting." },
-  { q: "What does it cost?", a: "Every piece is quoted individually based on size, complexity, and colour count. Small rugs typically start around 750,000 RWF; larger statement pieces 1.5M+." },
-  { q: "Can you match a specific colour?", a: "Yes. We keep a wide wool library and can dye custom colours when needed. We'll send you a physical sample before we start." },
-  { q: "Do you ship internationally?", a: "Yes. We regularly ship across East Africa, Europe, and the US. Shipping is quoted per order." },
-  { q: "What if I don't like it?", a: "We share progress photos throughout production. Every design is signed off before the final piece is finished — no surprises." },
-];
 
 function HowPage() {
   return (
@@ -48,8 +42,21 @@ function HowPage() {
             ))}
           </div>
         </section>
-        <div className="border-t border-border/60">
-          <FaqBlock items={FAQ} />
+        <div className="border-t border-border/60 pt-14">
+          <div className="container-x mx-auto max-w-[900px]">
+            <span className="eyebrow text-muted-foreground">Everything else</span>
+            <h2 className="mt-3 font-serif text-4xl tracking-tight md:text-5xl">Questions, answered.</h2>
+          </div>
+          {FAQ_SECTIONS.map((section) => (
+            <div key={section.title} className="container-x mx-auto mt-10 max-w-[900px]">
+              <h3 className="font-display text-2xl">{section.title}</h3>
+              <FaqBlock items={section.items} />
+            </div>
+          ))}
+          <p className="container-x mx-auto mt-10 max-w-[900px] text-sm text-muted-foreground">
+            Still need help? Email{" "}
+            <a className="text-accent underline underline-offset-4" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+          </p>
         </div>
         <div className="container-x mx-auto max-w-[900px] pb-4 flex flex-wrap gap-3">
           <Link to="/custom" className="rounded-full bg-foreground px-6 py-3.5 text-sm font-medium text-background">Start a custom order →</Link>

@@ -46,10 +46,10 @@ function ExplorePage() {
         </section>
 
         <section className="container-x mx-auto max-w-[1400px] pb-20">
-          <div className="columns-2 gap-4 md:columns-3 lg:columns-4 [&>*]:mb-4">
+          <div className="columns-2 gap-3 md:columns-3 lg:columns-4 [&>*]:mb-3">
             {products.map((p, i) => {
               const img = resolveImage(p.main_image_url);
-              const ratio = ["aspect-[3/4]", "aspect-square", "aspect-[4/5]", "aspect-[4/3]"][i % 4];
+              const ratio = ["aspect-[3/4]", "aspect-square", "aspect-[4/5]", "aspect-[4/3]", "aspect-[5/6]", "aspect-[2/3]"][i % 6];
               return (
                 <Link
                   key={p.id}
@@ -67,12 +67,12 @@ function ExplorePage() {
                         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     )}
-                  </div>
-                  <div className="mt-2 flex items-start justify-between gap-3">
-                    <h2 className="font-display text-sm font-medium md:text-base">{p.name}</h2>
-                    <span className="shrink-0 text-xs text-muted-foreground md:text-sm">
-                      {format({ rwf: p.base_price_rwf, usd: p.base_price_usd })}
-                    </span>
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent p-3 pt-10 md:p-4 md:pt-14">
+                      <h2 className="font-display text-sm font-medium leading-tight text-white md:text-base">{p.name}</h2>
+                      <p className="mt-0.5 text-[11px] text-white/80 md:text-xs">
+                        Starting from {format({ rwf: p.base_price_rwf, usd: p.base_price_usd })}
+                      </p>
+                    </div>
                   </div>
                 </Link>
               );

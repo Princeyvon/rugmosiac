@@ -9,22 +9,20 @@ import homeHero from "@/assets/home-hero.jpg";
 import heritageBanner from "@/assets/heritage-banner.jpg";
 import heritage2 from "@/assets/heritage-2.jpg";
 import heritage3 from "@/assets/heritage-3.jpg";
-import catBrands from "@/assets/cat-brands.jpg";
+import catWallArt from "@/assets/cat-wall-art.jpg";
 import catAreaRugs from "@/assets/cat-area-rugs.jpg";
-import catRunners from "@/assets/cat-runners.jpg";
+import catCustom from "@/assets/cat-custom.jpg";
 import ig1 from "@/assets/ig-1.jpg";
 import ig2 from "@/assets/ig-2.jpg";
 import ig3 from "@/assets/ig-3.jpg";
 import ig4 from "@/assets/ig-4.jpg";
-import ig5 from "@/assets/ig-5.jpg";
-import ig6 from "@/assets/ig-6.jpg";
 
-const IG_GRID: string[] = [ig1, ig2, ig3, ig4, ig5, ig6];
+const IG_GRID: string[] = [ig1, ig2, ig3, ig4];
 
 const HOME_CATEGORIES = [
-  { slug: "brands", name: "Brands", image: catBrands },
-  { slug: "area-rugs", name: "Area Rugs", image: catAreaRugs },
-  { slug: "runners", name: "Runners", image: catRunners },
+  { slug: "area-rugs", name: "Area rugs", image: catAreaRugs },
+  { slug: "wall-art", name: "Wall art pieces", image: catWallArt },
+  { slug: "custom", name: "Custom rugs", image: catCustom },
 ];
 
 const HERITAGE_SLIDES = [
@@ -295,7 +293,7 @@ function Home() {
       <main>
         {/* Hero card — top padding is tuned to the nav wordmark scroll range so the card
             rises directly beneath "Mosiac" with no dead whitespace mid-transition. */}
-        <section className="pt-[19rem] md:pt-[22rem]">
+        <section className="pt-[13rem] md:pt-[15rem]">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">

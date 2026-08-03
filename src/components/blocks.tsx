@@ -92,7 +92,7 @@ export function RequestCallback({ className = "" }: { className?: string }) {
       await submit({
         data: {
           name: String(fd.get("name") ?? "Callback request"),
-          email: String(fd.get("email") ?? "callback@mosiac.rw"),
+          email: String(fd.get("email") ?? "callback@rugmosiac.com"),
           subject: "Callback request",
           message: `Please call me back on ${String(fd.get("phone") ?? "")}. ${String(fd.get("note") ?? "")}`,
         },

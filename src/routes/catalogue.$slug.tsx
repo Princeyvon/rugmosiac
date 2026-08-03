@@ -448,14 +448,15 @@ function SizingGuide({
   const active = list.find((s) => s.id === selectedSize) ?? list[0];
   const wCm = active?.width_cm ?? 160;
   const hCm = active?.height_cm ?? 230;
-  const kg = active?.weight_kg ?? 0;
+  // Weight = rug area in m² × 3.8 kg/m² (hand-tufted wool pile).
+  const kg = (wCm / 100) * (hCm / 100) * 3.8;
 
-  const cmToIn = (v: number) => Math.round(v / 2.54);
+  const cmToFt = (v: number) => Math.round((v / 30.48) * 10) / 10;
   const kgToLb = (v: number) => Math.round(v * 2.2046 * 10) / 10;
 
-  const wLabel = units === "metric" ? `${wCm} cm` : `${cmToIn(wCm)} in`;
-  const hLabel = units === "metric" ? `${hCm} cm` : `${cmToIn(hCm)} in`;
-  const weightLabel = units === "metric" ? `${kg.toFixed(2)} kg` : `${kgToLb(kg)} lb`;
+  const wLabel = units === "metric" ? `${wCm} cm` : `${cmToFt(wCm)} ft`;
+  const hLabel = units === "metric" ? `${hCm} cm` : `${cmToFt(hCm)} ft`;
+  const weightLabel = units === "metric" ? `${kg.toFixed(1)} kg` : `${kgToLb(kg)} lb`;
 
   // Scale rug to fit within a viewbox while preserving aspect ratio
   const maxW = 900;
