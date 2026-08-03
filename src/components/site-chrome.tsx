@@ -6,7 +6,6 @@ import { subscribeNewsletter } from "@/lib/forms.functions";
 import { CURRENCIES, useCurrency, type Currency } from "@/lib/currency";
 import { useCart, useWishlist, useHydratedCounts } from "@/lib/store";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import promoBg from "@/assets/promo-green.jpg";
 
 export const WHATSAPP_NUMBER = "250796664868";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
@@ -301,8 +300,8 @@ export function Nav() {
   // Interpolated brand transforms — driven directly by scroll for a seamless
   // "card pushes the wordmark up into the nav" feel. No CSS transition on
   // these values so they track scroll 1:1.
-  const size = 240 - (240 - 36) * p; // px — settles a touch larger in the nav
-  const top = 220 - (220 - 14) * p; // px from viewport top — more headroom at rest
+  const size = 240 - (240 - 39) * p; // px — settles a touch larger in the nav
+  const top = 150 - (150 - 14) * p; // px from viewport top
 
 
   const pillCls = `rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all duration-300 ${
