@@ -3,7 +3,7 @@ import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
 import { NewsletterWeekly, RequestCallback } from "@/components/blocks";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const EMAIL = "hello@mosiac.rw";
+const EMAIL = "hello@rugmosiac.com";
 
 const SECTIONS: Array<{ title: string; items: Array<{ q: string; a: string }> }> = [
   {
