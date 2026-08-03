@@ -41,8 +41,21 @@ function HowPage() {
             ))}
           </div>
         </section>
-        <div className="border-t border-border/60">
-          <FaqBlock items={FAQ} />
+        <div className="border-t border-border/60 pt-14">
+          <div className="container-x mx-auto max-w-[900px]">
+            <span className="eyebrow text-muted-foreground">Everything else</span>
+            <h2 className="mt-3 font-serif text-4xl tracking-tight md:text-5xl">Questions, answered.</h2>
+          </div>
+          {FAQ_SECTIONS.map((section) => (
+            <div key={section.title} className="container-x mx-auto mt-10 max-w-[900px]">
+              <h3 className="font-display text-2xl">{section.title}</h3>
+              <FaqBlock items={section.items} />
+            </div>
+          ))}
+          <p className="container-x mx-auto mt-10 max-w-[900px] text-sm text-muted-foreground">
+            Still need help? Email{" "}
+            <a className="text-accent underline underline-offset-4" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+          </p>
         </div>
         <div className="container-x mx-auto max-w-[900px] pb-4 flex flex-wrap gap-3">
           <Link to="/custom" className="rounded-full bg-foreground px-6 py-3.5 text-sm font-medium text-background">Start a custom order →</Link>
