@@ -22,53 +22,104 @@ export function WhatsAppIcon({ className }: { className?: string }) {
 
 const PROMOS = [
   {
-    text: "December Sales promotion active.. get 120K rwf off your order now",
-    cta: "Claim Now",
+    id: "december",
+    text: "December Sale is live — 120,000 RWF off every made-to-order rug.",
+    sub: "Ends when the studio calendar fills.",
+    cta: "Claim 120K off",
     to: "/catalogue" as const,
-    tint: "linear-gradient(90deg, rgba(255,255,255,0.55), rgba(255,255,255,0.15))",
+    style: { background: "linear-gradient(90deg, #1f1b16 0%, #3a2a18 55%, #c97d3a 100%)" },
+    fg: "text-white",
+    btn: "border-white/60 bg-white/15 text-white hover:bg-white/30",
+    close: "text-white/70 hover:bg-white/15 hover:text-white",
   },
   {
-    text: "Sign up to our newsletter for 10% off your first order",
-    cta: "Get 10% Off",
+    id: "newsletter",
+    text: "First rug? Take 10% off — join the list and your code lands instantly.",
+    sub: "One email a week. Unsubscribe any time.",
+    cta: "Get my 10%",
     to: "/contact" as const,
-    tint: "linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.6))",
+    style: { background: "linear-gradient(90deg, #f4ede2 0%, #e7d8c2 60%, #d9c3a5 100%)" },
+    fg: "text-foreground",
+    btn: "border-foreground/20 bg-white/60 text-foreground hover:bg-white",
+    close: "text-foreground/60 hover:bg-white/60 hover:text-foreground",
   },
 ];
 
+const PROMO_KEY = "mosiac.promo.dismiss";
+/** Snooze ladder: first dismiss hides it 2 minutes, second 10 minutes, then an hour. */
+const SNOOZE_MS = [2 * 60_000, 10 * 60_000, 60 * 60_000];
+
 export function PromoBar() {
-  const [dismissed, setDismissed] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [i, setI] = useState(0);
+
+  // Read the shared snooze state so a dismissal on one page carries to the next.
   useEffect(() => {
-    if (dismissed) return;
+    const check = () => {
+      let count = 0;
+      let until = 0;
+      try {
+        const raw = localStorage.getItem(PROMO_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as { count: number; until: number };
+          count = parsed.count ?? 0;
+          until = parsed.until ?? 0;
+        }
+      } catch {
+        /* ignore */
+      }
+      void count;
+      setVisible(Date.now() >= until);
+    };
+    check();
+    const t = setInterval(check, 5_000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
     const t = setInterval(() => setI((v) => (v + 1) % PROMOS.length), 6500);
     return () => clearInterval(t);
-  }, [dismissed]);
-  if (dismissed) return null;
+  }, [visible]);
+
+  function dismiss() {
+    let count = 0;
+    try {
+      const raw = localStorage.getItem(PROMO_KEY);
+      if (raw) count = (JSON.parse(raw) as { count: number }).count ?? 0;
+    } catch {
+      /* ignore */
+    }
+    const next = count + 1;
+    const wait = SNOOZE_MS[Math.min(next - 1, SNOOZE_MS.length - 1)];
+    try {
+      localStorage.setItem(PROMO_KEY, JSON.stringify({ count: next, until: Date.now() + wait }));
+    } catch {
+      /* ignore */
+    }
+    setVisible(false);
+  }
+
+  if (!visible) return null;
   const promo = PROMOS[i];
   return (
     <div className="container-x mx-auto max-w-[1400px] pb-3">
-      <div className="relative overflow-hidden rounded-2xl border border-white/40 shadow-sm">
-        <img
-          src={promoBg}
-          alt=""
-          aria-hidden
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0" style={{ background: promo.tint }} />
-        <div className="relative flex items-center gap-3 px-4 py-3 md:px-6">
-          <p key={promo.text} className="min-w-0 flex-1 animate-fade-in text-[13px] font-medium leading-snug text-foreground md:text-sm">
-            {promo.text}
-          </p>
+      <div className="relative overflow-hidden rounded-2xl border border-white/30 shadow-sm" style={promo.style}>
+        <div className={`relative flex items-center gap-3 px-4 py-3 md:px-6 ${promo.fg}`}>
+          <div key={promo.id} className="min-w-0 flex-1 animate-fade-in">
+            <p className="text-[13px] font-semibold leading-snug md:text-sm">{promo.text}</p>
+            <p className="mt-0.5 text-[11px] opacity-70">{promo.sub}</p>
+          </div>
           <Link
             to={promo.to}
-            className="hidden whitespace-nowrap rounded-full border border-white/70 bg-white/40 px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-foreground backdrop-blur-md transition-colors hover:bg-white/70 sm:inline-block"
+            className={`hidden whitespace-nowrap rounded-full border px-5 py-2 text-[11px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors sm:inline-block ${promo.btn}`}
           >
             {promo.cta}
           </Link>
           <button
-            onClick={() => setDismissed(true)}
+            onClick={dismiss}
             aria-label="Dismiss promotion"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-foreground/70 transition-colors hover:bg-white/50 hover:text-foreground"
+            className={`grid h-8 w-8 shrink-0 place-items-center rounded-full transition-colors ${promo.close}`}
           >
             <X className="h-4 w-4" />
           </button>
