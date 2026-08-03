@@ -111,7 +111,7 @@ function ContactPage() {
                   <label htmlFor="message" className="eyebrow text-muted-foreground">Message</label>
                   <textarea id="message" name="message" required rows={4} placeholder="Tell us about the space, the size, and the feeling you're after." className={FIELD} />
                 </div>
-                {status === "error" && <p className="text-sm text-destructive">{err}</p>}
+                {status === "error" && <p className="text-sm text-accent">{err}</p>}
                 <button
                   disabled={status === "loading"}
                   className="w-full rounded-full bg-foreground px-8 py-4 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto sm:px-12"
