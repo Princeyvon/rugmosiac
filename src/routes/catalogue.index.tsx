@@ -83,8 +83,12 @@ function CataloguePage() {
                 <div className="relative aspect-square overflow-hidden rounded-sm bg-muted">
                   <WishlistHeart product={{ productId: p.id, slug: p.slug, name: p.name, image: resolveImage(p.main_image_url) }} />
                   {resolveImage(p.main_image_url) && (
-                    <img src={resolveImage(p.main_image_url)} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <img src={resolveImage(p.main_image_url)} alt={p.name} loading="lazy" className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${p.hover_image_url ? "group-hover:opacity-0" : ""}`} />
                   )}
+                  {resolveImage(p.hover_image_url) && (
+                    <img src={resolveImage(p.hover_image_url)} alt="" aria-hidden loading="lazy" className="absolute inset-0 h-full w-full scale-105 object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+                  )}
+
                 </div>
                 <div className="mt-5 flex items-start justify-between gap-4">
                   <div>
