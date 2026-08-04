@@ -6,6 +6,8 @@ import { subscribeNewsletter } from "@/lib/forms.functions";
 import { CURRENCIES, useCurrency, type Currency } from "@/lib/currency";
 import { useCart, useWishlist, useHydratedCounts } from "@/lib/store";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { FAQ_SECTIONS } from "@/lib/faq-content";
+
 
 export const WHATSAPP_NUMBER = "250796664868";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
