@@ -48,7 +48,32 @@ const PROMO_KEY = "mosiac.promo.dismiss";
 /** Snooze ladder: first dismiss hides it 2 minutes, second 10 minutes, then an hour. */
 const SNOOZE_MS = [2 * 60_000, 10 * 60_000, 60 * 60_000];
 
+/**
+ * The promo bar sits inside the sticky header, so its height shifts every
+ * fixed-position element below it. Publish the measured height so the floating
+ * wordmark rides up with the page the moment the bar is dismissed.
+ */
+let promoHeight = 0;
+const promoListeners = new Set<(h: number) => void>();
+function publishPromoHeight(h: number) {
+  if (Math.abs(h - promoHeight) < 0.5) return;
+  promoHeight = h;
+  promoListeners.forEach((fn) => fn(h));
+}
+export function usePromoHeight() {
+  const [h, setH] = useState(0);
+  useEffect(() => {
+    setH(promoHeight);
+    promoListeners.add(setH);
+    return () => {
+      promoListeners.delete(setH);
+    };
+  }, []);
+  return h;
+}
+
 export function PromoBar() {
+
   const [visible, setVisible] = useState(false);
   const [i, setI] = useState(0);
 
