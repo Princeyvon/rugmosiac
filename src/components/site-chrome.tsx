@@ -124,11 +124,20 @@ export function PromoBar() {
     setVisible(false);
   }
 
-  if (!visible) return null;
   const promo = PROMOS[i];
   return (
-    <div className="container-x mx-auto max-w-[1400px] pb-3">
+    <div
+      ref={(node) => {
+        if (!node || !visible) {
+          publishPromoHeight(0);
+          return;
+        }
+        publishPromoHeight(node.getBoundingClientRect().height);
+      }}
+      className={`container-x mx-auto max-w-[1400px] ${visible ? "pb-3" : "hidden"}`}
+    >
       <div className="relative overflow-hidden rounded-2xl border border-white/30 shadow-sm" style={promo.style}>
+
         <div className={`relative flex items-center gap-3 px-4 py-3 md:px-6 ${promo.fg}`}>
           <div key={promo.id} className="min-w-0 flex-1 animate-fade-in">
             <p className="text-[13px] font-semibold leading-snug md:text-sm">{promo.text}</p>
