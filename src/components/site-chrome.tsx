@@ -326,16 +326,21 @@ export function Nav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === "/";
   const pScroll = useScrollProgress(220);
-  // Off the home page the wordmark stays small and centered in the nav —
+  // Off the home page the wordmark stays small and centered in the nav, with
   // no huge-hero-to-nav shrink animation.
   const p = isHome ? pScroll : 1;
   const scrolled = p > 0.02;
+  const promoH = usePromoHeight();
 
-  // Interpolated brand transforms — driven directly by scroll for a seamless
+  // Interpolated brand transforms, driven directly by scroll for a seamless
   // "card pushes the wordmark up into the nav" feel. No CSS transition on
   // these values so they track scroll 1:1.
-  const size = 240 - (240 - 39) * p; // px — settles a touch larger in the nav
-  const top = 150 - (150 - 14) * p; // px from viewport top
+  const size = 240 - (240 - 39) * p; // px, settles a touch larger in the nav
+  // The resting position follows the promo bar: when it is dismissed the page
+  // rises, so the wordmark rises with it instead of covering the hero card.
+  const restTop = 62 + promoH;
+  const top = restTop - (restTop - 14) * p; // px from viewport top
+
 
 
   const pillCls = `rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-wider transition-all duration-300 ${
