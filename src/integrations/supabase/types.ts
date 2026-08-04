@@ -231,15 +231,18 @@ export type Database = {
           base_price_usd: number | null
           category_id: string | null
           color_palette: string[] | null
+          colorways: Json
           created_at: string
           description: string | null
           featured: boolean
           featured_order: number
+          hover_image_url: string | null
           id: string
           is_published: boolean
           main_image_url: string | null
           material: string | null
           name: string
+          notes: string | null
           production_time: string | null
           shape: Database["public"]["Enums"]["rug_shape"]
           short_description: string | null
@@ -253,15 +256,18 @@ export type Database = {
           base_price_usd?: number | null
           category_id?: string | null
           color_palette?: string[] | null
+          colorways?: Json
           created_at?: string
           description?: string | null
           featured?: boolean
           featured_order?: number
+          hover_image_url?: string | null
           id?: string
           is_published?: boolean
           main_image_url?: string | null
           material?: string | null
           name: string
+          notes?: string | null
           production_time?: string | null
           shape?: Database["public"]["Enums"]["rug_shape"]
           short_description?: string | null
@@ -275,15 +281,18 @@ export type Database = {
           base_price_usd?: number | null
           category_id?: string | null
           color_palette?: string[] | null
+          colorways?: Json
           created_at?: string
           description?: string | null
           featured?: boolean
           featured_order?: number
+          hover_image_url?: string | null
           id?: string
           is_published?: boolean
           main_image_url?: string | null
           material?: string | null
           name?: string
+          notes?: string | null
           production_time?: string | null
           shape?: Database["public"]["Enums"]["rug_shape"]
           short_description?: string | null
