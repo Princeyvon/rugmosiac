@@ -52,10 +52,10 @@ export type ProductInput = {
   slug: string;
   name: string;
   category_id: string | null;
-  shape: string;
+  shape: "rectangle" | "circular" | "runner" | "organic";
   short_description: string | null;
   description: string | null;
-  stock_status: string;
+  stock_status: "in_stock" | "made_to_order" | "out_of_stock";
   production_time: string | null;
   material: string | null;
   featured: boolean;
