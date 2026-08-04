@@ -24,6 +24,7 @@ export type Product = {
   short_description: string | null;
   description: string | null;
   main_image_url: string | null;
+  hover_image_url: string | null;
   base_price_rwf: number | null;
   base_price_usd: number | null;
   stock_status: string;
@@ -53,7 +54,7 @@ export const listProducts = createServerFn({ method: "GET" })
     const s = getClient();
     let q = s
       .from("products")
-      .select("id, slug, name, short_description, main_image_url, base_price_rwf, base_price_usd, stock_status, shape, tags, category:categories(slug, name)")
+      .select("id, slug, name, short_description, main_image_url, hover_image_url, color_palette, base_price_rwf, base_price_usd, stock_status, shape, tags, category:categories(slug, name)")
       .eq("is_published", true)
       .order("featured_order", { ascending: true })
       .order("created_at", { ascending: false });
@@ -70,7 +71,7 @@ export const listFeatured = createServerFn({ method: "GET" }).handler(async () =
   const s = getClient();
   const { data, error } = await s
     .from("products")
-    .select("id, slug, name, short_description, main_image_url, base_price_rwf, base_price_usd, stock_status, tags, category:categories(slug, name)")
+    .select("id, slug, name, short_description, main_image_url, hover_image_url, color_palette, base_price_rwf, base_price_usd, stock_status, tags, category:categories(slug, name)")
     .eq("is_published", true)
     .eq("featured", true)
     .order("featured_order");
@@ -111,7 +112,7 @@ export const listRelated = createServerFn({ method: "GET" })
     if (!current) return [] as Product[];
     let q = s
       .from("products")
-      .select("id, slug, name, short_description, main_image_url, base_price_rwf, base_price_usd, stock_status, tags, category:categories(slug, name)")
+      .select("id, slug, name, short_description, main_image_url, hover_image_url, color_palette, base_price_rwf, base_price_usd, stock_status, tags, category:categories(slug, name)")
       .eq("is_published", true)
       .neq("id", current.id)
       .limit(4);
@@ -121,7 +122,7 @@ export const listRelated = createServerFn({ method: "GET" })
     // Fallback: any other 4 rugs
     const { data: fallback } = await s
       .from("products")
-      .select("id, slug, name, short_description, main_image_url, base_price_rwf, base_price_usd, stock_status, tags, category:categories(slug, name)")
+      .select("id, slug, name, short_description, main_image_url, hover_image_url, color_palette, base_price_rwf, base_price_usd, stock_status, tags, category:categories(slug, name)")
       .eq("is_published", true)
       .neq("id", current.id)
       .limit(4);
