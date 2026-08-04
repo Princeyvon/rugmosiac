@@ -222,6 +222,26 @@ function useScrollProgress(range = 360) {
 }
 
 
+/** Everything outside the catalogue that search should be able to surface. */
+type PageHit = { kind: "page"; title: string; blurb: string; to: string; hash?: string };
+
+const SEARCHABLE_PAGES: PageHit[] = [
+  { kind: "page", title: "Shop all rugs", blurb: "The full Mosiac catalogue, filter by shape, colour and price.", to: "/catalogue" },
+  { kind: "page", title: "Explore Mosiac", blurb: "Our rugs photographed in real homes and studios.", to: "/explore" },
+  { kind: "page", title: "Custom rugs", blurb: "Any design, any size. Start a custom commission.", to: "/custom" },
+  { kind: "page", title: "About the studio", blurb: "How we hand tuft every rug in Kigali, plus full FAQs.", to: "/how-it-works" },
+  { kind: "page", title: "Contact us", blurb: "WhatsApp, email and a callback request.", to: "/contact" },
+  { kind: "page", title: "Frequently asked questions", blurb: "Shipping, returns, care, custom work and pricing.", to: "/faq" },
+  { kind: "page", title: "Sizing guide", blurb: "Rug dimensions, weights and how to pick a size.", to: "/faq" },
+];
+
+function scoreText(needle: string, haystack: string) {
+  const h = haystack.toLowerCase();
+  if (h.includes(needle)) return h.startsWith(needle) ? 3 : 2;
+  // Loose intent match: every word in the query appears somewhere.
+  return needle.split(/\s+/).every((w) => w.length > 2 && h.includes(w)) ? 1 : 0;
+}
+
 function SearchOverlay({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState("");
   const [items, setItems] = useState<Product[] | null>(null);
@@ -242,30 +262,55 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  const needle = q.trim().toLowerCase();
+
   const results = useMemo(() => {
     if (!items) return [];
-    const needle = q.trim().toLowerCase();
-    if (!needle) return items.slice(0, 6);
+    if (!needle) return items.slice(0, 5);
     return items
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(needle) ||
-          p.short_description?.toLowerCase().includes(needle) ||
-          p.category?.name.toLowerCase().includes(needle),
-      )
-      .slice(0, 8);
-  }, [items, q]);
+      .map((p) => ({
+        p,
+        s: Math.max(
+          scoreText(needle, p.name) * 2,
+          scoreText(needle, p.short_description ?? ""),
+          scoreText(needle, p.category?.name ?? ""),
+          scoreText(needle, (p.tags ?? []).join(" ")),
+        ),
+      }))
+      .filter((r) => r.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 6)
+      .map((r) => r.p);
+  }, [items, needle]);
+
+  const pageHits = useMemo(() => {
+    if (!needle) return SEARCHABLE_PAGES.slice(0, 3);
+    return SEARCHABLE_PAGES.filter((p) => scoreText(needle, `${p.title} ${p.blurb}`) > 0).slice(0, 4);
+  }, [needle]);
+
+  const answers = useMemo(() => {
+    if (needle.length < 3) return [];
+    return FAQ_SECTIONS.flatMap((section) =>
+      section.items
+        .filter((item) => scoreText(needle, `${item.q} ${item.a}`) > 0)
+        .map((item) => ({ section: section.title, ...item })),
+    ).slice(0, 3);
+  }, [needle]);
+
+  const empty = results.length === 0 && pageHits.length === 0 && answers.length === 0;
+
   return (
     <div className="fixed inset-0 z-[70] bg-background/95 backdrop-blur-md animate-fade-in" onClick={onClose}>
-      <div
-        className="mx-auto mt-24 max-w-2xl px-6"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="mx-auto mt-24 max-w-2xl px-6" onClick={(e) => e.stopPropagation()}>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             if (results[0]) {
               navigate({ to: "/catalogue/$slug", params: { slug: results[0].slug } });
+              onClose();
+            } else if (pageHits[0]) {
+              navigate({ to: pageHits[0].to });
               onClose();
             }
           }}
@@ -276,48 +321,97 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search rugs, categories…"
+            placeholder="Search rugs, pages or ask a question"
             className="flex-1 bg-transparent text-2xl outline-none placeholder:text-muted-foreground"
           />
           <button type="button" onClick={onClose} aria-label="Close search" className="p-2">
             <X className="h-5 w-5" />
           </button>
         </form>
-        <div className="mt-6 max-h-[60vh] overflow-y-auto">
+
+        <div className="mt-6 max-h-[62vh] space-y-7 overflow-y-auto pb-10">
           {items === null ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
-          ) : results.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">No matches. Try another word.</div>
+          ) : empty ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              Nothing matched. Try a colour, a shape, or something like "shipping".
+            </div>
           ) : (
-            <ul className="divide-y divide-border">
-              {results.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    to="/catalogue/$slug"
-                    params={{ slug: p.slug }}
-                    onClick={onClose}
-                    className="flex items-center gap-4 py-3 transition-opacity hover:opacity-70"
-                  >
-                    {resolveImage(p.main_image_url) && (
-                      <img src={resolveImage(p.main_image_url)} alt="" className="h-14 w-14 rounded-sm object-cover" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-display text-base font-medium">{p.name}</div>
-                      <div className="truncate text-xs text-muted-foreground">
-                        {p.category?.name ?? "Rug"}
-                      </div>
-                    </div>
-                    <span className="eyebrow text-muted-foreground">View</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              {results.length > 0 && (
+                <section>
+                  <p className="eyebrow text-muted-foreground">{needle ? "Rugs" : "Popular rugs"}</p>
+                  <ul className="mt-2 divide-y divide-border">
+                    {results.map((p) => (
+                      <li key={p.id}>
+                        <Link
+                          to="/catalogue/$slug"
+                          params={{ slug: p.slug }}
+                          onClick={onClose}
+                          className="flex items-center gap-4 py-3 transition-opacity hover:opacity-70"
+                        >
+                          {resolveImage(p.main_image_url) && (
+                            <img src={resolveImage(p.main_image_url)} alt="" className="h-14 w-14 rounded-sm object-cover" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-display text-base font-medium">{p.name}</div>
+                            <div className="truncate text-xs text-muted-foreground">{p.category?.name ?? "Rug"}</div>
+                          </div>
+                          <span className="eyebrow shrink-0 text-muted-foreground">View</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {answers.length > 0 && (
+                <section>
+                  <p className="eyebrow text-muted-foreground">Answers</p>
+                  <ul className="mt-2 space-y-3">
+                    {answers.map((a) => (
+                      <li key={a.q} className="rounded-2xl border border-border p-4">
+                        <div className="text-sm font-semibold">{a.q}</div>
+                        <p className="mt-1.5 line-clamp-3 text-sm text-muted-foreground">{a.a}</p>
+                        <Link to="/faq" onClick={onClose} className="mt-2 inline-block text-xs font-semibold underline underline-offset-4">
+                          Read in full
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {pageHits.length > 0 && (
+                <section>
+                  <p className="eyebrow text-muted-foreground">Pages</p>
+                  <ul className="mt-2 divide-y divide-border">
+                    {pageHits.map((page) => (
+                      <li key={page.title}>
+                        <Link
+                          to={page.to}
+                          onClick={onClose}
+                          className="flex items-center gap-4 py-3 transition-opacity hover:opacity-70"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-semibold">{page.title}</div>
+                            <div className="truncate text-xs text-muted-foreground">{page.blurb}</div>
+                          </div>
+                          <span className="eyebrow shrink-0 text-muted-foreground">Open</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
           )}
         </div>
       </div>
     </div>
   );
 }
+
 
 export function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false);
