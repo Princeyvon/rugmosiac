@@ -257,7 +257,7 @@ function ProductPage() {
                 <span className="text-xs text-muted-foreground">{selectedColor}</span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {COLOR_SWATCHES.map((c) => {
+                {swatches.map((c) => {
                   const active = selectedColor === c.name;
                   return (
                     <button
