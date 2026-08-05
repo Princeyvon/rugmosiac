@@ -55,12 +55,32 @@ export const Route = createFileRoute("/catalogue/$slug")({
   component: ProductPage,
 });
 
-const COLOR_SWATCHES: Array<{ name: string; gradient: string }> = [
-  { name: "Buttermilk", gradient: "linear-gradient(90deg,#f2e6a8,#cfe3d8)" },
-  { name: "Moss", gradient: "linear-gradient(90deg,#4a5d34,#e6c9c1)" },
-  { name: "Terracotta", gradient: "linear-gradient(90deg,#4a2b17,#a97a5b)" },
-  { name: "Sand", gradient: "linear-gradient(90deg,#e9dfc6,#efe6ce)" },
-];
+/** Human readable name for a hex accent, used to label the colourway buttons. */
+function colourName(hex: string): string {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.slice(0, 2), 16) / 255;
+  const g = parseInt(clean.slice(2, 4), 16) / 255;
+  const b = parseInt(clean.slice(4, 6), 16) / 255;
+  if ([r, g, b].some((v) => Number.isNaN(v))) return "Accent";
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d < 0.08) return l > 0.8 ? "Ivory" : l > 0.45 ? "Stone" : l > 0.2 ? "Graphite" : "Ink";
+  let h = 0;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+  else if (max === g) h = ((b - r) / d + 2) * 60;
+  else h = ((r - g) / d + 4) * 60;
+  if (h < 15 || h >= 345) return l < 0.4 ? "Oxblood" : "Rust";
+  if (h < 40) return l < 0.45 ? "Terracotta" : "Amber";
+  if (h < 65) return l > 0.6 ? "Buttermilk" : "Ochre";
+  if (h < 160) return l < 0.4 ? "Forest" : "Moss";
+  if (h < 200) return "Teal";
+  if (h < 255) return l < 0.4 ? "Indigo" : "Cobalt";
+  if (h < 300) return "Plum";
+  return "Rose";
+}
+
 
 const TABS = ["Description", "Find your size", "Care instructions", "Shipping"] as const;
 type Tab = (typeof TABS)[number];
