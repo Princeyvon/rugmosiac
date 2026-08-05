@@ -454,7 +454,7 @@ function ProductPage() {
 // ---------- Sizing guide ----------
 
 function SizingGuide({
-  sizes, selectedSize, setSelectedSize, units, setUnits, material,
+  sizes, selectedSize, setSelectedSize, units, setUnits, material, shape,
 }: {
   sizes: SizeRow[];
   selectedSize: string;
@@ -462,19 +462,30 @@ function SizingGuide({
   units: "imperial" | "metric";
   setUnits: (u: "imperial" | "metric") => void;
   material: string;
+  shape?: string | null;
 }) {
-  const fallbackSizes: SizeRow[] = [
-    { id: "s", label: "S", width_cm: 90, height_cm: 150, weight_kg: 3.6 },
-    { id: "m", label: "M", width_cm: 160, height_cm: 230, weight_kg: 9.9 },
-    { id: "l", label: "L", width_cm: 200, height_cm: 300, weight_kg: 16.2 },
-    { id: "xl", label: "XL", width_cm: 240, height_cm: 340, weight_kg: 22 },
-  ];
+  const isRound = shape === "circular";
+  const fallbackSizes: SizeRow[] = isRound
+    ? [
+        { id: "s", label: "S", width_cm: 90, height_cm: 90, weight_kg: 2.4 },
+        { id: "m", label: "M", width_cm: 120, height_cm: 120, weight_kg: 4.3 },
+        { id: "l", label: "L", width_cm: 150, height_cm: 150, weight_kg: 6.7 },
+      ]
+    : [
+        { id: "s", label: "S", width_cm: 90, height_cm: 150, weight_kg: 3.6 },
+        { id: "m", label: "M", width_cm: 160, height_cm: 230, weight_kg: 9.9 },
+        { id: "l", label: "L", width_cm: 200, height_cm: 300, weight_kg: 16.2 },
+        { id: "xl", label: "XL", width_cm: 240, height_cm: 340, weight_kg: 22 },
+      ];
   const list = sizes.length > 0 ? sizes : fallbackSizes;
   const active = list.find((s) => s.id === selectedSize) ?? list[0];
-  const wCm = active?.width_cm ?? 160;
-  const hCm = active?.height_cm ?? 230;
+  const wCm = active?.width_cm ?? (isRound ? 120 : 160);
+  const hCm = active?.height_cm ?? (isRound ? 120 : 230);
   // Weight = rug area in m² × 3.8 kg/m² (hand-tufted wool pile).
-  const kg = (wCm / 100) * (hCm / 100) * 3.8;
+  const areaM2 = isRound
+    ? Math.PI * Math.pow(wCm / 200, 2)
+    : (wCm / 100) * (hCm / 100);
+  const kg = areaM2 * 3.8;
 
   const cmToFt = (v: number) => Math.round((v / 30.48) * 10) / 10;
   const kgToLb = (v: number) => Math.round(v * 2.2046 * 10) / 10;
@@ -486,7 +497,7 @@ function SizingGuide({
   // Scale rug to fit within a viewbox while preserving aspect ratio
   const maxW = 900;
   const maxH = 420;
-  const ratio = wCm / hCm;
+  const ratio = isRound ? 1 : wCm / hCm;
   const boxRatio = maxW / maxH;
   const rectW = ratio > boxRatio ? maxW : maxH * ratio;
   const rectH = ratio > boxRatio ? maxW / ratio : maxH;
@@ -494,6 +505,7 @@ function SizingGuide({
   const cy = 560 / 2 + 20;
   const x = cx - rectW / 2;
   const y = cy - rectH / 2;
+
 
   return (
     <div className="mx-auto max-w-6xl rounded-3xl bg-[#f4ede2] p-6 md:p-10">
