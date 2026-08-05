@@ -55,12 +55,32 @@ export const Route = createFileRoute("/catalogue/$slug")({
   component: ProductPage,
 });
 
-const COLOR_SWATCHES: Array<{ name: string; gradient: string }> = [
-  { name: "Buttermilk", gradient: "linear-gradient(90deg,#f2e6a8,#cfe3d8)" },
-  { name: "Moss", gradient: "linear-gradient(90deg,#4a5d34,#e6c9c1)" },
-  { name: "Terracotta", gradient: "linear-gradient(90deg,#4a2b17,#a97a5b)" },
-  { name: "Sand", gradient: "linear-gradient(90deg,#e9dfc6,#efe6ce)" },
-];
+/** Human readable name for a hex accent, used to label the colourway buttons. */
+function colourName(hex: string): string {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.slice(0, 2), 16) / 255;
+  const g = parseInt(clean.slice(2, 4), 16) / 255;
+  const b = parseInt(clean.slice(4, 6), 16) / 255;
+  if ([r, g, b].some((v) => Number.isNaN(v))) return "Accent";
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d < 0.08) return l > 0.8 ? "Ivory" : l > 0.45 ? "Stone" : l > 0.2 ? "Graphite" : "Ink";
+  let h = 0;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+  else if (max === g) h = ((b - r) / d + 2) * 60;
+  else h = ((r - g) / d + 4) * 60;
+  if (h < 15 || h >= 345) return l < 0.4 ? "Oxblood" : "Rust";
+  if (h < 40) return l < 0.45 ? "Terracotta" : "Amber";
+  if (h < 65) return l > 0.6 ? "Buttermilk" : "Ochre";
+  if (h < 160) return l < 0.4 ? "Forest" : "Moss";
+  if (h < 200) return "Teal";
+  if (h < 255) return l < 0.4 ? "Indigo" : "Cobalt";
+  if (h < 300) return "Plum";
+  return "Rose";
+}
+
 
 const TABS = ["Description", "Find your size", "Care instructions", "Shipping"] as const;
 type Tab = (typeof TABS)[number];
@@ -98,8 +118,19 @@ function ProductPage() {
     () => ((p.sizes ?? []) as SizeRow[]).slice().sort((a, b) => ((a as any).sort_order ?? 0) - ((b as any).sort_order ?? 0)),
     [p.sizes],
   );
+  // Colour buttons come from the rug's own palette so each swatch mirrors the
+  // accents actually tufted into that piece.
+  const swatches = useMemo(() => {
+    const palette = (p.color_palette ?? []).filter(Boolean);
+    if (palette.length === 0) return [{ name: "As shown", gradient: "linear-gradient(90deg,#d8cfc0,#b9a68e)" }];
+    return palette.map((hex, i) => ({
+      name: colourName(hex),
+      gradient: `linear-gradient(90deg, ${hex} 0%, ${palette[(i + 1) % palette.length]} 100%)`,
+    }));
+  }, [p.color_palette]);
   const [selectedSize, setSelectedSize] = useState(sizes[0]?.id ?? "");
-  const [selectedColor, setSelectedColor] = useState(COLOR_SWATCHES[0].name);
+  const [selectedColor, setSelectedColor] = useState(swatches[0].name);
+
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<Tab>("Description");
   const [units, setUnits] = useState<"imperial" | "metric">("imperial");
@@ -163,26 +194,20 @@ function ProductPage() {
             )}
           </aside>
 
-          {/* Center — stacked image cards */}
+          {/* Center: stacked image cards, each kept at its own natural shape */}
           <div className="flex flex-col gap-6">
-            {gallery.length === 0 && (
-              <div className="aspect-[4/5] rounded-3xl bg-muted" />
-            )}
+            {gallery.length === 0 && <div className="aspect-[4/5] rounded-3xl bg-muted" />}
             {gallery.map((src, i) => (
-              <div
+              <img
                 key={src}
-                className="overflow-hidden rounded-3xl bg-muted"
-                style={{ background: i % 2 === 0 ? "#f0eadf" : "#efe6d3" }}
-              >
-                <img
-                  src={src}
-                  alt={`${p.name} — view ${i + 1}`}
-                  loading={i === 0 ? "eager" : "lazy"}
-                  className="h-full w-full object-contain aspect-[4/5]"
-                />
-              </div>
+                src={src}
+                alt={`${p.name}, view ${i + 1}`}
+                loading={i === 0 ? "eager" : "lazy"}
+                className="w-full rounded-3xl object-cover"
+              />
             ))}
           </div>
+
 
           {/* Right column — sticky controls */}
           <aside className="lg:sticky lg:top-28 self-start">
@@ -232,7 +257,7 @@ function ProductPage() {
                 <span className="text-xs text-muted-foreground">{selectedColor}</span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {COLOR_SWATCHES.map((c) => {
+                {swatches.map((c) => {
                   const active = selectedColor === c.name;
                   return (
                     <button
@@ -358,6 +383,8 @@ function ProductPage() {
                 units={units}
                 setUnits={setUnits}
                 material={p.material ?? "New Zealand Wool"}
+                shape={p.shape}
+
               />
             )}
 
@@ -429,7 +456,7 @@ function ProductPage() {
 // ---------- Sizing guide ----------
 
 function SizingGuide({
-  sizes, selectedSize, setSelectedSize, units, setUnits, material,
+  sizes, selectedSize, setSelectedSize, units, setUnits, material, shape,
 }: {
   sizes: SizeRow[];
   selectedSize: string;
@@ -437,19 +464,30 @@ function SizingGuide({
   units: "imperial" | "metric";
   setUnits: (u: "imperial" | "metric") => void;
   material: string;
+  shape?: string | null;
 }) {
-  const fallbackSizes: SizeRow[] = [
-    { id: "s", label: "S", width_cm: 90, height_cm: 150, weight_kg: 3.6 },
-    { id: "m", label: "M", width_cm: 160, height_cm: 230, weight_kg: 9.9 },
-    { id: "l", label: "L", width_cm: 200, height_cm: 300, weight_kg: 16.2 },
-    { id: "xl", label: "XL", width_cm: 240, height_cm: 340, weight_kg: 22 },
-  ];
+  const isRound = shape === "circular";
+  const fallbackSizes: SizeRow[] = isRound
+    ? [
+        { id: "s", label: "S", width_cm: 90, height_cm: 90, weight_kg: 2.4 },
+        { id: "m", label: "M", width_cm: 120, height_cm: 120, weight_kg: 4.3 },
+        { id: "l", label: "L", width_cm: 150, height_cm: 150, weight_kg: 6.7 },
+      ]
+    : [
+        { id: "s", label: "S", width_cm: 90, height_cm: 150, weight_kg: 3.6 },
+        { id: "m", label: "M", width_cm: 160, height_cm: 230, weight_kg: 9.9 },
+        { id: "l", label: "L", width_cm: 200, height_cm: 300, weight_kg: 16.2 },
+        { id: "xl", label: "XL", width_cm: 240, height_cm: 340, weight_kg: 22 },
+      ];
   const list = sizes.length > 0 ? sizes : fallbackSizes;
   const active = list.find((s) => s.id === selectedSize) ?? list[0];
-  const wCm = active?.width_cm ?? 160;
-  const hCm = active?.height_cm ?? 230;
+  const wCm = active?.width_cm ?? (isRound ? 120 : 160);
+  const hCm = active?.height_cm ?? (isRound ? 120 : 230);
   // Weight = rug area in m² × 3.8 kg/m² (hand-tufted wool pile).
-  const kg = (wCm / 100) * (hCm / 100) * 3.8;
+  const areaM2 = isRound
+    ? Math.PI * Math.pow(wCm / 200, 2)
+    : (wCm / 100) * (hCm / 100);
+  const kg = areaM2 * 3.8;
 
   const cmToFt = (v: number) => Math.round((v / 30.48) * 10) / 10;
   const kgToLb = (v: number) => Math.round(v * 2.2046 * 10) / 10;
@@ -461,7 +499,7 @@ function SizingGuide({
   // Scale rug to fit within a viewbox while preserving aspect ratio
   const maxW = 900;
   const maxH = 420;
-  const ratio = wCm / hCm;
+  const ratio = isRound ? 1 : wCm / hCm;
   const boxRatio = maxW / maxH;
   const rectW = ratio > boxRatio ? maxW : maxH * ratio;
   const rectH = ratio > boxRatio ? maxW / ratio : maxH;
@@ -469,6 +507,7 @@ function SizingGuide({
   const cy = 560 / 2 + 20;
   const x = cx - rectW / 2;
   const y = cy - rectH / 2;
+
 
   return (
     <div className="mx-auto max-w-6xl rounded-3xl bg-[#f4ede2] p-6 md:p-10">
@@ -506,25 +545,40 @@ function SizingGuide({
 
       <div className="mt-8">
         <svg viewBox="0 0 1080 620" className="w-full h-auto">
-          {/* Top dimension label */}
+          {/* Top dimension label (diameter for round rugs) */}
           <text x={cx} y={y - 26} textAnchor="middle" className="fill-muted-foreground" style={{ fontSize: 22 }}>
-            {wLabel}
+            {isRound ? `⌀ ${wLabel}` : wLabel}
           </text>
           <line x1={x} x2={x + rectW} y1={y - 12} y2={y - 12} stroke="currentColor" strokeOpacity={0.25} />
-          {/* Left dimension label */}
-          <text x={x - 28} y={cy + 6} textAnchor="end" className="fill-muted-foreground" style={{ fontSize: 22 }}>
-            {hLabel}
-          </text>
-          <line x1={x - 12} x2={x - 12} y1={y} y2={y + rectH} stroke="currentColor" strokeOpacity={0.25} />
+          {!isRound && (
+            <>
+              <text x={x - 28} y={cy + 6} textAnchor="end" className="fill-muted-foreground" style={{ fontSize: 22 }}>
+                {hLabel}
+              </text>
+              <line x1={x - 12} x2={x - 12} y1={y} y2={y + rectH} stroke="currentColor" strokeOpacity={0.25} />
+            </>
+          )}
 
-          {/* Rug outline sketch — cream fill with subtle irregular notches at the corners */}
-          <path
-            d={rugPath(x, y, rectW, rectH)}
-            fill="#efe6d0"
-            stroke="#c9bda2"
-            strokeWidth={1.2}
-            strokeLinejoin="round"
-          />
+          {/* Rug outline sketch: circle for round rugs, notched rectangle otherwise */}
+          {isRound ? (
+            <circle
+              cx={cx}
+              cy={cy}
+              r={Math.min(rectW, rectH) / 2}
+              fill="#efe6d0"
+              stroke="#c9bda2"
+              strokeWidth={1.2}
+            />
+          ) : (
+            <path
+              d={rugPath(x, y, rectW, rectH)}
+              fill="#efe6d0"
+              stroke="#c9bda2"
+              strokeWidth={1.2}
+              strokeLinejoin="round"
+            />
+          )}
+
         </svg>
       </div>
 

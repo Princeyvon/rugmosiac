@@ -82,19 +82,26 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => {
     const format = ({ rwf, usd }: { rwf?: number | null; usd?: number | null }) => {
+      // RWF is the catalogue's source of truth: show the exact listed price.
+      if (currency === "RWF" && typeof rwf === "number" && rwf > 0) {
+        return `${SYMBOLS.RWF}${Math.round(rwf).toLocaleString()}`;
+      }
       // Derive a USD base price. If only RWF is set, convert using the live RWF rate.
       let baseUsd: number | null = null;
       if (typeof usd === "number" && usd > 0) baseUsd = Number(usd);
       else if (typeof rwf === "number" && rwf > 0) baseUsd = Number(rwf) / (rates.RWF || FALLBACK.RWF);
       if (baseUsd == null) return "Price on request";
       const converted = baseUsd * (rates[currency] || 1);
-      const rounded = currency === "RWF" || currency === "KES" ? Math.round(converted) : Math.round(converted * 100) / 100;
+      // Round up so a converted price never undercuts the RWF list price.
+      const whole = currency === "RWF" || currency === "KES";
+      const rounded = whole ? Math.ceil(converted) : Math.ceil(converted * 100) / 100;
       const formatted = rounded.toLocaleString(undefined, {
-        minimumFractionDigits: currency === "RWF" || currency === "KES" ? 0 : 0,
-        maximumFractionDigits: currency === "RWF" || currency === "KES" ? 0 : 2,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: whole ? 0 : 2,
       });
       return `${SYMBOLS[currency]}${formatted}`;
     };
+
     return { currency, setCurrency, rates, format };
   }, [currency, rates]);
 

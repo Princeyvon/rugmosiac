@@ -903,13 +903,15 @@ function CartDrawer() {
               <span className="eyebrow text-muted-foreground">Subtotal</span>
               <span className="font-display text-lg">{format({ usd: subtotalUsd })}</span>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">Shipping calculated at checkout.</p>
-            <button
-              disabled
-              className="mt-4 w-full rounded-full bg-foreground py-3 text-xs font-semibold uppercase tracking-wider text-background opacity-90"
+            <p className="mt-2 text-xs text-muted-foreground">Delivery calculated at checkout.</p>
+            <Link
+              to="/checkout"
+              onClick={() => setOpen(false)}
+              className="mt-4 flex w-full items-center justify-center rounded-full bg-foreground py-3 text-xs font-semibold uppercase tracking-wider text-background transition-opacity hover:opacity-90"
             >
-              Checkout — coming soon
-            </button>
+              Proceed to checkout
+            </Link>
+
             <a
               href={`${WHATSAPP_URL}?text=${encodeURIComponent(
                 "Hi Mosiac — I'd like to place this order:\n" +
