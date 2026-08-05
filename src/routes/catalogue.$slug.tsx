@@ -383,6 +383,8 @@ function ProductPage() {
                 units={units}
                 setUnits={setUnits}
                 material={p.material ?? "New Zealand Wool"}
+                shape={p.shape}
+
               />
             )}
 
