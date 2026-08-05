@@ -543,25 +543,40 @@ function SizingGuide({
 
       <div className="mt-8">
         <svg viewBox="0 0 1080 620" className="w-full h-auto">
-          {/* Top dimension label */}
+          {/* Top dimension label (diameter for round rugs) */}
           <text x={cx} y={y - 26} textAnchor="middle" className="fill-muted-foreground" style={{ fontSize: 22 }}>
-            {wLabel}
+            {isRound ? `⌀ ${wLabel}` : wLabel}
           </text>
           <line x1={x} x2={x + rectW} y1={y - 12} y2={y - 12} stroke="currentColor" strokeOpacity={0.25} />
-          {/* Left dimension label */}
-          <text x={x - 28} y={cy + 6} textAnchor="end" className="fill-muted-foreground" style={{ fontSize: 22 }}>
-            {hLabel}
-          </text>
-          <line x1={x - 12} x2={x - 12} y1={y} y2={y + rectH} stroke="currentColor" strokeOpacity={0.25} />
+          {!isRound && (
+            <>
+              <text x={x - 28} y={cy + 6} textAnchor="end" className="fill-muted-foreground" style={{ fontSize: 22 }}>
+                {hLabel}
+              </text>
+              <line x1={x - 12} x2={x - 12} y1={y} y2={y + rectH} stroke="currentColor" strokeOpacity={0.25} />
+            </>
+          )}
 
-          {/* Rug outline sketch — cream fill with subtle irregular notches at the corners */}
-          <path
-            d={rugPath(x, y, rectW, rectH)}
-            fill="#efe6d0"
-            stroke="#c9bda2"
-            strokeWidth={1.2}
-            strokeLinejoin="round"
-          />
+          {/* Rug outline sketch: circle for round rugs, notched rectangle otherwise */}
+          {isRound ? (
+            <circle
+              cx={cx}
+              cy={cy}
+              r={Math.min(rectW, rectH) / 2}
+              fill="#efe6d0"
+              stroke="#c9bda2"
+              strokeWidth={1.2}
+            />
+          ) : (
+            <path
+              d={rugPath(x, y, rectW, rectH)}
+              fill="#efe6d0"
+              stroke="#c9bda2"
+              strokeWidth={1.2}
+              strokeLinejoin="round"
+            />
+          )}
+
         </svg>
       </div>
 
