@@ -149,6 +149,132 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          order_id: string
+          product_id: string | null
+          product_name: string
+          product_slug: string | null
+          qty: number
+          size_label: string | null
+          unit_price_rwf: number | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          product_slug?: string | null
+          qty?: number
+          size_label?: string | null
+          unit_price_rwf?: number | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          product_slug?: string | null
+          qty?: number
+          size_label?: string | null
+          unit_price_rwf?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          coupon_code: string | null
+          created_at: string
+          currency: string
+          customer_name: string
+          delivery_rwf: number
+          discount_rwf: number
+          email: string
+          id: string
+          notes: string | null
+          order_number: string
+          payment_method: string
+          phone: string
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal_rwf: number
+          total_rwf: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          currency?: string
+          customer_name: string
+          delivery_rwf?: number
+          discount_rwf?: number
+          email: string
+          id?: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: string
+          phone: string
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal_rwf?: number
+          total_rwf?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          currency?: string
+          customer_name?: string
+          delivery_rwf?: number
+          discount_rwf?: number
+          email?: string
+          id?: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: string
+          phone?: string
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal_rwf?: number
+          total_rwf?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           alt: string | null
@@ -439,6 +565,13 @@ export type Database = {
         | "in_production"
         | "complete"
         | "declined"
+      order_status:
+        | "pending"
+        | "confirmed"
+        | "in_production"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
       rug_shape: "rectangle" | "circular" | "runner" | "organic"
       stock_status: "in_stock" | "made_to_order" | "out_of_stock"
     }
@@ -577,6 +710,14 @@ export const Constants = {
         "in_production",
         "complete",
         "declined",
+      ],
+      order_status: [
+        "pending",
+        "confirmed",
+        "in_production",
+        "shipped",
+        "delivered",
+        "cancelled",
       ],
       rug_shape: ["rectangle", "circular", "runner", "organic"],
       stock_status: ["in_stock", "made_to_order", "out_of_stock"],
