@@ -98,8 +98,19 @@ function ProductPage() {
     () => ((p.sizes ?? []) as SizeRow[]).slice().sort((a, b) => ((a as any).sort_order ?? 0) - ((b as any).sort_order ?? 0)),
     [p.sizes],
   );
+  // Colour buttons come from the rug's own palette so each swatch mirrors the
+  // accents actually tufted into that piece.
+  const swatches = useMemo(() => {
+    const palette = (p.color_palette ?? []).filter(Boolean);
+    if (palette.length === 0) return [{ name: "As shown", gradient: "linear-gradient(90deg,#d8cfc0,#b9a68e)" }];
+    return palette.map((hex, i) => ({
+      name: colourName(hex),
+      gradient: `linear-gradient(90deg, ${hex} 0%, ${palette[(i + 1) % palette.length]} 100%)`,
+    }));
+  }, [p.color_palette]);
   const [selectedSize, setSelectedSize] = useState(sizes[0]?.id ?? "");
-  const [selectedColor, setSelectedColor] = useState(COLOR_SWATCHES[0].name);
+  const [selectedColor, setSelectedColor] = useState(swatches[0].name);
+
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<Tab>("Description");
   const [units, setUnits] = useState<"imperial" | "metric">("imperial");
