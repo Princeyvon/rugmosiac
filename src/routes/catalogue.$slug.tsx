@@ -163,26 +163,20 @@ function ProductPage() {
             )}
           </aside>
 
-          {/* Center — stacked image cards */}
+          {/* Center: stacked image cards, each kept at its own natural shape */}
           <div className="flex flex-col gap-6">
-            {gallery.length === 0 && (
-              <div className="aspect-[4/5] rounded-3xl bg-muted" />
-            )}
+            {gallery.length === 0 && <div className="aspect-[4/5] rounded-3xl bg-muted" />}
             {gallery.map((src, i) => (
-              <div
+              <img
                 key={src}
-                className="overflow-hidden rounded-3xl bg-muted"
-                style={{ background: i % 2 === 0 ? "#f0eadf" : "#efe6d3" }}
-              >
-                <img
-                  src={src}
-                  alt={`${p.name} — view ${i + 1}`}
-                  loading={i === 0 ? "eager" : "lazy"}
-                  className="h-full w-full object-contain aspect-[4/5]"
-                />
-              </div>
+                src={src}
+                alt={`${p.name}, view ${i + 1}`}
+                loading={i === 0 ? "eager" : "lazy"}
+                className="w-full rounded-3xl object-cover"
+              />
             ))}
           </div>
+
 
           {/* Right column — sticky controls */}
           <aside className="lg:sticky lg:top-28 self-start">
