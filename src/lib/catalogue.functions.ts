@@ -128,3 +128,68 @@ export const listRelated = createServerFn({ method: "GET" })
       .limit(4);
     return (fallback ?? []) as unknown as Product[];
   });
+
+export type ExploreShot = {
+  key: string;
+  url: string;
+  slug: string;
+  name: string;
+  productId: string;
+  base_price_rwf: number | null;
+  base_price_usd: number | null;
+};
+
+export const listExploreShots = createServerFn({ method: "GET" }).handler(async () => {
+  const s = getClient();
+  const { data, error } = await s
+    .from("products")
+    .select("id, slug, name, main_image_url, hover_image_url, base_price_rwf, base_price_usd, images:product_images(url, sort_order)")
+    .eq("is_published", true);
+  if (error) throw new Error(error.message);
+
+  const shots: ExploreShot[] = [];
+  const seen = new Set<string>();
+  for (const p of (data ?? []) as any[]) {
+    const urls = [
+      p.main_image_url,
+      p.hover_image_url,
+      ...((p.images ?? []) as any[])
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((i) => i.url),
+    ].filter(Boolean) as string[];
+    for (const url of urls) {
+      if (seen.has(url)) continue;
+      seen.add(url);
+      shots.push({
+        key: `${p.slug}-${shots.length}`,
+        url,
+        slug: p.slug,
+        name: p.name,
+        productId: p.id,
+        base_price_rwf: p.base_price_rwf,
+        base_price_usd: p.base_price_usd,
+      });
+    }
+  }
+
+  // Deterministic scatter so the same rug's photos don't stack together.
+  const byProduct = new Map<string, ExploreShot[]>();
+  for (const sh of shots) {
+    const arr = byProduct.get(sh.slug) ?? [];
+    arr.push(sh);
+    byProduct.set(sh.slug, arr);
+  }
+  const buckets = [...byProduct.values()];
+  const scattered: ExploreShot[] = [];
+  let round = 0;
+  while (scattered.length < shots.length) {
+    for (let b = 0; b < buckets.length; b++) {
+      const list = buckets[(b + round) % buckets.length];
+      const item = list[round];
+      if (item) scattered.push(item);
+    }
+    round++;
+    if (round > 50) break;
+  }
+  return scattered;
+});
