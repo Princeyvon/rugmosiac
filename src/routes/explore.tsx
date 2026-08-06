@@ -3,12 +3,13 @@ import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { Nav, Footer, FloatingWhatsApp, resolveImage, WishlistHeart } from "@/components/site-chrome";
 import { NewsletterWeekly } from "@/components/blocks";
 import { useCurrency } from "@/lib/currency";
-import { listProducts } from "@/lib/catalogue.functions";
+import { listExploreShots } from "@/lib/catalogue.functions";
 
 const exploreQO = queryOptions({
-  queryKey: ["explore"],
-  queryFn: () => listProducts({ data: {} }),
+  queryKey: ["explore-shots"],
+  queryFn: () => listExploreShots(),
 });
+
 
 export const Route = createFileRoute("/explore")({
   loader: ({ context }) => context.queryClient.ensureQueryData(exploreQO),
