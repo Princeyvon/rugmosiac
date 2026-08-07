@@ -33,21 +33,22 @@ const HOME_CATEGORIES = [
 
 const HERITAGE_SLIDES = [
   {
-    image: heritageBanner,
+    image: PHOTO.valley3,
     kicker: "New collection",
     title: "Introducing the",
     italic: "Heritage",
     suffix: "rugs",
   },
   {
-    image: heritage2,
+    image: PHOTO.geometric1,
     kicker: "Traditional patterns",
     title: "Woven with",
     italic: "intention",
     suffix: "",
   },
   {
-    image: heritage3,
+    image: PHOTO.uzu1,
+
     kicker: "Made in Kigali",
     title: "Tufted by",
     italic: "hand",
