@@ -4,7 +4,9 @@ import { Nav, Footer, WHATSAPP_URL } from "@/components/site-chrome";
 import { useCart } from "@/lib/store";
 import { useCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
+import { startMomoPayment, checkMomoPayment } from "@/lib/momo.functions";
 import { Minus, Plus, Trash2, Check, Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -50,6 +52,11 @@ function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<string | null>(null);
+  const [momo, setMomo] = useState<
+    { state: "prompted" | "successful" | "failed" | "unavailable"; reference?: string; message?: string } | null
+  >(null);
+  const [checkingMomo, setCheckingMomo] = useState(false);
+
 
   const subtotal = useMemo(
     () => items.reduce((s, i) => s + (i.unitPriceRwf ?? 0) * i.qty, 0),
@@ -125,10 +132,32 @@ function CheckoutPage() {
 
       clear();
       setPlaced(order.order_number);
+
+      if (payment === "momo") {
+        const res = await startMomoPayment({
+          data: { orderNumber: order.order_number, phone: form.phone, amountRwf: total },
+        });
+        if (res.ok) setMomo({ state: "prompted", reference: res.referenceId });
+        else if (!res.configured) setMomo({ state: "unavailable" });
+        else setMomo({ state: "failed", message: res.error });
+      }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function refreshMomo() {
+    if (!momo?.reference) return;
+    setCheckingMomo(true);
+    try {
+      const res = await checkMomoPayment({ data: { referenceId: momo.reference } });
+      if (res.status === "SUCCESSFUL") setMomo({ ...momo, state: "successful" });
+      else if (res.status === "FAILED") setMomo({ ...momo, state: "failed", message: "Payment declined or cancelled." });
+    } finally {
+      setCheckingMomo(false);
     }
   }
 
@@ -145,6 +174,39 @@ function CheckoutPage() {
             Your reference is <strong className="text-foreground">{placed}</strong>. Our studio will confirm your
             tufting slot and payment details by email within one working day.
           </p>
+
+          {momo?.state === "prompted" && (
+            <div className="mt-8 rounded-3xl bg-muted/50 p-6 text-left">
+              <p className="text-sm font-medium">Approve the MoMo prompt on your phone</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                We sent a payment request for {format({ rwf: total })} to {form.phone}. Enter your MoMo PIN to confirm.
+              </p>
+              <button
+                type="button"
+                onClick={refreshMomo}
+                disabled={checkingMomo}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-wider disabled:opacity-60"
+              >
+                {checkingMomo && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                I've paid — check status
+              </button>
+            </div>
+          )}
+          {momo?.state === "successful" && (
+            <p className="mt-8 rounded-3xl bg-muted/50 p-6 text-sm">Mobile Money payment confirmed. Thank you!</p>
+          )}
+          {momo?.state === "failed" && (
+            <p className="mt-8 rounded-3xl bg-muted/50 p-6 text-sm text-muted-foreground">
+              We couldn't complete the MoMo payment{momo.message ? ` (${momo.message})` : ""}. The studio will send you
+              payment details instead.
+            </p>
+          )}
+          {momo?.state === "unavailable" && (
+            <p className="mt-8 rounded-3xl bg-muted/50 p-6 text-sm text-muted-foreground">
+              Your order is saved. The studio will send MoMo payment instructions with your invoice.
+            </p>
+          )}
+
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link to="/catalogue" className="rounded-full bg-foreground px-6 py-3 text-xs font-semibold uppercase tracking-wider text-background">
               Keep browsing
