@@ -52,6 +52,11 @@ function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<string | null>(null);
+  const [momo, setMomo] = useState<
+    { state: "prompted" | "successful" | "failed" | "unavailable"; reference?: string; message?: string } | null
+  >(null);
+  const [checkingMomo, setCheckingMomo] = useState(false);
+
 
   const subtotal = useMemo(
     () => items.reduce((s, i) => s + (i.unitPriceRwf ?? 0) * i.qty, 0),
