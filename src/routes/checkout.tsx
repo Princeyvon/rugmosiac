@@ -149,6 +149,18 @@ function CheckoutPage() {
     }
   }
 
+  async function refreshMomo() {
+    if (!momo?.reference) return;
+    setCheckingMomo(true);
+    try {
+      const res = await checkMomoPayment({ data: { referenceId: momo.reference } });
+      if (res.status === "SUCCESSFUL") setMomo({ ...momo, state: "successful" });
+      else if (res.status === "FAILED") setMomo({ ...momo, state: "failed", message: "Payment declined or cancelled." });
+    } finally {
+      setCheckingMomo(false);
+    }
+  }
+
   if (placed) {
     return (
       <div className="min-h-screen bg-background text-foreground">
@@ -162,6 +174,39 @@ function CheckoutPage() {
             Your reference is <strong className="text-foreground">{placed}</strong>. Our studio will confirm your
             tufting slot and payment details by email within one working day.
           </p>
+
+          {momo?.state === "prompted" && (
+            <div className="mt-8 rounded-3xl bg-muted/50 p-6 text-left">
+              <p className="text-sm font-medium">Approve the MoMo prompt on your phone</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                We sent a payment request for {format({ rwf: total })} to {form.phone}. Enter your MoMo PIN to confirm.
+              </p>
+              <button
+                type="button"
+                onClick={refreshMomo}
+                disabled={checkingMomo}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-wider disabled:opacity-60"
+              >
+                {checkingMomo && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                I've paid — check status
+              </button>
+            </div>
+          )}
+          {momo?.state === "successful" && (
+            <p className="mt-8 rounded-3xl bg-muted/50 p-6 text-sm">Mobile Money payment confirmed. Thank you!</p>
+          )}
+          {momo?.state === "failed" && (
+            <p className="mt-8 rounded-3xl bg-muted/50 p-6 text-sm text-muted-foreground">
+              We couldn't complete the MoMo payment{momo.message ? ` (${momo.message})` : ""}. The studio will send you
+              payment details instead.
+            </p>
+          )}
+          {momo?.state === "unavailable" && (
+            <p className="mt-8 rounded-3xl bg-muted/50 p-6 text-sm text-muted-foreground">
+              Your order is saved. The studio will send MoMo payment instructions with your invoice.
+            </p>
+          )}
+
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link to="/catalogue" className="rounded-full bg-foreground px-6 py-3 text-xs font-semibold uppercase tracking-wider text-background">
               Keep browsing
