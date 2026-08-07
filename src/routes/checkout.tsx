@@ -132,6 +132,16 @@ function CheckoutPage() {
 
       clear();
       setPlaced(order.order_number);
+
+      if (payment === "momo") {
+        const res = await startMomoPayment({
+          data: { orderNumber: order.order_number, phone: form.phone, amountRwf: total },
+        });
+        if (res.ok) setMomo({ state: "prompted", reference: res.referenceId });
+        else if (!res.configured) setMomo({ state: "unavailable" });
+        else setMomo({ state: "failed", message: res.error });
+      }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
