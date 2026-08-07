@@ -216,7 +216,9 @@ function HeritageSlider() {
 /** Featured rugs — sticky horizontal scroll-jack through 10 rugs. */
 function FeaturedRugsSticky({ items }: { items: Product[] }) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const [p, setP] = useState(0);
+  const [maxShift, setMaxShift] = useState(0);
   const { format } = useCurrency();
 
   useEffect(() => {
@@ -224,6 +226,12 @@ function FeaturedRugsSticky({ items }: { items: Product[] }) {
     const update = () => {
       raf = 0;
       const el = wrapRef.current;
+      const track = trackRef.current;
+      if (track) {
+        // Stop exactly when the last card's right edge meets the viewport edge.
+        const pad = parseFloat(getComputedStyle(track).paddingLeft) || 0;
+        setMaxShift(Math.max(0, track.scrollWidth - window.innerWidth + pad));
+      }
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const total = el.offsetHeight - window.innerHeight;
@@ -260,9 +268,11 @@ function FeaturedRugsSticky({ items }: { items: Product[] }) {
           </span>
         </div>
         <div
-          className="flex gap-6 pl-[max(1.5rem,calc((100vw-1400px)/2))] will-change-transform"
-          style={{ transform: `translate3d(${-p * (items.length - 1) * 340}px,0,0)` }}
+          ref={trackRef}
+          className="flex gap-6 pl-[max(1.5rem,calc((100vw-1400px)/2))] pr-[max(1.5rem,calc((100vw-1400px)/2))] will-change-transform"
+          style={{ transform: `translate3d(${-p * maxShift}px,0,0)` }}
         >
+
           {items.map((r) => {
             const img = resolveImage(r.main_image_url);
             return (
