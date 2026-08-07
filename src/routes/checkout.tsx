@@ -4,7 +4,9 @@ import { Nav, Footer, WHATSAPP_URL } from "@/components/site-chrome";
 import { useCart } from "@/lib/store";
 import { useCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
+import { startMomoPayment, checkMomoPayment } from "@/lib/momo.functions";
 import { Minus, Plus, Trash2, Check, Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
