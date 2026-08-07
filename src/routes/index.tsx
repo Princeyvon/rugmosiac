@@ -5,25 +5,31 @@ import { ArrowRight, ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Nav, Footer, FloatingWhatsApp, resolveImage, WishlistHeart } from "@/components/site-chrome";
 import { useCurrency } from "@/lib/currency";
 import { listCategories, listFeatured, listProducts, listReviews, type Product } from "@/lib/catalogue.functions";
-import homeHero from "@/assets/home-hero.jpg";
-import heritageBanner from "@/assets/heritage-banner.jpg";
-import heritage2 from "@/assets/heritage-2.jpg";
-import heritage3 from "@/assets/heritage-3.jpg";
-import catWallArt from "@/assets/cat-wall-art.jpg";
-import catAreaRugs from "@/assets/cat-area-rugs.jpg";
-import catCustom from "@/assets/cat-custom.jpg";
-import ig1 from "@/assets/ig-1.jpg";
-import ig2 from "@/assets/ig-2.jpg";
-import ig3 from "@/assets/ig-3.jpg";
-import ig4 from "@/assets/ig-4.jpg";
+/** Real studio photography (CDN) — no AI-generated imagery on the homepage. */
+const PHOTO = {
+  hassanRoom: "/__l5e/assets-v1/10176d14-3299-443a-9708-a27203c5d214/hassan-1.jpg",
+  hassanChess: "/__l5e/assets-v1/12431968-acc8-4c32-a82e-2a0918a92e0b/hassan-2.jpg",
+  hassanDetail: "/__l5e/assets-v1/28c325e7-6be3-44b6-8d49-e24f327dcc96/hassan-5.jpg",
+  valencia1: "/__l5e/assets-v1/2cbb95f3-b832-4e67-a626-6398c3ce7025/valencia-1.jpg",
+  celestial: "/__l5e/assets-v1/aabe64b3-5f6f-4c3c-92e2-3b41f272d2cc/celestial-1.jpg",
+  valley3: "/__l5e/assets-v1/074246a2-d88c-4a8b-914b-d38c7182cc20/valley-3.jpg",
+  geometric1: "/__l5e/assets-v1/410edc13-8f3d-4b3d-8294-134006f103d3/geometric-1.jpg",
+  uzu1: "/__l5e/assets-v1/c83a1a4b-98bf-4d4e-8b72-6c3d824989c9/uzu-1.jpg",
+  melt1: "/__l5e/assets-v1/6c661115-c673-45ed-a9e4-86925b566cd0/melt-1.jpg",
+  tai1: "/__l5e/assets-v1/c46c2792-6b2e-4db6-b56c-8ad9251966b5/tai-1.jpg",
+  arc1: "/__l5e/assets-v1/3adfeab6-35aa-4124-b516-2d33c86ef3e0/arc-1.jpg",
+};
 
-const IG_GRID: string[] = [ig1, ig2, ig3, ig4];
+const homeHero = PHOTO.hassanRoom;
+
+const IG_GRID: string[] = [PHOTO.melt1, PHOTO.tai1, PHOTO.arc1, PHOTO.hassanDetail];
 
 const HOME_CATEGORIES = [
-  { slug: "area-rugs", name: "Area rugs", image: catAreaRugs },
-  { slug: "wall-art", name: "Wall art pieces", image: catWallArt },
-  { slug: "custom", name: "Custom rugs", image: catCustom },
+  { slug: "area-rugs", name: "Area rugs", image: PHOTO.valencia1 },
+  { slug: "wall-art", name: "Wall art pieces", image: PHOTO.celestial },
+  { slug: "custom", name: "Custom rugs", image: PHOTO.hassanChess },
 ];
+
 
 const HERITAGE_SLIDES = [
   {
