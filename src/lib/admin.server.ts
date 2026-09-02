@@ -1,7 +1,7 @@
 import { useSession } from "@tanstack/react-start/server";
 import { createHash, timingSafeEqual, randomBytes } from "node:crypto";
 
-export type StaffRole = "owner" | "admin" | "manager" | "staff";
+export type StaffRole = "owner" | "admin" | "manager" | "sales" | "production" | "staff";
 
 export type AdminSession = {
   admin?: boolean;
@@ -9,6 +9,7 @@ export type AdminSession = {
   role?: StaffRole;
   name?: string;
   email?: string;
+  perms?: Record<string, boolean>;
 };
 
 function sessionConfig() {
