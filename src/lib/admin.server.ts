@@ -58,51 +58,103 @@ export async function verifyPassword(password: string, stored: string): Promise<
 
 // ---------- permissions ----------
 
-export type Capability =
-  | "catalogue"
-  | "inventory"
-  | "orders"
-  | "customers"
-  | "discounts"
-  | "content"
-  | "analytics"
-  | "staff"
-  | "settings"
-  | "destroy";
+export const CAPABILITIES = [
+  "catalogue",
+  "pricing",
+  "inventory",
+  "orders",
+  "customers",
+  "discounts",
+  "content",
+  "analytics",
+  "publish",
+  "staff",
+  "settings",
+  "destroy",
+] as const;
+
+export type Capability = (typeof CAPABILITIES)[number];
+
+/** Human wording for each toggle, shown in the team panel. */
+export const CAPABILITY_LABELS: Record<Capability, string> = {
+  catalogue: "Add & edit rugs",
+  pricing: "Change prices",
+  inventory: "Manage stock",
+  orders: "Orders & delivery status",
+  customers: "See customers & mailing list",
+  discounts: "Create discount codes",
+  content: "Edit website content",
+  analytics: "See sales & revenue",
+  publish: "Push changes to the website",
+  staff: "Manage the team",
+  settings: "Studio settings",
+  destroy: "Delete things permanently",
+};
 
 const MATRIX: Record<StaffRole, Capability[]> = {
-  owner: [
+  owner: [...CAPABILITIES],
+  admin: [...CAPABILITIES],
+  manager: [
     "catalogue",
+    "pricing",
     "inventory",
     "orders",
     "customers",
     "discounts",
     "content",
     "analytics",
-    "staff",
-    "settings",
-    "destroy",
+    "publish",
   ],
-  admin: ["catalogue", "inventory", "orders", "customers", "discounts", "content", "analytics", "settings", "destroy"],
-  manager: ["catalogue", "inventory", "orders", "customers", "discounts", "analytics", "content"],
+  sales: ["orders", "customers", "discounts", "analytics", "catalogue"],
+  production: ["inventory", "orders", "catalogue"],
   staff: ["orders", "inventory", "customers"],
 };
 
-export function can(role: StaffRole, capability: Capability): boolean {
-  return MATRIX[role]?.includes(capability) ?? false;
+export function roleDefaults(role: StaffRole): Record<Capability, boolean> {
+  const allowed = MATRIX[role] ?? [];
+  return Object.fromEntries(CAPABILITIES.map((c) => [c, allowed.includes(c)])) as Record<Capability, boolean>;
 }
 
-export type Actor = { id: string | null; name: string; role: StaffRole; email: string | null };
+/** Role defaults with the per-person toggles layered on top. */
+export function effectivePerms(
+  role: StaffRole,
+  overrides?: Record<string, boolean> | null,
+): Record<Capability, boolean> {
+  const base = roleDefaults(role);
+  for (const c of CAPABILITIES) {
+    const o = overrides?.[c];
+    if (typeof o === "boolean") base[c] = o;
+  }
+  return base;
+}
+
+export function can(role: StaffRole, capability: Capability, overrides?: Record<string, boolean> | null): boolean {
+  return effectivePerms(role, overrides)[capability];
+}
+
+export type Actor = {
+  id: string | null;
+  name: string;
+  role: StaffRole;
+  email: string | null;
+  perms: Record<Capability, boolean>;
+};
 
 export async function requireAdmin(capability?: Capability): Promise<Actor> {
   const session = await getAdminSession();
   const data = session.data;
   if (!data.admin && !data.staffId) throw new Error("Not authorised. Sign in to the dashboard first.");
   const role: StaffRole = data.role ?? "owner";
-  if (capability && !can(role, capability)) {
-    throw new Error("Your role does not have permission for this action.");
+  const perms = data.admin && !data.staffId ? roleDefaults("owner") : effectivePerms(role, data.perms);
+  if (capability && !perms[capability]) {
+    throw new Error("Your access level does not allow that. Ask an administrator to switch it on.");
   }
-  return { id: data.staffId ?? null, name: data.name ?? "Owner", role, email: data.email ?? null };
+  return { id: data.staffId ?? null, name: data.name ?? "Owner", role, email: data.email ?? null, perms };
+}
+
+/** A six digit PIN, nothing else. */
+export function normalisePin(pin: string): string {
+  return pin.replace(/\D/g, "").slice(0, 6);
 }
 
 // ---------- audit log ----------
