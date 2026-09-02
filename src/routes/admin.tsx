@@ -535,6 +535,10 @@ function ProductForm({
             <span className={label}>Full description</span>
             <textarea rows={4} className={`${input} mt-1.5`} value={draft.description} onChange={(e) => set("description", e.target.value)} />
           </div>
+          <div>
+            <span className={label}>Care instructions</span>
+            <textarea rows={3} className={`${input} mt-1.5`} value={draft.care_instructions} onChange={(e) => set("care_instructions", e.target.value)} />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <TokenField
               title="Tags"
@@ -561,6 +565,15 @@ function ProductForm({
               />
             </div>
             <div>
+              <span className={label}>Cost price (RWF)</span>
+              <input
+                type="number"
+                className={`${input} mt-1.5`}
+                value={draft.cost_rwf ?? ""}
+                onChange={(e) => set("cost_rwf", e.target.value ? Number(e.target.value) : null)}
+              />
+            </div>
+            <div>
               <span className={label}>Featured order</span>
               <input
                 type="number"
@@ -569,11 +582,65 @@ function ProductForm({
                 onChange={(e) => set("featured_order", Number(e.target.value))}
               />
             </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <span className={label}>SKU</span>
+              <input className={`${input} mt-1.5`} value={draft.sku} onChange={(e) => set("sku", e.target.value)} />
+            </div>
+            <div>
+              <span className={label}>Stock on hand</span>
+              <input
+                type="number"
+                className={`${input} mt-1.5`}
+                value={draft.stock_qty}
+                onChange={(e) => set("stock_qty", Number(e.target.value) || 0)}
+              />
+            </div>
+            <div>
+              <span className={label}>Low stock alert at</span>
+              <input
+                type="number"
+                className={`${input} mt-1.5`}
+                value={draft.low_stock_threshold}
+                onChange={(e) => set("low_stock_threshold", Number(e.target.value) || 0)}
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <span className={label}>Fulfilment</span>
+              <select
+                className={`${input} mt-1.5`}
+                value={draft.fulfilment_type}
+                onChange={(e) => set("fulfilment_type", e.target.value as Draft["fulfilment_type"])}
+              >
+                <option value="ready_to_ship">Ready to ship</option>
+                <option value="made_to_order">Made to order</option>
+                <option value="custom">Custom commission</option>
+              </select>
+            </div>
             <div className="flex flex-col justify-end gap-2 pb-1">
               <Toggle label="Featured" on={draft.featured} onChange={(v) => set("featured", v)} />
+              <Toggle
+                label="New arrival"
+                on={draft.tags.includes("new")}
+                onChange={(v) => set("tags", v ? [...draft.tags, "new"] : draft.tags.filter((t) => t !== "new"))}
+              />
               <Toggle label="Visible on site" on={draft.is_published} onChange={(v) => set("is_published", v)} />
             </div>
           </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <span className={label}>SEO title</span>
+              <input className={`${input} mt-1.5`} value={draft.seo_title} onChange={(e) => set("seo_title", e.target.value)} />
+            </div>
+            <div>
+              <span className={label}>SEO description</span>
+              <input className={`${input} mt-1.5`} value={draft.seo_description} onChange={(e) => set("seo_description", e.target.value)} />
+            </div>
+          </div>
+
         </div>
 
         {/* Imagery + sizes */}
