@@ -17,11 +17,12 @@ const catalogueQO = (categorySlug?: string) =>
     },
   });
 
-type Search = { category?: string };
+type Search = { category?: string; filter?: "new" };
 
 export const Route = createFileRoute("/catalogue/")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     category: typeof s.category === "string" ? s.category : undefined,
+    filter: s.filter === "new" ? "new" : undefined,
   }),
   loaderDeps: ({ search }) => ({ category: search.category }),
   loader: ({ context, deps }) =>
@@ -38,9 +39,14 @@ export const Route = createFileRoute("/catalogue/")({
 });
 
 function CataloguePage() {
-  const { category } = Route.useSearch();
+  const { category, filter } = Route.useSearch();
   const { data } = useSuspenseQuery(catalogueQO(category));
   const { format } = useCurrency();
+
+  const products = filter === "new"
+    ? data.products.filter((p) => ((p.tags ?? []) as string[]).includes("new"))
+    : data.products;
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
