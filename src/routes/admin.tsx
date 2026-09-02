@@ -10,6 +10,13 @@ import {
   adminSaveProduct,
   adminDeleteProduct,
   adminUploadImage,
+  adminQuickUpdate,
+  adminListCoupons,
+  adminSaveCoupon,
+  adminDeleteCoupon,
+  adminListOrders,
+  adminUpdateOrder,
+  type CouponInput,
 } from "@/lib/admin.functions";
 import { resolveImage } from "@/components/site-chrome";
 
