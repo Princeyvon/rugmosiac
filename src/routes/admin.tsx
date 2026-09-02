@@ -240,6 +240,40 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
     setLoading(false);
   }, [load]);
 
+  async function quick(
+    id: string,
+    patch: {
+      is_published?: boolean;
+      featured?: boolean;
+      stock_status?: "in_stock" | "made_to_order" | "out_of_stock";
+      newArrival?: boolean;
+    },
+  ) {
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const next = { ...p };
+        if (patch.is_published !== undefined) next.is_published = patch.is_published;
+        if (patch.featured !== undefined) next.featured = patch.featured;
+        if (patch.stock_status !== undefined) next.stock_status = patch.stock_status;
+        if (patch.newArrival !== undefined) {
+          const tags = ((p.tags ?? []) as string[]).filter((t) => t !== "new");
+          next.tags = patch.newArrival ? [...tags, "new"] : tags;
+        }
+        return next;
+      }),
+    );
+    try {
+      await quickUpdate({ data: { id, ...patch } });
+      setToast("Website updated.");
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "Could not update.");
+      await refresh();
+    }
+  }
+
+
+
   useEffect(() => {
     refresh();
   }, [refresh]);
