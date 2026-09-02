@@ -229,6 +229,8 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [tab, setTab] = useState<"catalogue" | "promotions" | "orders">("catalogue");
+  const quickUpdate = useServerFn(adminQuickUpdate);
 
   const refresh = useCallback(async () => {
     setLoading(true);
