@@ -10,6 +10,13 @@ import {
   adminSaveProduct,
   adminDeleteProduct,
   adminUploadImage,
+  adminQuickUpdate,
+  adminListCoupons,
+  adminSaveCoupon,
+  adminDeleteCoupon,
+  adminListOrders,
+  adminUpdateOrder,
+  type CouponInput,
 } from "@/lib/admin.functions";
 import { resolveImage } from "@/components/site-chrome";
 
@@ -222,6 +229,8 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [tab, setTab] = useState<"catalogue" | "promotions" | "orders">("catalogue");
+  const quickUpdate = useServerFn(adminQuickUpdate);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -230,6 +239,40 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
     setCategories(res.categories as any);
     setLoading(false);
   }, [load]);
+
+  async function quick(
+    id: string,
+    patch: {
+      is_published?: boolean;
+      featured?: boolean;
+      stock_status?: "in_stock" | "made_to_order" | "out_of_stock";
+      newArrival?: boolean;
+    },
+  ) {
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const next = { ...p };
+        if (patch.is_published !== undefined) next.is_published = patch.is_published;
+        if (patch.featured !== undefined) next.featured = patch.featured;
+        if (patch.stock_status !== undefined) next.stock_status = patch.stock_status;
+        if (patch.newArrival !== undefined) {
+          const tags = ((p.tags ?? []) as string[]).filter((t) => t !== "new");
+          next.tags = patch.newArrival ? [...tags, "new"] : tags;
+        }
+        return next;
+      }),
+    );
+    try {
+      await quickUpdate({ data: { id, ...patch } });
+      setToast("Website updated.");
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "Could not update.");
+      await refresh();
+    }
+  }
+
+
 
   useEffect(() => {
     refresh();
@@ -983,6 +1026,524 @@ function GalleryField({
           <Plus className="h-5 w-5" />
         </DropZone>
       </div>
+    </div>
+  );
+}
+
+// ---------- shared bits ----------
+
+function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+        on ? "border-foreground bg-foreground text-background" : "border-border text-muted-foreground hover:border-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+const panelLabel = "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
+const panelInput =
+  "mt-1.5 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm outline-none focus:border-foreground";
+
+function money(n: number | null | undefined) {
+  return `${Number(n ?? 0).toLocaleString()} RWF`;
+}
+
+// ---------- promotions ----------
+
+const emptyCoupon = (): CouponInput => ({
+  code: "",
+  description: null,
+  discount_type: "percent",
+  discount_percent: 10,
+  discount_amount_rwf: null,
+  min_order_rwf: null,
+  usage_limit: null,
+  starts_at: null,
+  expires_at: null,
+  is_active: true,
+});
+
+function CouponsPanel({ onToast }: { onToast: (m: string) => void }) {
+  const list = useServerFn(adminListCoupons);
+  const save = useServerFn(adminSaveCoupon);
+  const remove = useServerFn(adminDeleteCoupon);
+
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [draft, setDraft] = useState<CouponInput | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setRows((await list()) as any[]);
+    setLoading(false);
+  }, [list]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const set = <K extends keyof CouponInput>(k: K, v: CouponInput[K]) =>
+    setDraft((d) => (d ? { ...d, [k]: v } : d));
+
+  async function onSave() {
+    if (!draft) return;
+    setSaving(true);
+    try {
+      await save({ data: draft });
+      onToast("Promotion saved.");
+      setDraft(null);
+      await refresh();
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : "Could not save the promotion.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onDelete(id: string, code: string) {
+    if (!confirm(`Delete the code "${code}"?`)) return;
+    await remove({ data: { id } });
+    onToast("Promotion deleted.");
+    await refresh();
+  }
+
+  return (
+    <section className="mt-8">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+        <h2 className="font-display text-xl font-medium">
+          Discount codes <span className="text-muted-foreground">({rows.length})</span>
+        </h2>
+        <button
+          onClick={() => setDraft(emptyCoupon())}
+          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-background"
+        >
+          <Plus className="h-4 w-4" /> New code
+        </button>
+      </div>
+
+      {draft && (
+        <div className="mt-5 rounded-3xl border border-border bg-background p-5 md:p-7">
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="block">
+              <span className={panelLabel}>Code</span>
+              <input
+                value={draft.code}
+                onChange={(e) => set("code", e.target.value.toUpperCase())}
+                placeholder="WELCOME10"
+                className={panelInput}
+              />
+            </label>
+            <label className="block">
+              <span className={panelLabel}>Type</span>
+              <select
+                value={draft.discount_type}
+                onChange={(e) => set("discount_type", e.target.value as CouponInput["discount_type"])}
+                className={panelInput}
+              >
+                <option value="percent">Percentage off</option>
+                <option value="amount">Fixed amount off</option>
+              </select>
+            </label>
+            {draft.discount_type === "percent" ? (
+              <label className="block">
+                <span className={panelLabel}>Percent off</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={draft.discount_percent}
+                  onChange={(e) => set("discount_percent", Number(e.target.value))}
+                  className={panelInput}
+                />
+              </label>
+            ) : (
+              <label className="block">
+                <span className={panelLabel}>Amount off (RWF)</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={draft.discount_amount_rwf ?? ""}
+                  onChange={(e) =>
+                    set("discount_amount_rwf", e.target.value === "" ? null : Number(e.target.value))
+                  }
+                  className={panelInput}
+                />
+              </label>
+            )}
+            <label className="block">
+              <span className={panelLabel}>Minimum order (RWF)</span>
+              <input
+                type="number"
+                min={0}
+                value={draft.min_order_rwf ?? ""}
+                onChange={(e) => set("min_order_rwf", e.target.value === "" ? null : Number(e.target.value))}
+                className={panelInput}
+              />
+            </label>
+            <label className="block">
+              <span className={panelLabel}>Total uses allowed</span>
+              <input
+                type="number"
+                min={1}
+                value={draft.usage_limit ?? ""}
+                onChange={(e) => set("usage_limit", e.target.value === "" ? null : Number(e.target.value))}
+                placeholder="Unlimited"
+                className={panelInput}
+              />
+            </label>
+            <label className="block">
+              <span className={panelLabel}>Starts</span>
+              <input
+                type="date"
+                value={draft.starts_at ? draft.starts_at.slice(0, 10) : ""}
+                onChange={(e) => set("starts_at", e.target.value ? new Date(e.target.value).toISOString() : null)}
+                className={panelInput}
+              />
+            </label>
+            <label className="block">
+              <span className={panelLabel}>Expires</span>
+              <input
+                type="date"
+                value={draft.expires_at ? draft.expires_at.slice(0, 10) : ""}
+                onChange={(e) => set("expires_at", e.target.value ? new Date(e.target.value).toISOString() : null)}
+                className={panelInput}
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className={panelLabel}>Internal note</span>
+              <input
+                value={draft.description ?? ""}
+                onChange={(e) => set("description", e.target.value || null)}
+                placeholder="Newsletter welcome offer"
+                className={panelInput}
+              />
+            </label>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Chip on={draft.is_active} onClick={() => set("is_active", !draft.is_active)}>
+              {draft.is_active ? "Active" : "Paused"}
+            </Chip>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => setDraft(null)}
+                className="rounded-full border border-border px-5 py-2.5 text-xs font-semibold uppercase tracking-wider"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onSave}
+                disabled={saving}
+                className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-60"
+              >
+                {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Save code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="py-20 text-center text-muted-foreground">Loading promotions…</div>
+      ) : rows.length === 0 ? (
+        <div className="mt-5 rounded-3xl border border-border bg-background p-12 text-center text-sm text-muted-foreground">
+          No discount codes yet.
+        </div>
+      ) : (
+        <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-background">
+          {rows.map((c) => {
+            const expired = c.expires_at && new Date(c.expires_at) < new Date();
+            return (
+              <div
+                key={c.id}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-border px-4 py-3 last:border-none lg:grid-cols-[minmax(0,1fr)_160px_160px_auto]"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-sm font-semibold uppercase">{c.code}</span>
+                    {!c.is_active && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider">Paused</span>
+                    )}
+                    {expired && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider">Expired</span>
+                    )}
+                  </div>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                    {c.description || "No note"}
+                    {c.min_order_rwf ? ` · min ${money(c.min_order_rwf)}` : ""}
+                  </p>
+                </div>
+                <div className="hidden text-xs lg:block">
+                  {c.discount_type === "amount" ? `${money(c.discount_amount_rwf)} off` : `${c.discount_percent}% off`}
+                </div>
+                <div className="hidden text-xs text-muted-foreground lg:block">
+                  Used {c.used_count ?? 0}
+                  {c.usage_limit ? ` / ${c.usage_limit}` : ""}
+                  {c.expires_at ? ` · ends ${new Date(c.expires_at).toLocaleDateString()}` : ""}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    onClick={() =>
+                      setDraft({
+                        id: c.id,
+                        code: c.code,
+                        description: c.description,
+                        discount_type: c.discount_type,
+                        discount_percent: c.discount_percent ?? 0,
+                        discount_amount_rwf: c.discount_amount_rwf,
+                        min_order_rwf: c.min_order_rwf,
+                        usage_limit: c.usage_limit,
+                        starts_at: c.starts_at,
+                        expires_at: c.expires_at,
+                        is_active: c.is_active,
+                      })
+                    }
+                    className="rounded-full border border-border px-4 py-2 text-xs font-semibold"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(c.id, c.code)}
+                    aria-label={`Delete ${c.code}`}
+                    className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ---------- orders ----------
+
+const ORDER_STATUS = [
+  "pending",
+  "confirmed",
+  "in_production",
+  "ready",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "refunded",
+] as const;
+
+const PAYMENT_STATUS = ["unpaid", "deposit", "paid", "refunded"] as const;
+
+function OrdersPanel({ onToast }: { onToast: (m: string) => void }) {
+  const list = useServerFn(adminListOrders);
+  const update = useServerFn(adminUpdateOrder);
+
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | (typeof ORDER_STATUS)[number]>("all");
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setRows((await list()) as any[]);
+    setLoading(false);
+  }, [list]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const visible = useMemo(
+    () => (filter === "all" ? rows : rows.filter((o) => o.status === filter)),
+    [rows, filter],
+  );
+
+  const revenue = useMemo(
+    () => rows.filter((o) => o.status !== "cancelled").reduce((s, o) => s + (o.total_rwf ?? 0), 0),
+    [rows],
+  );
+
+  async function patch(id: string, data: { status?: string; payment_status?: string; internal_notes?: string }) {
+    setRows((prev) => prev.map((o) => (o.id === id ? { ...o, ...data } : o)));
+    try {
+      await update({ data: { id, ...data } });
+      onToast("Order updated.");
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : "Could not update the order.");
+      await refresh();
+    }
+  }
+
+  return (
+    <section className="mt-8">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="Orders" value={String(rows.length)} />
+        <Stat label="Awaiting action" value={String(rows.filter((o) => o.status === "pending").length)} />
+        <Stat label="Order value" value={money(revenue)} />
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Chip on={filter === "all"} onClick={() => setFilter("all")}>
+          All
+        </Chip>
+        {ORDER_STATUS.map((s) => (
+          <Chip key={s} on={filter === s} onClick={() => setFilter(s)}>
+            {s.replace(/_/g, " ")}
+          </Chip>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="py-20 text-center text-muted-foreground">Loading orders…</div>
+      ) : visible.length === 0 ? (
+        <div className="mt-5 rounded-3xl border border-border bg-background p-12 text-center text-sm text-muted-foreground">
+          No orders here yet.
+        </div>
+      ) : (
+        <div className="mt-5 space-y-3">
+          {visible.map((o) => (
+            <article key={o.id} className="overflow-hidden rounded-2xl border border-border bg-background">
+              <button
+                onClick={() => setOpen(open === o.id ? null : o.id)}
+                className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4 text-left lg:grid-cols-[minmax(0,1fr)_150px_140px_auto]"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs font-semibold">{o.order_number}</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                      {String(o.status).replace(/_/g, " ")}
+                    </span>
+                    {o.payment_status && o.payment_status !== "unpaid" && (
+                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                        {o.payment_status}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 truncate text-sm">
+                    {o.customer_name} <span className="text-muted-foreground">· {o.phone}</span>
+                  </p>
+                </div>
+                <div className="hidden text-xs text-muted-foreground lg:block">
+                  {new Date(o.created_at).toLocaleDateString()}
+                </div>
+                <div className="hidden text-xs lg:block">{money(o.total_rwf)}</div>
+                <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {open === o.id ? "Close" : "Open"}
+                </span>
+              </button>
+
+              {open === o.id && (
+                <div className="border-t border-border px-4 py-5">
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+                    <div>
+                      <span className={panelLabel}>Items</span>
+                      <ul className="mt-2 space-y-2">
+                        {(o.items ?? []).map((it: any) => (
+                          <li key={it.id} className="flex items-baseline justify-between gap-4 text-sm">
+                            <span className="min-w-0">
+                              {it.qty} × {it.product_name}
+                              {it.size_label ? ` · ${it.size_label}` : ""}
+                              {it.color ? ` · ${it.color}` : ""}
+                            </span>
+                            <span className="shrink-0 text-muted-foreground">{money(it.unit_price_rwf)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <dl className="mt-4 space-y-1 border-t border-border pt-3 text-sm">
+                        <Row label="Subtotal" value={money(o.subtotal_rwf)} />
+                        {o.discount_rwf ? <Row label={`Discount ${o.coupon_code ?? ""}`} value={`− ${money(o.discount_rwf)}`} /> : null}
+                        <Row label="Delivery" value={money(o.delivery_rwf)} />
+                        <Row label="Total" value={money(o.total_rwf)} strong />
+                      </dl>
+                      <p className="mt-4 text-xs text-muted-foreground">
+                        {o.email} · {[o.address, o.city, o.country].filter(Boolean).join(", ")}
+                        {o.notes ? ` · Note: ${o.notes}` : ""}
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="block">
+                        <span className={panelLabel}>Order status</span>
+                        <select
+                          value={o.status}
+                          onChange={(e) => patch(o.id, { status: e.target.value })}
+                          className={panelInput}
+                        >
+                          {ORDER_STATUS.map((s) => (
+                            <option key={s} value={s}>
+                              {s.replace(/_/g, " ")}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className={panelLabel}>Payment</span>
+                        <select
+                          value={o.payment_status ?? "unpaid"}
+                          onChange={(e) => patch(o.id, { payment_status: e.target.value })}
+                          className={panelInput}
+                        >
+                          {PAYMENT_STATUS.map((s) => (
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className={panelLabel}>Private note</span>
+                        <textarea
+                          rows={3}
+                          defaultValue={o.internal_notes ?? ""}
+                          onBlur={(e) => {
+                            if (e.target.value !== (o.internal_notes ?? "")) {
+                              patch(o.id, { internal_notes: e.target.value });
+                            }
+                          }}
+                          className={panelInput}
+                        />
+                      </label>
+                      <a
+                        href={`https://wa.me/${String(o.phone ?? "").replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border px-5 py-2.5 text-xs font-semibold uppercase tracking-wider"
+                      >
+                        Message customer
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-background p-5">
+      <span className={panelLabel}>{label}</span>
+      <p className="mt-2 font-display text-2xl font-medium">{value}</p>
+    </div>
+  );
+}
+
+function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className={`flex items-baseline justify-between gap-4 ${strong ? "font-medium" : "text-muted-foreground"}`}>
+      <dt>{label}</dt>
+      <dd className={strong ? "" : "text-foreground"}>{value}</dd>
     </div>
   );
 }
