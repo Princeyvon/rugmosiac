@@ -72,7 +72,8 @@ export const adminSaveProduct = createServerFn({ method: "POST" })
 
     if (!data.name.trim()) throw new Error("The rug needs a name.");
     const slug = slugify(data.slug || data.name);
-    const row = {
+    const d = data as Partial<ProductInput> & typeof data;
+    const row: Record<string, unknown> = {
       slug,
       name: data.name.trim(),
       category_id: data.category_id,
@@ -91,6 +92,16 @@ export const adminSaveProduct = createServerFn({ method: "POST" })
       tags: data.tags,
       base_price_rwf: data.base_price_rwf,
       base_price_usd: data.base_price_rwf ? Math.round(data.base_price_rwf * USD_PER_RWF * 100) / 100 : null,
+      sku: d.sku ?? null,
+      cost_rwf: d.cost_rwf ?? null,
+      seo_title: d.seo_title ?? null,
+      seo_description: d.seo_description ?? null,
+      care_instructions: d.care_instructions ?? null,
+      design_style: d.design_style ?? null,
+      weight_kg: d.weight_kg ?? null,
+      fulfilment_type: d.fulfilment_type ?? "made_to_order",
+      stock_qty: d.stock_qty ?? 0,
+      low_stock_threshold: d.low_stock_threshold ?? 2,
     };
 
     let productId = data.id;
