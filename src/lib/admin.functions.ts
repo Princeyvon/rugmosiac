@@ -106,10 +106,10 @@ export const adminSaveProduct = createServerFn({ method: "POST" })
 
     let productId = data.id;
     if (productId) {
-      const { error } = await supabaseAdmin.from("products").update(row).eq("id", productId);
+      const { error } = await supabaseAdmin.from("products").update(row as never).eq("id", productId);
       if (error) throw new Error(error.message);
     } else {
-      const { data: created, error } = await supabaseAdmin.from("products").insert(row).select("id").single();
+      const { data: created, error } = await supabaseAdmin.from("products").insert(row as never).select("id").single();
       if (error) throw new Error(error.message);
       productId = created.id as string;
     }
@@ -180,7 +180,7 @@ export const adminQuickUpdate = createServerFn({ method: "POST" })
       const tags: string[] = ((row?.tags as string[] | null) ?? []).filter((t) => t !== "new");
       patch.tags = data.newArrival ? [...tags, "new"] : tags;
     }
-    const { error } = await supabaseAdmin.from("products").update(patch).eq("id", data.id);
+    const { error } = await supabaseAdmin.from("products").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
@@ -234,7 +234,7 @@ export const adminSaveCoupon = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       return { id: data.id };
     }
-    const { data: created, error } = await supabaseAdmin.from("promo_coupons").insert(row).select("id").single();
+    const { data: created, error } = await supabaseAdmin.from("promo_coupons").insert(row as never).select("id").single();
     if (error) throw new Error(error.message);
     return { id: created.id as string };
   });
@@ -274,7 +274,7 @@ export const adminUpdateOrder = createServerFn({ method: "POST" })
     if (data.status) patch.status = data.status;
     if (data.payment_status) patch.payment_status = data.payment_status;
     if (data.internal_notes !== undefined) patch.internal_notes = data.internal_notes;
-    const { error } = await supabaseAdmin.from("orders").update(patch).eq("id", data.id);
+    const { error } = await supabaseAdmin.from("orders").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
