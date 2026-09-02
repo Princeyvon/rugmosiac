@@ -43,11 +43,18 @@ type Draft = {
   id?: string;
   slug: string;
   name: string;
+  sku: string;
   category_id: string | null;
   shape: "rectangle" | "circular" | "runner" | "organic";
   short_description: string;
   description: string;
+  care_instructions: string;
+  seo_title: string;
+  seo_description: string;
   stock_status: "in_stock" | "made_to_order" | "out_of_stock";
+  fulfilment_type: "ready_to_ship" | "made_to_order" | "custom";
+  stock_qty: number;
+  low_stock_threshold: number;
   production_time: string;
   material: string;
   featured: boolean;
@@ -58,6 +65,7 @@ type Draft = {
   color_palette: string[];
   tags: string[];
   base_price_rwf: number | null;
+  cost_rwf: number | null;
   sizes: SizeRow[];
   images: Array<{ url: string; alt: string | null }>;
 };
