@@ -348,71 +348,122 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
       )}
 
       <main className="container-x mx-auto max-w-[1400px] py-8">
-        {draft && (
-          <ProductForm
-            draft={draft}
-            setDraft={setDraft}
-            categories={categories}
-            saving={saving}
-            onSave={onSave}
-            onCancel={() => setDraft(null)}
-          />
-        )}
+        <div className="flex flex-wrap gap-2">
+          {(["catalogue", "promotions", "orders"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-wider capitalize ${
+                tab === t ? "border-foreground bg-foreground text-background" : "border-border"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
 
-        <h2 className="mt-10 font-display text-xl font-medium">
-          Catalogue <span className="text-muted-foreground">({products.length})</span>
-        </h2>
-        {loading ? (
-          <div className="py-20 text-center text-muted-foreground">Loading the catalogue…</div>
-        ) : (
-          <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-background">
-            {products.map((p) => (
-              <div
-                key={p.id}
-                className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border px-4 py-3 last:border-none sm:grid-cols-[56px_minmax(0,1fr)_140px_120px_auto]"
-              >
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  {resolveImage(p.main_image_url) && (
-                    <img src={resolveImage(p.main_image_url)} alt="" className="h-full w-full object-cover" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-display text-base font-medium">{p.name}</span>
-                    {p.featured && <Star className="h-3.5 w-3.5 shrink-0 fill-current text-accent" />}
-                    {!p.is_published && (
-                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider">
-                        Hidden
-                      </span>
-                    )}
-                  </div>
-                  <div className="truncate text-xs text-muted-foreground">
-                    /{p.slug} · {p.shape} · {(p.sizes ?? []).length} sizes
-                  </div>
-                </div>
-                <div className="hidden text-xs text-muted-foreground sm:block">
-                  {STOCK.find((s) => s.value === p.stock_status)?.label}
-                </div>
-                <div className="hidden text-xs sm:block">
-                  {p.base_price_rwf ? `${Number(p.base_price_rwf).toLocaleString()} RWF` : "On request"}
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <button onClick={() => edit(p)} className="rounded-full border border-border px-4 py-2 text-xs font-semibold">
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(p.id, p.name)}
-                    aria-label={`Delete ${p.name}`}
-                    className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+        {tab === "promotions" && <CouponsPanel onToast={setToast} />}
+        {tab === "orders" && <OrdersPanel onToast={setToast} />}
+
+        {tab === "catalogue" && (
+          <>
+            {draft && (
+              <div className="mt-6">
+                <ProductForm
+                  draft={draft}
+                  setDraft={setDraft}
+                  categories={categories}
+                  saving={saving}
+                  onSave={onSave}
+                  onCancel={() => setDraft(null)}
+                />
               </div>
-            ))}
-          </div>
+            )}
+
+            <h2 className="mt-10 font-display text-xl font-medium">
+              Catalogue <span className="text-muted-foreground">({products.length})</span>
+            </h2>
+            {loading ? (
+              <div className="py-20 text-center text-muted-foreground">Loading the catalogue…</div>
+            ) : (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-background">
+                {products.map((p) => (
+                  <div
+                    key={p.id}
+                    className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border px-4 py-3 last:border-none lg:grid-cols-[56px_minmax(0,1fr)_150px_130px_auto]"
+                  >
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      {resolveImage(p.main_image_url) && (
+                        <img src={resolveImage(p.main_image_url)} alt="" className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-display text-base font-medium">{p.name}</span>
+                        {p.featured && <Star className="h-3.5 w-3.5 shrink-0 fill-current text-accent" />}
+                        {(p.tags ?? []).includes("new") && (
+                          <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                            New
+                          </span>
+                        )}
+                        {!p.is_published && (
+                          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                            Hidden
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        <Chip on={p.is_published} onClick={() => quick(p.id, { is_published: !p.is_published })}>
+                          {p.is_published ? "Visible" : "Hidden"}
+                        </Chip>
+                        <Chip
+                          on={p.stock_status === "out_of_stock"}
+                          onClick={() =>
+                            quick(p.id, {
+                              stock_status: p.stock_status === "out_of_stock" ? "made_to_order" : "out_of_stock",
+                            })
+                          }
+                        >
+                          {p.stock_status === "out_of_stock" ? "Sold out" : "Mark sold out"}
+                        </Chip>
+                        <Chip on={p.featured} onClick={() => quick(p.id, { featured: !p.featured })}>
+                          Featured
+                        </Chip>
+                        <Chip
+                          on={(p.tags ?? []).includes("new")}
+                          onClick={() => quick(p.id, { newArrival: !(p.tags ?? []).includes("new") })}
+                        >
+                          New arrival
+                        </Chip>
+                      </div>
+                    </div>
+                    <div className="hidden text-xs text-muted-foreground lg:block">
+                      {STOCK.find((s) => s.value === p.stock_status)?.label}
+                      <div className="mt-1">{(p.sizes ?? []).length} sizes · {(p.color_palette ?? []).length} colours</div>
+                    </div>
+                    <div className="hidden text-xs lg:block">
+                      {p.base_price_rwf ? `${Number(p.base_price_rwf).toLocaleString()} RWF` : "On request"}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button onClick={() => edit(p)} className="rounded-full border border-border px-4 py-2 text-xs font-semibold">
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onDelete(p.id, p.name)}
+                        aria-label={`Delete ${p.name}`}
+                        className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
+
     </div>
   );
 }
