@@ -947,6 +947,30 @@ export type Database = {
         }
         Relationships: []
       }
+      site_visits: {
+        Row: {
+          created_at: string
+          id: string
+          path: string
+          referrer: string | null
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          path: string
+          referrer?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          path?: string
+          referrer?: string | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
       staff_accounts: {
         Row: {
           created_at: string
@@ -954,9 +978,12 @@ export type Database = {
           full_name: string
           id: string
           is_active: boolean
+          job_title: string | null
           last_login_at: string | null
-          password_hash: string
-          role: Database["public"]["Enums"]["staff_role"]
+          password_hash: string | null
+          permissions: Json
+          pin_hash: string | null
+          role: string
           updated_at: string
         }
         Insert: {
@@ -965,9 +992,12 @@ export type Database = {
           full_name: string
           id?: string
           is_active?: boolean
+          job_title?: string | null
           last_login_at?: string | null
-          password_hash: string
-          role?: Database["public"]["Enums"]["staff_role"]
+          password_hash?: string | null
+          permissions?: Json
+          pin_hash?: string | null
+          role?: string
           updated_at?: string
         }
         Update: {
@@ -976,9 +1006,12 @@ export type Database = {
           full_name?: string
           id?: string
           is_active?: boolean
+          job_title?: string | null
           last_login_at?: string | null
-          password_hash?: string
-          role?: Database["public"]["Enums"]["staff_role"]
+          password_hash?: string | null
+          permissions?: Json
+          pin_hash?: string | null
+          role?: string
           updated_at?: string
         }
         Relationships: []
