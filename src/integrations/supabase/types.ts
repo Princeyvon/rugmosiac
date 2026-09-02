@@ -565,6 +565,8 @@ export type Database = {
         | "in_production"
         | "complete"
         | "declined"
+        | "approved"
+        | "cancelled"
       order_status:
         | "pending"
         | "confirmed"
@@ -572,6 +574,9 @@ export type Database = {
         | "shipped"
         | "delivered"
         | "cancelled"
+        | "processing"
+        | "ready"
+        | "refunded"
       rug_shape: "rectangle" | "circular" | "runner" | "organic"
       stock_status: "in_stock" | "made_to_order" | "out_of_stock"
     }
@@ -710,6 +715,8 @@ export const Constants = {
         "in_production",
         "complete",
         "declined",
+        "approved",
+        "cancelled",
       ],
       order_status: [
         "pending",
@@ -718,6 +725,9 @@ export const Constants = {
         "shipped",
         "delivered",
         "cancelled",
+        "processing",
+        "ready",
+        "refunded",
       ],
       rug_shape: ["rectangle", "circular", "runner", "organic"],
       stock_status: ["in_stock", "made_to_order", "out_of_stock"],
