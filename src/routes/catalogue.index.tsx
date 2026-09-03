@@ -73,8 +73,15 @@ function CataloguePage() {
               {c.name}
             </Link>
           ))}
+          <Link
+            to="/catalogue"
+            search={{ ...(category ? { category } : {}), filter: "new" as const }}
+            className={`rounded-full border px-4 py-2 text-sm transition-colors ${filter === "new" ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-foreground/40"}`}
+          >
+            New in
+          </Link>
         </div>
-        {data.products.length === 0 ? (
+        {products.length === 0 ? (
           <div className="rounded-sm border border-border/60 py-24 text-center">
             <p className="font-serif text-2xl italic">No rugs in this category yet.</p>
             <p className="mt-3 text-muted-foreground">Every design is custom — start yours below.</p>
