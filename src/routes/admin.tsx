@@ -352,11 +352,36 @@ function LoginGate({ onDone }: { onDone: () => void }) {
   );
 }
 
-function Dashboard({ onSignOut }: { onSignOut: () => void }) {
+type TabKey = "overview" | "catalogue" | "promotions" | "orders" | "customers" | "sales" | "team" | "activity";
+
+const TAB_CAP: Record<TabKey, string | null> = {
+  overview: null,
+  catalogue: "catalogue",
+  promotions: "discounts",
+  orders: "orders",
+  customers: "customers",
+  sales: "analytics",
+  team: "staff",
+  activity: null,
+};
+
+const TAB_LABEL: Record<TabKey, string> = {
+  overview: "Overview",
+  catalogue: "Catalogue",
+  promotions: "Discounts",
+  orders: "Orders",
+  customers: "Customers",
+  sales: "Sales",
+  team: "Team",
+  activity: "History",
+};
+
+function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const load = useServerFn(adminLoadCatalogue);
   const logout = useServerFn(adminLogout);
   const save = useServerFn(adminSaveProduct);
   const remove = useServerFn(adminDeleteProduct);
+  const publish = useServerFn(adminPublish);
 
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
@@ -364,8 +389,33 @@ function Dashboard({ onSignOut }: { onSignOut: () => void }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [tab, setTab] = useState<"catalogue" | "promotions" | "orders">("catalogue");
+  const [publishing, setPublishing] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
   const quickUpdate = useServerFn(adminQuickUpdate);
+
+  const tabs = useMemo(
+    () => (Object.keys(TAB_CAP) as TabKey[]).filter((t) => {
+      const cap = TAB_CAP[t];
+      return !cap || me.perms[cap];
+    }),
+    [me.perms],
+  );
+  const [tab, setTab] = useState<TabKey>("overview");
+  useEffect(() => {
+    if (!tabs.includes(tab)) setTab(tabs[0] ?? "overview");
+  }, [tabs, tab]);
+
+  async function onPublish() {
+    setPublishing(true);
+    try {
+      await publish();
+      setToast("Changes pushed to the website.");
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "Could not publish.");
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   const refresh = useCallback(async () => {
     setLoading(true);
