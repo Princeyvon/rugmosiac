@@ -395,7 +395,7 @@ function CheckoutPage() {
                 </button>
               </div>
               {couponError && <p className="mt-2 text-xs text-destructive">{couponError}</p>}
-              {coupon && <p className="mt-2 text-xs text-muted-foreground">{coupon.code} applied — {coupon.percent}% off.</p>}
+              {coupon && <p className="mt-2 text-xs text-muted-foreground">{coupon.code} applied — {coupon.note}.</p>}
 
               <dl className="mt-6 space-y-2 border-t border-border pt-5 text-sm">
                 <Row label="Subtotal" value={format({ rwf: subtotal })} />
