@@ -91,7 +91,7 @@ function CataloguePage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-3 md:gap-8">
-            {data.products.map((p) => (
+            {products.map((p) => (
               <Link key={p.id} to="/catalogue/$slug" params={{ slug: p.slug }} className="group block">
                 <div className="relative aspect-square overflow-hidden rounded-sm bg-muted">
                   <WishlistHeart product={{ productId: p.id, slug: p.slug, name: p.name, image: resolveImage(p.main_image_url) }} />
