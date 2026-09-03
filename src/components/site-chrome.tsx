@@ -745,7 +745,16 @@ export function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row">
-          <span>Kigali, Rwanda · Made to order</span>
+          <span className="flex items-center gap-3">
+            Kigali, Rwanda · Made to order
+            <Link
+              to="/admin"
+              className="rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:border-foreground hover:text-foreground"
+              title="Studio dashboard"
+            >
+              Inv
+            </Link>
+          </span>
           <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 transition-opacity hover:opacity-60">
             <WhatsAppIcon className="h-3.5 w-3.5" /> +250 796 664 868
           </a>

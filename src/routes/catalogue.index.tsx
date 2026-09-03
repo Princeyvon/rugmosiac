@@ -73,8 +73,15 @@ function CataloguePage() {
               {c.name}
             </Link>
           ))}
+          <Link
+            to="/catalogue"
+            search={{ ...(category ? { category } : {}), filter: "new" as const }}
+            className={`rounded-full border px-4 py-2 text-sm transition-colors ${filter === "new" ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-foreground/40"}`}
+          >
+            New in
+          </Link>
         </div>
-        {data.products.length === 0 ? (
+        {products.length === 0 ? (
           <div className="rounded-sm border border-border/60 py-24 text-center">
             <p className="font-serif text-2xl italic">No rugs in this category yet.</p>
             <p className="mt-3 text-muted-foreground">Every design is custom — start yours below.</p>
@@ -84,7 +91,7 @@ function CataloguePage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-3 md:gap-8">
-            {data.products.map((p) => (
+            {products.map((p) => (
               <Link key={p.id} to="/catalogue/$slug" params={{ slug: p.slug }} className="group block">
                 <div className="relative aspect-square overflow-hidden rounded-sm bg-muted">
                   <WishlistHeart product={{ productId: p.id, slug: p.slug, name: p.name, image: resolveImage(p.main_image_url) }} />
@@ -94,7 +101,18 @@ function CataloguePage() {
                   {resolveImage(p.hover_image_url) && (
                     <img src={resolveImage(p.hover_image_url)} alt="" aria-hidden loading="lazy" className="absolute inset-0 h-full w-full scale-105 object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
                   )}
-
+                  <div className="pointer-events-none absolute left-3 top-3 flex flex-col items-start gap-1.5">
+                    {((p.tags ?? []) as string[]).includes("new") && (
+                      <span className="rounded-full bg-accent px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-accent-foreground">
+                        New
+                      </span>
+                    )}
+                    {p.stock_status === "out_of_stock" && (
+                      <span className="rounded-full bg-foreground/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-background">
+                        Sold out
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-5 flex items-start justify-between gap-4">
                   <div>

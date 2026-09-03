@@ -47,7 +47,7 @@ function CheckoutPage() {
     customer_name: "", email: "", phone: "", address: "", city: "Kigali", country: "Rwanda", notes: "",
   });
   const [couponInput, setCouponInput] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
+  const [coupon, setCoupon] = useState<{ code: string; percent: number; amountRwf: number; note: string } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +62,9 @@ function CheckoutPage() {
     () => items.reduce((s, i) => s + (i.unitPriceRwf ?? 0) * i.qty, 0),
     [items],
   );
-  const discount = coupon ? Math.round((subtotal * coupon.percent) / 100) : 0;
+  const discount = coupon
+    ? Math.min(subtotal, coupon.amountRwf > 0 ? coupon.amountRwf : Math.round((subtotal * coupon.percent) / 100))
+    : 0;
   const delivery = DELIVERY[zone].price;
   const total = Math.max(0, subtotal - discount) + delivery;
 
@@ -75,16 +77,43 @@ function CheckoutPage() {
     if (!code) return;
     const { data } = await supabase
       .from("promo_coupons")
-      .select("code, discount_percent")
+      .select(
+        "code, discount_percent, discount_type, discount_amount_rwf, min_order_rwf, usage_limit, used_count, starts_at, expires_at",
+      )
       .eq("code", code)
       .eq("is_active", true)
       .maybeSingle();
-    if (!data) {
+
+    const fail = (message: string) => {
       setCoupon(null);
-      setCouponError("That code isn't valid or has expired.");
-      return;
+      setCouponError(message);
+    };
+
+    if (!data) return fail("That code isn't valid.");
+
+    const now = Date.now();
+    if (data.starts_at && new Date(data.starts_at).getTime() > now) {
+      return fail("That code isn't active yet.");
     }
-    setCoupon({ code: data.code, percent: data.discount_percent });
+    if (data.expires_at && new Date(data.expires_at).getTime() < now) {
+      return fail("That code has expired.");
+    }
+    if (data.usage_limit != null && (data.used_count ?? 0) >= data.usage_limit) {
+      return fail("That code has already been fully used.");
+    }
+    if (data.min_order_rwf != null && subtotal < data.min_order_rwf) {
+      return fail(`Spend at least ${data.min_order_rwf.toLocaleString("en-US")} RWF to use this code.`);
+    }
+
+    const isAmount = data.discount_type === "amount" && (data.discount_amount_rwf ?? 0) > 0;
+    setCoupon({
+      code: data.code,
+      percent: isAmount ? 0 : (data.discount_percent ?? 0),
+      amountRwf: isAmount ? (data.discount_amount_rwf ?? 0) : 0,
+      note: isAmount
+        ? `${(data.discount_amount_rwf ?? 0).toLocaleString("en-US")} RWF off`
+        : `${data.discount_percent ?? 0}% off`,
+    });
   }
 
   async function placeOrder(e: React.FormEvent) {
@@ -366,7 +395,7 @@ function CheckoutPage() {
                 </button>
               </div>
               {couponError && <p className="mt-2 text-xs text-destructive">{couponError}</p>}
-              {coupon && <p className="mt-2 text-xs text-muted-foreground">{coupon.code} applied — {coupon.percent}% off.</p>}
+              {coupon && <p className="mt-2 text-xs text-muted-foreground">{coupon.code} applied — {coupon.note}.</p>}
 
               <dl className="mt-6 space-y-2 border-t border-border pt-5 text-sm">
                 <Row label="Subtotal" value={format({ rwf: subtotal })} />
