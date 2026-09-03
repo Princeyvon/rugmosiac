@@ -165,38 +165,84 @@ const label = "text-[11px] font-semibold uppercase tracking-wider text-muted-for
 
 // ---------- page ----------
 
+export type Me = {
+  staffId: string | null;
+  name: string;
+  email: string | null;
+  role: StaffRole;
+  perms: Record<string, boolean>;
+};
+
 function AdminPage() {
   const status = useServerFn(adminStatus);
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const me = useServerFn(staffMe);
+  const [session, setSession] = useState<Me | null | undefined>(undefined);
+
+  const refreshSession = useCallback(async () => {
+    try {
+      const r = await me();
+      if (r.signedIn) {
+        setSession({
+          staffId: r.staffId,
+          name: r.name,
+          email: r.email,
+          role: r.role as StaffRole,
+          perms: r.perms as Record<string, boolean>,
+        });
+        return;
+      }
+      const s = await status();
+      setSession(s.signedIn ? { staffId: null, name: "Owner", email: null, role: "owner", perms: allPerms() } : null);
+    } catch {
+      setSession(null);
+    }
+  }, [me, status]);
 
   useEffect(() => {
-    status().then((r) => setSignedIn(r.signedIn)).catch(() => setSignedIn(false));
-  }, [status]);
+    refreshSession();
+  }, [refreshSession]);
 
-  if (signedIn === null) {
+  if (session === undefined) {
     return (
       <div className="grid min-h-screen place-items-center bg-background text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
       </div>
     );
   }
-  return signedIn ? <Dashboard onSignOut={() => setSignedIn(false)} /> : <LoginGate onDone={() => setSignedIn(true)} />;
+  return session ? (
+    <Dashboard me={session} onSignOut={() => setSession(null)} />
+  ) : (
+    <LoginGate onDone={refreshSession} />
+  );
 }
 
 function LoginGate({ onDone }: { onDone: () => void }) {
   const login = useServerFn(adminLogin);
+  const pinLogin = useServerFn(staffLoginPin);
+  const [mode, setMode] = useState<"pin" | "password">("pin");
+  const [pin, setPin] = useState("");
   const [pw, setPw] = useState("");
-  const [state, setState] = useState<"idle" | "busy" | "bad">("idle");
+  const [state, setState] = useState<"idle" | "busy">("idle");
+  const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setState("busy");
+    setError(null);
     try {
-      const res = await login({ data: { password: pw } });
-      if (res.ok) onDone();
-      else setState("bad");
+      if (mode === "pin") {
+        const res = await pinLogin({ data: { pin } });
+        if (res.ok) onDone();
+        else setError(res.message);
+      } else {
+        const res = await login({ data: { password: pw } });
+        if (res.ok) onDone();
+        else setError("That password is not right.");
+      }
     } catch {
-      setState("bad");
+      setError("Something went wrong. Try again.");
+    } finally {
+      setState("idle");
     }
   }
 
@@ -205,25 +251,62 @@ function LoginGate({ onDone }: { onDone: () => void }) {
       <form onSubmit={submit} className="w-full max-w-sm">
         <div className="font-script text-6xl leading-none">Mosiac</div>
         <h1 className="mt-6 font-display text-2xl font-medium">Studio dashboard</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Enter the studio password to manage the catalogue.</p>
-        <input
-          autoFocus
-          type="password"
-          value={pw}
-          onChange={(e) => {
-            setPw(e.target.value);
-            setState("idle");
-          }}
-          placeholder="Password"
-          className={`${input} mt-6`}
-        />
-        {state === "bad" && <p className="mt-3 text-sm text-destructive">That password is not right.</p>}
+        <p className="mt-2 text-sm text-muted-foreground">
+          {mode === "pin"
+            ? "Enter your six digit access PIN."
+            : "Enter the studio owner password."}
+        </p>
+
+        {mode === "pin" ? (
+          <input
+            autoFocus
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={pin}
+            onChange={(e) => {
+              setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
+              setError(null);
+            }}
+            placeholder="••••••"
+            className={`${input} mt-6 text-center font-display text-2xl tracking-[0.6em]`}
+          />
+        ) : (
+          <input
+            autoFocus
+            type="password"
+            value={pw}
+            onChange={(e) => {
+              setPw(e.target.value);
+              setError(null);
+            }}
+            placeholder="Password"
+            className={`${input} mt-6`}
+          />
+        )}
+
+        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+
         <button
-          disabled={state === "busy"}
+          disabled={state === "busy" || (mode === "pin" ? pin.length !== 6 : !pw)}
           className="mt-5 h-12 w-full rounded-full bg-foreground text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
         >
           {state === "busy" ? "Checking" : "Enter dashboard"}
         </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMode(mode === "pin" ? "password" : "pin");
+            setError(null);
+          }}
+          className="mt-4 w-full text-center text-xs text-muted-foreground underline underline-offset-4"
+        >
+          {mode === "pin" ? "Sign in with the owner password instead" : "Sign in with a team PIN instead"}
+        </button>
+
+        <Link to="/" className="mt-6 block text-center text-xs text-muted-foreground hover:text-foreground">
+          ← Back to the website
+        </Link>
       </form>
     </div>
   );
