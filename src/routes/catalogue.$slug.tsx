@@ -297,11 +297,23 @@ function ProductPage() {
             {/* Add to cart */}
             <button
               onClick={handleAddToCart}
-              className="mt-6 flex h-14 w-full items-center justify-between rounded-full bg-[#9c8a76] px-6 text-sm font-medium text-background transition-transform hover:scale-[1.01]"
+              disabled={p.stock_status === "out_of_stock"}
+              className="mt-6 flex h-14 w-full items-center justify-between rounded-full bg-[#9c8a76] px-6 text-sm font-medium text-background transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
             >
-              <span>Add to cart{qty > 1 ? ` · ${qty}` : ""}</span>
+              <span>
+                {p.stock_status === "out_of_stock" ? "Sold out" : `Add to cart${qty > 1 ? ` · ${qty}` : ""}`}
+              </span>
               <span className="font-display text-base">{totalLabel}</span>
             </button>
+            {p.stock_status === "out_of_stock" && (
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                This piece is sold out —{" "}
+                <Link to="/custom" className="underline underline-offset-4">
+                  request it as a custom order
+                </Link>
+                .
+              </p>
+            )}
 
             <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
