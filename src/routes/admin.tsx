@@ -545,16 +545,46 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
           <div className="flex min-w-0 items-center gap-3">
             <span className="font-script text-3xl leading-none">Mosiac</span>
             <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Studio dashboard
+              {me.name} · {me.role}
             </span>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              onClick={() => setDraft(emptyDraft())}
-              className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-background"
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider"
             >
-              <Plus className="h-4 w-4" /> New rug
-            </button>
+              <ExternalLink className="h-3.5 w-3.5" /> Return to site
+            </Link>
+            {me.perms.publish && (
+              <button
+                onClick={onPublish}
+                disabled={publishing}
+                className="inline-flex items-center gap-2 rounded-full border border-foreground px-4 py-2.5 text-xs font-semibold uppercase tracking-wider disabled:opacity-50"
+              >
+                {publishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                Publish
+              </button>
+            )}
+            {me.staffId && (
+              <button
+                onClick={() => setPinOpen(true)}
+                aria-label="Change my PIN"
+                className="grid h-10 w-10 place-items-center rounded-full border border-border"
+              >
+                <KeyRound className="h-4 w-4" />
+              </button>
+            )}
+            {me.perms.catalogue && (
+              <button
+                onClick={() => {
+                  setTab("catalogue");
+                  setDraft(emptyDraft());
+                }}
+                className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-background"
+              >
+                <Plus className="h-4 w-4" /> New rug
+              </button>
+            )}
             <button
               onClick={async () => {
                 await logout();
