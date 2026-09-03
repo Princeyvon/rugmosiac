@@ -62,7 +62,9 @@ function CheckoutPage() {
     () => items.reduce((s, i) => s + (i.unitPriceRwf ?? 0) * i.qty, 0),
     [items],
   );
-  const discount = coupon ? Math.round((subtotal * coupon.percent) / 100) : 0;
+  const discount = coupon
+    ? Math.min(subtotal, coupon.amountRwf > 0 ? coupon.amountRwf : Math.round((subtotal * coupon.percent) / 100))
+    : 0;
   const delivery = DELIVERY[zone].price;
   const total = Math.max(0, subtotal - discount) + delivery;
 
