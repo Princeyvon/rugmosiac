@@ -31,6 +31,18 @@ import {
   type StaffInput,
 } from "@/lib/admin.functions";
 import { resolveImage } from "@/components/site-chrome";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip as RTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
