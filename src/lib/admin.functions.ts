@@ -800,3 +800,126 @@ export const adminAnalytics = createServerFn({ method: "GET" })
       statusBreakdown: [...statusCounts.entries()].map(([name, value]) => ({ name, value })),
     };
   });
+
+// ---------------- studio notices (team notice board) ----------------
+
+export type Notice = {
+  id: string;
+  author: string;
+  role: string;
+  text: string;
+  created_at: string;
+};
+
+async function readNotices() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("site_settings")
+    .select("value")
+    .eq("key", "studio_notices")
+    .maybeSingle();
+  const raw = data?.value;
+  return Array.isArray(raw) ? (raw as unknown as Notice[]) : [];
+}
+
+export const adminListNotices = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("@/lib/admin.server");
+  await requireAdmin();
+  return readNotices();
+});
+
+export const adminAddNotice = createServerFn({ method: "POST" })
+  .inputValidator((d: { text: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/admin.server");
+    const actor = await requireAdmin();
+    const text = data.text.trim();
+    if (!text) throw new Error("Write a short note first.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const notices = await readNotices();
+    const next: Notice[] = [
+      {
+        id: crypto.randomUUID(),
+        author: actor.name,
+        role: actor.role,
+        text: text.slice(0, 600),
+        created_at: new Date().toISOString(),
+      },
+      ...notices,
+    ].slice(0, 40);
+    const { error } = await supabaseAdmin
+      .from("site_settings")
+      .upsert({ key: "studio_notices", value: next } as never, { onConflict: "key" });
+    if (error) throw new Error(error.message);
+    return next;
+  });
+
+export const adminDeleteNotice = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireAdmin } = await import("@/lib/admin.server");
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const next = (await readNotices()).filter((n) => n.id !== data.id);
+    const { error } = await supabaseAdmin
+      .from("site_settings")
+      .upsert({ key: "studio_notices", value: next } as never, { onConflict: "key" });
+    if (error) throw new Error(error.message);
+    return next;
+  });
+
+// ---------------- unpublished changes ----------------
+
+export const adminPendingChanges = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("@/lib/admin.server");
+  await requireAdmin();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: setting } = await supabaseAdmin
+    .from("site_settings")
+    .select("value")
+    .eq("key", "last_published_at")
+    .maybeSingle();
+  const lastPublishedAt = (setting?.value as string | null) ?? null;
+  let q = supabaseAdmin
+    .from("activity_log")
+    .select("id, summary, actor_name, created_at, action")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (lastPublishedAt) q = q.gt("created_at", lastPublishedAt);
+  const { data } = await q;
+  const rows = (data ?? []).filter(
+    (r) => !String(r.action ?? "").startsWith("auth.") && r.action !== "site.publish",
+  );
+  return { lastPublishedAt, count: rows.length, changes: rows.slice(0, 8) };
+});
+
+// ---------------- my profile ----------------
+
+export const staffUpdateProfile = createServerFn({ method: "POST" })
+  .inputValidator((d: { full_name: string; job_title: string; email: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireAdmin, logActivity } = await import("@/lib/admin.server");
+    const actor = await requireAdmin();
+    if (!actor.id) throw new Error("The owner account has no profile to edit.");
+    if (!data.full_name.trim()) throw new Error("Your name cannot be empty.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("staff_accounts")
+      .update({
+        full_name: data.full_name.trim(),
+        job_title: data.job_title.trim() || null,
+        email: data.email.trim().toLowerCase(),
+      } as never)
+      .eq("id", actor.id);
+    if (error) throw new Error(error.message);
+    const { getAdminSession } = await import("@/lib/admin.server");
+    const session = await getAdminSession();
+    await session.update({ name: data.full_name.trim(), email: data.email.trim().toLowerCase() });
+    await logActivity(supabaseAdmin as never, actor, {
+      action: "staff.profile",
+      entity_type: "staff",
+      entity_id: actor.id,
+      summary: `${data.full_name.trim()} updated their own profile`,
+    });
+    return { ok: true as const };
+  });
