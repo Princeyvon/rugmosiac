@@ -17,7 +17,8 @@ function sessionConfig() {
     password: process.env["ADMIN_SESSION_SECRET"]!,
     name: "mosiac-admin",
     maxAge: 60 * 60 * 8,
-    cookie: { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/" },
+    // "none" so the session survives inside the embedded preview frame
+    cookie: { httpOnly: true, secure: true, sameSite: "none" as const, path: "/" },
   };
 }
 
