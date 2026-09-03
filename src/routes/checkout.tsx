@@ -47,7 +47,7 @@ function CheckoutPage() {
     customer_name: "", email: "", phone: "", address: "", city: "Kigali", country: "Rwanda", notes: "",
   });
   const [couponInput, setCouponInput] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
+  const [coupon, setCoupon] = useState<{ code: string; percent: number; amountRwf: number; note: string } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
