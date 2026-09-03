@@ -607,21 +607,28 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
 
       <main className="container-x mx-auto max-w-[1400px] py-8">
         <div className="flex flex-wrap gap-2">
-          {(["catalogue", "promotions", "orders"] as const).map((t) => (
+          {tabs.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-wider capitalize ${
+              className={`rounded-full border px-5 py-2 text-xs font-semibold uppercase tracking-wider ${
                 tab === t ? "border-foreground bg-foreground text-background" : "border-border"
               }`}
             >
-              {t}
+              {TAB_LABEL[t]}
             </button>
           ))}
         </div>
 
+        {pinOpen && <ChangePinDialog onClose={() => setPinOpen(false)} onToast={setToast} />}
+
+        {tab === "overview" && <OverviewPanel me={me} onGo={setTab} />}
         {tab === "promotions" && <CouponsPanel onToast={setToast} />}
         {tab === "orders" && <OrdersPanel onToast={setToast} />}
+        {tab === "customers" && <CustomersPanel />}
+        {tab === "sales" && <SalesPanel />}
+        {tab === "team" && <TeamPanel me={me} onToast={setToast} />}
+        {tab === "activity" && <ActivityPanel />}
 
         {tab === "catalogue" && (
           <>
