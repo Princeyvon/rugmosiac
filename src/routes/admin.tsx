@@ -1816,7 +1816,7 @@ function OverviewPanel({ me, onGo }: { me: Me; onGo: (t: TabKey) => void }) {
         <StatCard label="Visits today" value={String(data.visitsToday)} />
         <StatCard label="Visits this week" value={String(data.visitsWeek)} />
         <StatCard label="Orders this week" value={String(data.ordersWeek)} />
-        <StatCard label="Sales this week" value={`${money(data.salesWeek)} RWF`} />
+        <StatCard label="Sales this week" value={money(data.salesWeek)} />
         <StatCard label="New subscribers" value={String(data.subscribersWeek)} />
         <StatCard label="Messages" value={String(data.messagesWeek)} />
         <StatCard label="Custom requests" value={String(data.customRequestsWeek)} />
