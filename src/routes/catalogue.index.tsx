@@ -101,7 +101,18 @@ function CataloguePage() {
                   {resolveImage(p.hover_image_url) && (
                     <img src={resolveImage(p.hover_image_url)} alt="" aria-hidden loading="lazy" className="absolute inset-0 h-full w-full scale-105 object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
                   )}
-
+                  <div className="pointer-events-none absolute left-3 top-3 flex flex-col items-start gap-1.5">
+                    {((p.tags ?? []) as string[]).includes("new") && (
+                      <span className="rounded-full bg-accent px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-accent-foreground">
+                        New
+                      </span>
+                    )}
+                    {p.stock_status === "out_of_stock" && (
+                      <span className="rounded-full bg-foreground/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-background">
+                        Sold out
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-5 flex items-start justify-between gap-4">
                   <div>
