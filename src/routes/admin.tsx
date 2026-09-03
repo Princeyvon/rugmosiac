@@ -1816,7 +1816,7 @@ function OverviewPanel({ me, onGo }: { me: Me; onGo: (t: TabKey) => void }) {
         <StatCard label="Visits today" value={String(data.visitsToday)} />
         <StatCard label="Visits this week" value={String(data.visitsWeek)} />
         <StatCard label="Orders this week" value={String(data.ordersWeek)} />
-        <StatCard label="Sales this week" value={`${money(data.salesWeek)} RWF`} />
+        <StatCard label="Sales this week" value={money(data.salesWeek)} />
         <StatCard label="New subscribers" value={String(data.subscribersWeek)} />
         <StatCard label="Messages" value={String(data.messagesWeek)} />
         <StatCard label="Custom requests" value={String(data.customRequestsWeek)} />
@@ -1840,7 +1840,7 @@ function OverviewPanel({ me, onGo }: { me: Me; onGo: (t: TabKey) => void }) {
                 <span className="font-medium">{o.order_number}</span>
                 <span className="text-muted-foreground">{o.customer_name}</span>
                 <span className="capitalize text-muted-foreground">{o.status}</span>
-                <span className="font-display">{money(o.total_rwf)} RWF</span>
+                <span className="font-display">{money(o.total_rwf)}</span>
               </li>
             ))}
           </ul>
@@ -1906,12 +1906,12 @@ function SalesPanel() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Revenue" value={`${money(data.revenue)} RWF`} />
-        <StatCard label="Profit" value={`${money(data.profit)} RWF`} />
+        <StatCard label="Revenue" value={money(data.revenue)} />
+        <StatCard label="Profit" value={money(data.profit)} />
         <StatCard label="Orders" value={String(data.orderCount)} />
-        <StatCard label="Average order" value={`${money(data.averageOrder)} RWF`} />
-        <StatCard label="Product cost" value={`${money(data.cost)} RWF`} />
-        <StatCard label="Discounts given" value={`${money(data.discounts)} RWF`} />
+        <StatCard label="Average order" value={money(data.averageOrder)} />
+        <StatCard label="Product cost" value={money(data.cost)} />
+        <StatCard label="Discounts given" value={money(data.discounts)} />
         <StatCard label="Website visits" value={String(data.visits)} />
         <StatCard label="Visits that ordered" value={`${data.conversion}%`} />
       </div>
@@ -1930,7 +1930,7 @@ function SalesPanel() {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={24} />
               <YAxis tick={{ fontSize: 11 }} width={70} tickFormatter={(v) => money(Number(v))} />
-              <RTooltip formatter={(v: number | string) => `${money(Number(v))} RWF`} />
+              <RTooltip formatter={(v: number | string) => money(Number(v))} />
               <Legend />
               <Area
                 type="monotone"
@@ -1982,7 +1982,7 @@ function SalesPanel() {
                 <li key={p.name} className="flex items-center justify-between gap-4 text-sm">
                   <span className="truncate">{p.name}</span>
                   <span className="shrink-0 text-muted-foreground">
-                    {p.qty} sold · {money(p.revenue)} RWF
+                    {p.qty} sold · {money(p.revenue)}
                   </span>
                 </li>
               ))}
@@ -2056,7 +2056,7 @@ function CustomersPanel() {
                   <td className="px-5 py-3 text-muted-foreground">{c.email}</td>
                   <td className="px-5 py-3 text-muted-foreground">{c.phone ?? "—"}</td>
                   <td className="px-5 py-3">{c.orders}</td>
-                  <td className="px-5 py-3 font-display">{money(c.spent)} RWF</td>
+                  <td className="px-5 py-3 font-display">{money(c.spent)}</td>
                 </tr>
               ))}
             </tbody>
