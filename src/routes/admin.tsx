@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Plus, Trash2, Upload, X, LogOut, Star, Check } from "lucide-react";
+import { Loader2, Plus, Trash2, Upload, X, LogOut, Star, Check, ExternalLink, UploadCloud, KeyRound } from "lucide-react";
 import {
   adminStatus,
   adminLogin,
@@ -16,7 +16,19 @@ import {
   adminDeleteCoupon,
   adminListOrders,
   adminUpdateOrder,
+  staffLoginPin,
+  staffMe,
+  staffChangePin,
+  adminListStaff,
+  adminSaveStaff,
+  adminDeleteStaff,
+  adminActivity,
+  adminNotifications,
+  adminPublish,
+  adminCustomers,
+  adminAnalytics,
   type CouponInput,
+  type StaffInput,
 } from "@/lib/admin.functions";
 import { resolveImage } from "@/components/site-chrome";
 
