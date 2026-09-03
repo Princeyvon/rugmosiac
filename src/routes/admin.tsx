@@ -1769,3 +1769,690 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
     </div>
   );
 }
+
+// ================= overview =================
+
+function OverviewPanel({ me, onGo }: { me: Me; onGo: (t: TabKey) => void }) {
+  const load = useServerFn(adminNotifications);
+  const [data, setData] = useState<Awaited<ReturnType<typeof adminNotifications>> | null>(null);
+
+  useEffect(() => {
+    load().then(setData).catch(() => setData(null));
+  }, [load]);
+
+  if (!data) {
+    return (
+      <div className="mt-8 grid place-items-center py-16 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8 space-y-8">
+      <div>
+        <h2 className="font-display text-xl font-medium">Hello {me.name.split(" ")[0]}.</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Here is what happened on the website over the last seven days.
+          {data.lastPublishedAt
+            ? ` Last published ${new Date(data.lastPublishedAt).toLocaleString()}.`
+            : " Nothing published yet."}
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Visits today" value={String(data.visitsToday)} />
+        <StatCard label="Visits this week" value={String(data.visitsWeek)} />
+        <StatCard label="Orders this week" value={String(data.ordersWeek)} />
+        <StatCard label="Sales this week" value={`${money(data.salesWeek)} RWF`} />
+        <StatCard label="New subscribers" value={String(data.subscribersWeek)} />
+        <StatCard label="Messages" value={String(data.messagesWeek)} />
+        <StatCard label="Custom requests" value={String(data.customRequestsWeek)} />
+        <button
+          onClick={() => onGo(me.perms.analytics ? "sales" : "overview")}
+          className="rounded-2xl border border-border bg-background p-5 text-left"
+        >
+          <div className={panelLabel}>Go deeper</div>
+          <div className="mt-2 font-display text-lg">Sales analytics →</div>
+        </button>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-background">
+        <div className="border-b border-border px-5 py-4 font-display text-sm font-medium">Latest orders</div>
+        {data.recentOrders.length === 0 ? (
+          <p className="px-5 py-8 text-sm text-muted-foreground">No orders in the last seven days.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {data.recentOrders.map((o) => (
+              <li key={o.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
+                <span className="font-medium">{o.order_number}</span>
+                <span className="text-muted-foreground">{o.customer_name}</span>
+                <span className="capitalize text-muted-foreground">{o.status}</span>
+                <span className="font-display">{money(o.total_rwf)} RWF</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-background p-5">
+      <div className={panelLabel}>{label}</div>
+      <div className="mt-2 font-display text-2xl">{value}</div>
+    </div>
+  );
+}
+
+// ================= sales analytics =================
+
+function SalesPanel() {
+  const load = useServerFn(adminAnalytics);
+  const [days, setDays] = useState(30);
+  const [data, setData] = useState<Awaited<ReturnType<typeof adminAnalytics>> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    setData(null);
+    load({ data: { days } })
+      .then((r) => live && setData(r))
+      .catch((e) => live && setError(e instanceof Error ? e.message : "Could not load analytics."));
+    return () => {
+      live = false;
+    };
+  }, [load, days]);
+
+  if (error) return <p className="mt-8 text-sm text-destructive">{error}</p>;
+  if (!data) {
+    return (
+      <div className="mt-8 grid place-items-center py-16 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
+
+  const short = (iso: string) => iso.slice(5).replace("-", "/");
+
+  return (
+    <div className="mt-8 space-y-8">
+      <div className="flex flex-wrap gap-2">
+        {[7, 30, 90, 365].map((d) => (
+          <button
+            key={d}
+            onClick={() => setDays(d)}
+            className={`rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-wider ${
+              days === d ? "border-foreground bg-foreground text-background" : "border-border"
+            }`}
+          >
+            {d === 365 ? "1 year" : `${d} days`}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Revenue" value={`${money(data.revenue)} RWF`} />
+        <StatCard label="Profit" value={`${money(data.profit)} RWF`} />
+        <StatCard label="Orders" value={String(data.orderCount)} />
+        <StatCard label="Average order" value={`${money(data.averageOrder)} RWF`} />
+        <StatCard label="Product cost" value={`${money(data.cost)} RWF`} />
+        <StatCard label="Discounts given" value={`${money(data.discounts)} RWF`} />
+        <StatCard label="Website visits" value={String(data.visits)} />
+        <StatCard label="Visits that ordered" value={`${data.conversion}%`} />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-background p-5">
+        <div className="font-display text-sm font-medium">Revenue and profit</div>
+        <div className="mt-4 h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data.series.map((s) => ({ ...s, label: short(s.date) }))}>
+              <defs>
+                <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="currentColor" stopOpacity={0.28} />
+                  <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={24} />
+              <YAxis tick={{ fontSize: 11 }} width={70} tickFormatter={(v) => money(Number(v))} />
+              <RTooltip formatter={(v: number | string) => `${money(Number(v))} RWF`} />
+              <Legend />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                name="Revenue"
+                stroke="currentColor"
+                fill="url(#revFill)"
+                strokeWidth={2}
+              />
+              <Area
+                type="monotone"
+                dataKey="profit"
+                name="Profit"
+                stroke="#9c8a76"
+                fill="#9c8a76"
+                fillOpacity={0.15}
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-background p-5">
+          <div className="font-display text-sm font-medium">Orders and visits per day</div>
+          <div className="mt-4 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.series.map((s) => ({ ...s, label: short(s.date) }))}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={24} />
+                <YAxis tick={{ fontSize: 11 }} width={40} />
+                <RTooltip />
+                <Legend />
+                <Bar dataKey="orders" name="Orders" fill="#9c8a76" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="visits" name="Visits" fill="currentColor" fillOpacity={0.35} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-background p-5">
+          <div className="font-display text-sm font-medium">Best sellers</div>
+          {data.topProducts.length === 0 ? (
+            <p className="mt-6 text-sm text-muted-foreground">No sales in this period yet.</p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {data.topProducts.map((p) => (
+                <li key={p.name} className="flex items-center justify-between gap-4 text-sm">
+                  <span className="truncate">{p.name}</span>
+                  <span className="shrink-0 text-muted-foreground">
+                    {p.qty} sold · {money(p.revenue)} RWF
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-8 font-display text-sm font-medium">Orders by status</div>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {data.statusBreakdown.map((s) => (
+              <li key={s.name} className="rounded-full border border-border px-3 py-1 text-xs capitalize">
+                {s.name}: {s.value}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ================= customers & mailing list =================
+
+function CustomersPanel() {
+  const load = useServerFn(adminCustomers);
+  const [data, setData] = useState<Awaited<ReturnType<typeof adminCustomers>> | null>(null);
+  const [view, setView] = useState<"customers" | "subscribers" | "messages">("customers");
+
+  useEffect(() => {
+    load().then(setData).catch(() => setData(null));
+  }, [load]);
+
+  if (!data) {
+    return (
+      <div className="mt-8 grid place-items-center py-16 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8 space-y-6">
+      <div className="flex flex-wrap gap-2">
+        {(["customers", "subscribers", "messages"] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            className={`rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-wider capitalize ${
+              view === v ? "border-foreground bg-foreground text-background" : "border-border"
+            }`}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto rounded-2xl border border-border bg-background">
+        {view === "customers" && (
+          <table className="w-full min-w-[640px] text-sm">
+            <thead className="border-b border-border text-left">
+              <tr className={panelLabel}>
+                <th className="px-5 py-3">Name</th>
+                <th className="px-5 py-3">Email</th>
+                <th className="px-5 py-3">Phone</th>
+                <th className="px-5 py-3">Orders</th>
+                <th className="px-5 py-3">Spent</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {data.customers.map((c) => (
+                <tr key={c.email}>
+                  <td className="px-5 py-3">{c.name}</td>
+                  <td className="px-5 py-3 text-muted-foreground">{c.email}</td>
+                  <td className="px-5 py-3 text-muted-foreground">{c.phone ?? "—"}</td>
+                  <td className="px-5 py-3">{c.orders}</td>
+                  <td className="px-5 py-3 font-display">{money(c.spent)} RWF</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {view === "subscribers" && (
+          <table className="w-full min-w-[640px] text-sm">
+            <thead className="border-b border-border text-left">
+              <tr className={panelLabel}>
+                <th className="px-5 py-3">Email</th>
+                <th className="px-5 py-3">Welcome code</th>
+                <th className="px-5 py-3">Joined</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {data.subscribers.map((s) => (
+                <tr key={s.id}>
+                  <td className="px-5 py-3">{s.email}</td>
+                  <td className="px-5 py-3 text-muted-foreground">{s.coupon_code ?? "—"}</td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {new Date(s.created_at).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {view === "messages" && (
+          <ul className="divide-y divide-border">
+            {data.messages.map((m) => (
+              <li key={m.id} className="px-5 py-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">
+                    {m.name} · <span className="text-muted-foreground">{m.email}</span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(m.created_at).toLocaleString()}
+                  </span>
+                </div>
+                {m.subject && <div className="mt-1 text-muted-foreground">{m.subject}</div>}
+                <p className="mt-2 whitespace-pre-wrap">{m.message}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {((view === "customers" && data.customers.length === 0) ||
+          (view === "subscribers" && data.subscribers.length === 0) ||
+          (view === "messages" && data.messages.length === 0)) && (
+          <p className="px-5 py-10 text-sm text-muted-foreground">Nothing here yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ================= activity history =================
+
+function ActivityPanel() {
+  const load = useServerFn(adminActivity);
+  const [rows, setRows] = useState<any[] | null>(null);
+
+  useEffect(() => {
+    load().then((r) => setRows(r as any[])).catch(() => setRows([]));
+  }, [load]);
+
+  if (!rows) {
+    return (
+      <div className="mt-8 grid place-items-center py-16 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8 overflow-x-auto rounded-2xl border border-border bg-background">
+      <table className="w-full min-w-[720px] text-sm">
+        <thead className="border-b border-border text-left">
+          <tr className={panelLabel}>
+            <th className="px-5 py-3">When</th>
+            <th className="px-5 py-3">Who</th>
+            <th className="px-5 py-3">Role</th>
+            <th className="px-5 py-3">What changed</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {rows.map((r) => (
+            <tr key={r.id}>
+              <td className="whitespace-nowrap px-5 py-3 text-muted-foreground">
+                {new Date(r.created_at).toLocaleString()}
+              </td>
+              <td className="px-5 py-3">{r.actor_name ?? "—"}</td>
+              <td className="px-5 py-3 capitalize text-muted-foreground">{r.actor_role ?? "—"}</td>
+              <td className="px-5 py-3">{r.summary}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {rows.length === 0 && <p className="px-5 py-10 text-sm text-muted-foreground">No changes recorded yet.</p>}
+    </div>
+  );
+}
+
+// ================= team =================
+
+function emptyStaff(): StaffInput {
+  return {
+    email: "",
+    full_name: "",
+    job_title: "",
+    role: "sales",
+    is_active: true,
+    permissions: {},
+    pin: "",
+  };
+}
+
+function TeamPanel({ me, onToast }: { me: Me; onToast: (m: string) => void }) {
+  const list = useServerFn(adminListStaff);
+  const saveFn = useServerFn(adminSaveStaff);
+  const removeFn = useServerFn(adminDeleteStaff);
+
+  const [rows, setRows] = useState<Awaited<ReturnType<typeof adminListStaff>> | null>(null);
+  const [draft, setDraft] = useState<StaffInput | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = useCallback(async () => {
+    const r = await list();
+    setRows(r);
+  }, [list]);
+
+  useEffect(() => {
+    refresh().catch(() => setRows([]));
+  }, [refresh]);
+
+  async function submit() {
+    if (!draft) return;
+    setBusy(true);
+    try {
+      await saveFn({ data: draft });
+      onToast("Team member saved.");
+      setDraft(null);
+      await refresh();
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : "Could not save.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onRemove(id: string, name: string) {
+    if (!confirm(`Remove ${name} from the team? They lose dashboard access immediately.`)) return;
+    try {
+      await removeFn({ data: { id } });
+      onToast("Team member removed.");
+      await refresh();
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : "Could not remove.");
+    }
+  }
+
+  if (!rows) {
+    return (
+      <div className="mt-8 grid place-items-center py-16 text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8 space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">
+          Everyone signs in with their own six digit PIN. The role sets what they can do; the toggles fine-tune it.
+        </p>
+        <button
+          onClick={() => setDraft(emptyStaff())}
+          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-background"
+        >
+          <Plus className="h-4 w-4" /> Add person
+        </button>
+      </div>
+
+      {draft && (
+        <div className="rounded-2xl border border-border bg-background p-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <div className={panelLabel}>Full name</div>
+              <input
+                value={draft.full_name}
+                onChange={(e) => setDraft({ ...draft, full_name: e.target.value })}
+                className={panelInput}
+              />
+            </div>
+            <div>
+              <div className={panelLabel}>Email</div>
+              <input
+                value={draft.email}
+                onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+                className={panelInput}
+              />
+            </div>
+            <div>
+              <div className={panelLabel}>Job title</div>
+              <input
+                value={draft.job_title ?? ""}
+                onChange={(e) => setDraft({ ...draft, job_title: e.target.value })}
+                className={panelInput}
+              />
+            </div>
+            <div>
+              <div className={panelLabel}>Role</div>
+              <select
+                value={draft.role}
+                onChange={(e) => setDraft({ ...draft, role: e.target.value as StaffRole, permissions: {} })}
+                className={panelInput}
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r} className="capitalize">
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <div className={panelLabel}>{draft.id ? "New PIN (leave blank to keep)" : "Six digit PIN"}</div>
+              <input
+                inputMode="numeric"
+                value={draft.pin ?? ""}
+                onChange={(e) => setDraft({ ...draft, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+                placeholder="••••••"
+                className={`${panelInput} tracking-[0.4em]`}
+              />
+            </div>
+            <div className="flex items-end">
+              <Chip on={draft.is_active} onClick={() => setDraft({ ...draft, is_active: !draft.is_active })}>
+                {draft.is_active ? "Active" : "Suspended"}
+              </Chip>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <div className={panelLabel}>What they can do</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {CAPS.map((c) => {
+                const on = draft.permissions[c] ?? false;
+                return (
+                  <Chip
+                    key={c}
+                    on={on}
+                    onClick={() => setDraft({ ...draft, permissions: { ...draft.permissions, [c]: !on } })}
+                  >
+                    {CAP_LABELS[c]}
+                  </Chip>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Anything left off here falls back to what the {draft.role} role normally allows.
+            </p>
+          </div>
+
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={submit}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
+            </button>
+            <button
+              onClick={() => setDraft(null)}
+              className="rounded-full border border-border px-6 py-2.5 text-xs font-semibold uppercase tracking-wider"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-2xl border border-border bg-background">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead className="border-b border-border text-left">
+            <tr className={panelLabel}>
+              <th className="px-5 py-3">Name</th>
+              <th className="px-5 py-3">Role</th>
+              <th className="px-5 py-3">PIN</th>
+              <th className="px-5 py-3">Last signed in</th>
+              <th className="px-5 py-3" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.map((r) => (
+              <tr key={r.id} className={r.is_active ? "" : "opacity-60"}>
+                <td className="px-5 py-3">
+                  <div className="font-medium">{r.full_name}</div>
+                  <div className="text-xs text-muted-foreground">{r.job_title ?? r.email}</div>
+                </td>
+                <td className="px-5 py-3 capitalize">{r.role}</td>
+                <td className="px-5 py-3 text-muted-foreground">{r.has_pin ? "Set" : "Not set"}</td>
+                <td className="px-5 py-3 text-muted-foreground">
+                  {r.last_login_at ? new Date(r.last_login_at).toLocaleString() : "Never"}
+                </td>
+                <td className="px-5 py-3">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() =>
+                        setDraft({
+                          id: r.id,
+                          email: r.email,
+                          full_name: r.full_name,
+                          job_title: r.job_title,
+                          role: r.role as StaffRole,
+                          is_active: r.is_active,
+                          permissions: r.permissions,
+                          pin: "",
+                        })
+                      }
+                      className="rounded-full border border-border px-4 py-1.5 text-xs font-semibold uppercase tracking-wider"
+                    >
+                      Edit
+                    </button>
+                    {me.staffId !== r.id && (
+                      <button
+                        onClick={() => onRemove(r.id, r.full_name)}
+                        aria-label={`Remove ${r.full_name}`}
+                        className="grid h-8 w-8 place-items-center rounded-full border border-border text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {rows.length === 0 && (
+          <p className="px-5 py-10 text-sm text-muted-foreground">No team members yet — add your first one.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ================= change my PIN =================
+
+function ChangePinDialog({ onClose, onToast }: { onClose: () => void; onToast: (m: string) => void }) {
+  const change = useServerFn(staffChangePin);
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await change({ data: { currentPin, newPin } });
+      onToast("Your PIN has been changed.");
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not change your PIN.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 px-6">
+      <form onSubmit={submit} className="w-full max-w-sm rounded-2xl border border-border bg-background p-6">
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-lg font-medium">Change my PIN</h3>
+          <button type="button" onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="mt-5 space-y-4">
+          <div>
+            <div className={panelLabel}>Current PIN</div>
+            <input
+              inputMode="numeric"
+              value={currentPin}
+              onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              className={`${panelInput} tracking-[0.4em]`}
+            />
+          </div>
+          <div>
+            <div className={panelLabel}>New PIN</div>
+            <input
+              inputMode="numeric"
+              value={newPin}
+              onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              className={`${panelInput} tracking-[0.4em]`}
+            />
+          </div>
+        </div>
+        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        <button
+          disabled={busy || currentPin.length !== 6 || newPin.length !== 6}
+          className="mt-6 h-11 w-full rounded-full bg-foreground text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+        >
+          {busy ? "Saving" : "Save new PIN"}
+        </button>
+      </form>
+    </div>
+  );
+}
