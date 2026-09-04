@@ -446,10 +446,26 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [toast, setToast] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
+  const [pending, setPending] = useState<{ count: number; changes: any[] } | null>(null);
   const quickUpdate = useServerFn(adminQuickUpdate);
+  const pendingFn = useServerFn(adminPendingChanges);
+  const navigate = useNavigate();
+
+  const refreshPending = useCallback(() => {
+    pendingFn()
+      .then((r) => setPending({ count: r.count, changes: r.changes as any[] }))
+      .catch(() => setPending(null));
+  }, [pendingFn]);
+
+  useEffect(() => {
+    refreshPending();
+  }, [refreshPending]);
 
   const tabs = useMemo(
-    () => (Object.keys(TAB_CAP) as TabKey[]).filter((t) => {
+    () => NAV_TABS.filter((t) => {
       const cap = TAB_CAP[t];
       return !cap || me.perms[cap];
     }),
@@ -457,8 +473,22 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   );
   const [tab, setTab] = useState<TabKey>("overview");
   useEffect(() => {
-    if (!tabs.includes(tab)) setTab(tabs[0] ?? "overview");
+    if (tab !== "profile" && !tabs.includes(tab)) setTab(tabs[0] ?? "overview");
   }, [tabs, tab]);
+
+  async function leaveStudio() {
+    await logout().catch(() => undefined);
+    onSignOut();
+    navigate({ to: "/" });
+  }
+
+  async function onExit() {
+    if (pending && pending.count > 0) {
+      setExitOpen(true);
+      return;
+    }
+    await leaveStudio();
+  }
 
   async function onPublish() {
     setPublishing(true);
