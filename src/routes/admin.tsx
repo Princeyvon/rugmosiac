@@ -903,8 +903,8 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
             )}
           </>
         )}
-      </main>
-
+        </main>
+      </div>
     </div>
   );
 }
