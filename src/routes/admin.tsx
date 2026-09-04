@@ -495,6 +495,7 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
     try {
       await publish();
       setToast("Changes pushed to the website.");
+      refreshPending();
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Could not publish.");
     } finally {
