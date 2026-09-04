@@ -1985,13 +1985,15 @@ function OverviewPanel({ me, onGo }: { me: Me; onGo: (t: TabKey) => void }) {
         <StatCard label="Messages" value={String(data.messagesWeek)} />
         <StatCard label="Custom requests" value={String(data.customRequestsWeek)} />
         <button
-          onClick={() => onGo(me.perms.analytics ? "sales" : "overview")}
+          onClick={() => onGo("orders")}
           className="rounded-2xl border border-border bg-background p-5 text-left"
         >
           <div className={panelLabel}>Go deeper</div>
-          <div className="mt-2 font-display text-lg">Sales analytics →</div>
+          <div className="mt-2 font-display text-lg">Open orders →</div>
         </button>
       </div>
+
+      <NoticeBoard me={me} />
 
       <div className="rounded-2xl border border-border bg-background">
         <div className="border-b border-border px-5 py-4 font-display text-sm font-medium">Latest orders</div>
@@ -2010,6 +2012,100 @@ function OverviewPanel({ me, onGo }: { me: Me; onGo: (t: TabKey) => void }) {
           </ul>
         )}
       </div>
+
+      {me.perms.analytics && (
+        <div>
+          <h3 className="font-display text-xl font-medium">Sales &amp; revenue</h3>
+          <SalesPanel />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ================= notice board =================
+
+function NoticeBoard({ me }: { me: Me }) {
+  const list = useServerFn(adminListNotices);
+  const add = useServerFn(adminAddNotice);
+  const del = useServerFn(adminDeleteNotice);
+  const [notices, setNotices] = useState<Awaited<ReturnType<typeof adminListNotices>> | null>(null);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    list().then(setNotices).catch(() => setNotices([]));
+  }, [list]);
+
+  async function post() {
+    if (!text.trim()) return;
+    setBusy(true);
+    try {
+      setNotices(await add({ data: { text } }));
+      setText("");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-background">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+      >
+        <span className="font-display text-sm font-medium">
+          Notice board{notices && notices.length > 0 ? ` (${notices.length})` : ""}
+        </span>
+        <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="border-t border-border px-5 py-4">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && post()}
+              placeholder="Leave a note for the team…"
+              className={panelInput}
+            />
+            <button
+              onClick={post}
+              disabled={busy || !text.trim()}
+              className="shrink-0 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+            >
+              {busy ? "Posting" : "Post"}
+            </button>
+          </div>
+
+          {notices && notices.length > 0 ? (
+            <ul className="mt-4 space-y-3">
+              {notices.map((n) => (
+                <li key={n.id} className="flex items-start justify-between gap-3 rounded-xl bg-muted/50 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {n.author} · {new Date(n.created_at).toLocaleString()}
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm">{n.text}</p>
+                  </div>
+                  {(me.perms.settings || n.author === me.name) && (
+                    <button
+                      onClick={async () => setNotices(await del({ data: { id: n.id } }))}
+                      aria-label="Delete note"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">No notes yet. Anything posted here is seen by the whole team.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
