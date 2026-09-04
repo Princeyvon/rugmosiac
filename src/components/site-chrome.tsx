@@ -467,7 +467,7 @@ export function Nav() {
                   Shop <ChevronDown className="h-3.5 w-3.5" />
                 </button>
                 {shopOpen && (
-                  <div className="absolute left-0 top-full pt-3">
+                  <div className="absolute left-0 top-full z-[60] pt-3">
                     <div className="min-w-[200px] rounded-lg border border-border bg-card/95 p-2 shadow-lg backdrop-blur-md">
                       {SHOP_LINKS.map((l) => (
                         <Link

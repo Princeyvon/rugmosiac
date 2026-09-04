@@ -1,7 +1,31 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Plus, Trash2, Upload, X, LogOut, Star, Check, ExternalLink, UploadCloud, KeyRound } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+  LogOut,
+  Star,
+  Check,
+  ExternalLink,
+  UploadCloud,
+  KeyRound,
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  LayoutDashboard,
+  Package,
+  Tag,
+  ShoppingBag,
+  Users,
+  UserCog,
+  History,
+  User,
+} from "lucide-react";
 import {
   adminStatus,
   adminLogin,
@@ -27,6 +51,11 @@ import {
   adminPublish,
   adminCustomers,
   adminAnalytics,
+  adminListNotices,
+  adminAddNotice,
+  adminDeleteNotice,
+  adminPendingChanges,
+  staffUpdateProfile,
   type CouponInput,
   type StaffInput,
 } from "@/lib/admin.functions";
@@ -364,7 +393,7 @@ function LoginGate({ onDone }: { onDone: () => void }) {
   );
 }
 
-type TabKey = "overview" | "catalogue" | "promotions" | "orders" | "customers" | "sales" | "team" | "activity";
+type TabKey = "overview" | "catalogue" | "promotions" | "orders" | "customers" | "team" | "activity" | "profile";
 
 const TAB_CAP: Record<TabKey, string | null> = {
   overview: null,
@@ -372,9 +401,9 @@ const TAB_CAP: Record<TabKey, string | null> = {
   promotions: "discounts",
   orders: "orders",
   customers: "customers",
-  sales: "analytics",
   team: "staff",
   activity: null,
+  profile: null,
 };
 
 const TAB_LABEL: Record<TabKey, string> = {
@@ -383,10 +412,24 @@ const TAB_LABEL: Record<TabKey, string> = {
   promotions: "Discounts",
   orders: "Orders",
   customers: "Customers",
-  sales: "Sales",
   team: "Team",
   activity: "History",
+  profile: "My profile",
 };
+
+const TAB_ICON: Record<TabKey, typeof LayoutDashboard> = {
+  overview: LayoutDashboard,
+  catalogue: Package,
+  promotions: Tag,
+  orders: ShoppingBag,
+  customers: Users,
+  team: UserCog,
+  activity: History,
+  profile: User,
+};
+
+/** Tabs that appear in the sidebar — "profile" is reached from the badge. */
+const NAV_TABS: TabKey[] = ["overview", "catalogue", "promotions", "orders", "customers", "team", "activity"];
 
 function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const load = useServerFn(adminLoadCatalogue);
@@ -403,10 +446,26 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const [toast, setToast] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
+  const [pending, setPending] = useState<{ count: number; changes: any[] } | null>(null);
   const quickUpdate = useServerFn(adminQuickUpdate);
+  const pendingFn = useServerFn(adminPendingChanges);
+  const navigate = useNavigate();
+
+  const refreshPending = useCallback(() => {
+    pendingFn()
+      .then((r) => setPending({ count: r.count, changes: r.changes as any[] }))
+      .catch(() => setPending(null));
+  }, [pendingFn]);
+
+  useEffect(() => {
+    refreshPending();
+  }, [refreshPending]);
 
   const tabs = useMemo(
-    () => (Object.keys(TAB_CAP) as TabKey[]).filter((t) => {
+    () => NAV_TABS.filter((t) => {
       const cap = TAB_CAP[t];
       return !cap || me.perms[cap];
     }),
@@ -414,14 +473,29 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   );
   const [tab, setTab] = useState<TabKey>("overview");
   useEffect(() => {
-    if (!tabs.includes(tab)) setTab(tabs[0] ?? "overview");
+    if (tab !== "profile" && !tabs.includes(tab)) setTab(tabs[0] ?? "overview");
   }, [tabs, tab]);
+
+  async function leaveStudio() {
+    await logout().catch(() => undefined);
+    onSignOut();
+    navigate({ to: "/" });
+  }
+
+  async function onExit() {
+    if (pending && pending.count > 0) {
+      setExitOpen(true);
+      return;
+    }
+    await leaveStudio();
+  }
 
   async function onPublish() {
     setPublishing(true);
     try {
       await publish();
       setToast("Changes pushed to the website.");
+      refreshPending();
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Could not publish.");
     } finally {
@@ -556,17 +630,11 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         <div className="container-x mx-auto grid max-w-[1400px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="font-script text-3xl leading-none">Mosiac</span>
-            <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {me.name} · {me.role}
+            <span className="hidden truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:inline">
+              Studio dashboard
             </span>
           </div>
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider"
-            >
-              <ExternalLink className="h-3.5 w-3.5" /> Return to site
-            </Link>
             {me.perms.publish && (
               <button
                 onClick={onPublish}
@@ -575,17 +643,35 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               >
                 {publishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
                 Publish
+                {pending && pending.count > 0 && (
+                  <span className="rounded-full bg-foreground px-1.5 text-[10px] text-background">{pending.count}</span>
+                )}
               </button>
             )}
-            {me.staffId && (
+
+            <div className="relative">
               <button
-                onClick={() => setPinOpen(true)}
-                aria-label="Change my PIN"
+                onClick={() => setBellOpen((v) => !v)}
+                aria-label="Notifications"
                 className="grid h-10 w-10 place-items-center rounded-full border border-border"
               >
-                <KeyRound className="h-4 w-4" />
+                <Bell className="h-4 w-4" />
+                {pending && pending.count > 0 && (
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+                )}
               </button>
-            )}
+              {bellOpen && (
+                <NotificationsPanel
+                  pending={pending}
+                  onClose={() => setBellOpen(false)}
+                  onGo={(t) => {
+                    setBellOpen(false);
+                    setTab(t);
+                  }}
+                />
+              )}
+            </div>
+
             {me.perms.catalogue && (
               <button
                 onClick={() => {
@@ -597,12 +683,27 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
                 <Plus className="h-4 w-4" /> New rug
               </button>
             )}
+
             <button
-              onClick={async () => {
-                await logout();
-                onSignOut();
-              }}
-              aria-label="Sign out"
+              onClick={() => setTab("profile")}
+              title="My profile"
+              className={`inline-flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-4 text-left ${
+                tab === "profile" ? "border-foreground" : "border-border"
+              }`}
+            >
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-foreground text-xs font-semibold uppercase text-background">
+                {me.name.slice(0, 1)}
+              </span>
+              <span className="hidden leading-tight sm:block">
+                <span className="block text-xs font-semibold">{me.name.split(" ")[0]}</span>
+                <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">{me.role}</span>
+              </span>
+            </button>
+
+            <button
+              onClick={onExit}
+              aria-label="Leave the studio"
+              title="Leave the studio and sign out"
               className="grid h-10 w-10 place-items-center rounded-full border border-border"
             >
               <LogOut className="h-4 w-4" />
@@ -617,8 +718,69 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         </div>
       )}
 
-      <main className="container-x mx-auto max-w-[1400px] py-8">
-        <div className="flex flex-wrap gap-2">
+      {exitOpen && (
+        <ExitDialog
+          count={pending?.count ?? 0}
+          changes={pending?.changes ?? []}
+          canPublish={Boolean(me.perms.publish)}
+          publishing={publishing}
+          onClose={() => setExitOpen(false)}
+          onPublishAndLeave={async () => {
+            await onPublish();
+            await leaveStudio();
+          }}
+          onLeave={leaveStudio}
+        />
+      )}
+
+      <div className="container-x mx-auto flex max-w-[1400px] gap-6 py-8">
+        <aside
+          className={`hidden shrink-0 lg:block ${collapsed ? "w-[68px]" : "w-[212px]"} transition-all duration-200`}
+        >
+          <div className="sticky top-24 space-y-1 rounded-2xl border border-border bg-background p-2">
+            {tabs.map((t) => {
+              const Icon = TAB_ICON[t];
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  title={TAB_LABEL[t]}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+                    tab === t ? "bg-foreground text-background" : "hover:bg-muted"
+                  } ${collapsed ? "justify-center px-0" : ""}`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span className="truncate">{TAB_LABEL[t]}</span>}
+                </button>
+              );
+            })}
+            <div className="mt-2 border-t border-border pt-2">
+              <Link
+                to="/"
+                title="Open the website in a new tab"
+                target="_blank"
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted ${
+                  collapsed ? "justify-center px-0" : ""
+                }`}
+              >
+                <ExternalLink className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>View website</span>}
+              </Link>
+              <button
+                onClick={() => setCollapsed((v) => !v)}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted ${
+                  collapsed ? "justify-center px-0" : ""
+                }`}
+              >
+                {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                {!collapsed && <span>Collapse menu</span>}
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <main className="min-w-0 flex-1">
+        <div className="flex flex-wrap gap-2 lg:hidden">
           {tabs.map((t) => (
             <button
               key={t}
@@ -638,9 +800,11 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         {tab === "promotions" && <CouponsPanel onToast={setToast} />}
         {tab === "orders" && <OrdersPanel onToast={setToast} />}
         {tab === "customers" && <CustomersPanel />}
-        {tab === "sales" && <SalesPanel />}
         {tab === "team" && <TeamPanel me={me} onToast={setToast} />}
         {tab === "activity" && <ActivityPanel />}
+        {tab === "profile" && (
+          <ProfilePanel me={me} onToast={setToast} onChangePin={() => setPinOpen(true)} onExit={onExit} />
+        )}
 
         {tab === "catalogue" && (
           <>
@@ -739,8 +903,8 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
             )}
           </>
         )}
-      </main>
-
+        </main>
+      </div>
     </div>
   );
 }
@@ -1821,13 +1985,15 @@ function OverviewPanel({ me, onGo }: { me: Me; onGo: (t: TabKey) => void }) {
         <StatCard label="Messages" value={String(data.messagesWeek)} />
         <StatCard label="Custom requests" value={String(data.customRequestsWeek)} />
         <button
-          onClick={() => onGo(me.perms.analytics ? "sales" : "overview")}
+          onClick={() => onGo("orders")}
           className="rounded-2xl border border-border bg-background p-5 text-left"
         >
           <div className={panelLabel}>Go deeper</div>
-          <div className="mt-2 font-display text-lg">Sales analytics →</div>
+          <div className="mt-2 font-display text-lg">Open orders →</div>
         </button>
       </div>
+
+      <NoticeBoard me={me} />
 
       <div className="rounded-2xl border border-border bg-background">
         <div className="border-b border-border px-5 py-4 font-display text-sm font-medium">Latest orders</div>
@@ -1846,6 +2012,100 @@ function OverviewPanel({ me, onGo }: { me: Me; onGo: (t: TabKey) => void }) {
           </ul>
         )}
       </div>
+
+      {me.perms.analytics && (
+        <div>
+          <h3 className="font-display text-xl font-medium">Sales &amp; revenue</h3>
+          <SalesPanel />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ================= notice board =================
+
+function NoticeBoard({ me }: { me: Me }) {
+  const list = useServerFn(adminListNotices);
+  const add = useServerFn(adminAddNotice);
+  const del = useServerFn(adminDeleteNotice);
+  const [notices, setNotices] = useState<Awaited<ReturnType<typeof adminListNotices>> | null>(null);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    list().then(setNotices).catch(() => setNotices([]));
+  }, [list]);
+
+  async function post() {
+    if (!text.trim()) return;
+    setBusy(true);
+    try {
+      setNotices(await add({ data: { text } }));
+      setText("");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-background">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+      >
+        <span className="font-display text-sm font-medium">
+          Notice board{notices && notices.length > 0 ? ` (${notices.length})` : ""}
+        </span>
+        <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="border-t border-border px-5 py-4">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && post()}
+              placeholder="Leave a note for the team…"
+              className={panelInput}
+            />
+            <button
+              onClick={post}
+              disabled={busy || !text.trim()}
+              className="shrink-0 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+            >
+              {busy ? "Posting" : "Post"}
+            </button>
+          </div>
+
+          {notices && notices.length > 0 ? (
+            <ul className="mt-4 space-y-3">
+              {notices.map((n) => (
+                <li key={n.id} className="flex items-start justify-between gap-3 rounded-xl bg-muted/50 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {n.author} · {new Date(n.created_at).toLocaleString()}
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm">{n.text}</p>
+                  </div>
+                  {(me.perms.settings || n.author === me.name) && (
+                    <button
+                      onClick={async () => setNotices(await del({ data: { id: n.id } }))}
+                      aria-label="Delete note"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">No notes yet. Anything posted here is seen by the whole team.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
