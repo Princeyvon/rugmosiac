@@ -393,7 +393,7 @@ function LoginGate({ onDone }: { onDone: () => void }) {
   );
 }
 
-type TabKey = "overview" | "catalogue" | "promotions" | "orders" | "customers" | "sales" | "team" | "activity";
+type TabKey = "overview" | "catalogue" | "promotions" | "orders" | "customers" | "team" | "activity" | "profile";
 
 const TAB_CAP: Record<TabKey, string | null> = {
   overview: null,
@@ -401,9 +401,9 @@ const TAB_CAP: Record<TabKey, string | null> = {
   promotions: "discounts",
   orders: "orders",
   customers: "customers",
-  sales: "analytics",
   team: "staff",
   activity: null,
+  profile: null,
 };
 
 const TAB_LABEL: Record<TabKey, string> = {
@@ -412,10 +412,24 @@ const TAB_LABEL: Record<TabKey, string> = {
   promotions: "Discounts",
   orders: "Orders",
   customers: "Customers",
-  sales: "Sales",
   team: "Team",
   activity: "History",
+  profile: "My profile",
 };
+
+const TAB_ICON: Record<TabKey, typeof LayoutDashboard> = {
+  overview: LayoutDashboard,
+  catalogue: Package,
+  promotions: Tag,
+  orders: ShoppingBag,
+  customers: Users,
+  team: UserCog,
+  activity: History,
+  profile: User,
+};
+
+/** Tabs that appear in the sidebar — "profile" is reached from the badge. */
+const NAV_TABS: TabKey[] = ["overview", "catalogue", "promotions", "orders", "customers", "team", "activity"];
 
 function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   const load = useServerFn(adminLoadCatalogue);
