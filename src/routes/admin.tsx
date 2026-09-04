@@ -630,17 +630,11 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         <div className="container-x mx-auto grid max-w-[1400px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="font-script text-3xl leading-none">Mosiac</span>
-            <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {me.name} · {me.role}
+            <span className="hidden truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:inline">
+              Studio dashboard
             </span>
           </div>
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider"
-            >
-              <ExternalLink className="h-3.5 w-3.5" /> Return to site
-            </Link>
             {me.perms.publish && (
               <button
                 onClick={onPublish}
@@ -649,17 +643,35 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
               >
                 {publishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
                 Publish
+                {pending && pending.count > 0 && (
+                  <span className="rounded-full bg-foreground px-1.5 text-[10px] text-background">{pending.count}</span>
+                )}
               </button>
             )}
-            {me.staffId && (
+
+            <div className="relative">
               <button
-                onClick={() => setPinOpen(true)}
-                aria-label="Change my PIN"
+                onClick={() => setBellOpen((v) => !v)}
+                aria-label="Notifications"
                 className="grid h-10 w-10 place-items-center rounded-full border border-border"
               >
-                <KeyRound className="h-4 w-4" />
+                <Bell className="h-4 w-4" />
+                {pending && pending.count > 0 && (
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+                )}
               </button>
-            )}
+              {bellOpen && (
+                <NotificationsPanel
+                  pending={pending}
+                  onClose={() => setBellOpen(false)}
+                  onGo={(t) => {
+                    setBellOpen(false);
+                    setTab(t);
+                  }}
+                />
+              )}
+            </div>
+
             {me.perms.catalogue && (
               <button
                 onClick={() => {
@@ -671,12 +683,27 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
                 <Plus className="h-4 w-4" /> New rug
               </button>
             )}
+
             <button
-              onClick={async () => {
-                await logout();
-                onSignOut();
-              }}
-              aria-label="Sign out"
+              onClick={() => setTab("profile")}
+              title="My profile"
+              className={`inline-flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-4 text-left ${
+                tab === "profile" ? "border-foreground" : "border-border"
+              }`}
+            >
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-foreground text-xs font-semibold uppercase text-background">
+                {me.name.slice(0, 1)}
+              </span>
+              <span className="hidden leading-tight sm:block">
+                <span className="block text-xs font-semibold">{me.name.split(" ")[0]}</span>
+                <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">{me.role}</span>
+              </span>
+            </button>
+
+            <button
+              onClick={onExit}
+              aria-label="Leave the studio"
+              title="Leave the studio and sign out"
               className="grid h-10 w-10 place-items-center rounded-full border border-border"
             >
               <LogOut className="h-4 w-4" />
@@ -691,8 +718,69 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         </div>
       )}
 
-      <main className="container-x mx-auto max-w-[1400px] py-8">
-        <div className="flex flex-wrap gap-2">
+      {exitOpen && (
+        <ExitDialog
+          count={pending?.count ?? 0}
+          changes={pending?.changes ?? []}
+          canPublish={Boolean(me.perms.publish)}
+          publishing={publishing}
+          onClose={() => setExitOpen(false)}
+          onPublishAndLeave={async () => {
+            await onPublish();
+            await leaveStudio();
+          }}
+          onLeave={leaveStudio}
+        />
+      )}
+
+      <div className="container-x mx-auto flex max-w-[1400px] gap-6 py-8">
+        <aside
+          className={`hidden shrink-0 lg:block ${collapsed ? "w-[68px]" : "w-[212px]"} transition-all duration-200`}
+        >
+          <div className="sticky top-24 space-y-1 rounded-2xl border border-border bg-background p-2">
+            {tabs.map((t) => {
+              const Icon = TAB_ICON[t];
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  title={TAB_LABEL[t]}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+                    tab === t ? "bg-foreground text-background" : "hover:bg-muted"
+                  } ${collapsed ? "justify-center px-0" : ""}`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span className="truncate">{TAB_LABEL[t]}</span>}
+                </button>
+              );
+            })}
+            <div className="mt-2 border-t border-border pt-2">
+              <Link
+                to="/"
+                title="Open the website in a new tab"
+                target="_blank"
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted ${
+                  collapsed ? "justify-center px-0" : ""
+                }`}
+              >
+                <ExternalLink className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>View website</span>}
+              </Link>
+              <button
+                onClick={() => setCollapsed((v) => !v)}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted ${
+                  collapsed ? "justify-center px-0" : ""
+                }`}
+              >
+                {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                {!collapsed && <span>Collapse menu</span>}
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <main className="min-w-0 flex-1">
+        <div className="flex flex-wrap gap-2 lg:hidden">
           {tabs.map((t) => (
             <button
               key={t}
@@ -712,9 +800,11 @@ function Dashboard({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
         {tab === "promotions" && <CouponsPanel onToast={setToast} />}
         {tab === "orders" && <OrdersPanel onToast={setToast} />}
         {tab === "customers" && <CustomersPanel />}
-        {tab === "sales" && <SalesPanel />}
         {tab === "team" && <TeamPanel me={me} onToast={setToast} />}
         {tab === "activity" && <ActivityPanel />}
+        {tab === "profile" && (
+          <ProfilePanel me={me} onToast={setToast} onChangePin={() => setPinOpen(true)} onExit={onExit} />
+        )}
 
         {tab === "catalogue" && (
           <>
