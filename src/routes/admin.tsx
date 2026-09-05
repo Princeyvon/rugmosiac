@@ -2521,8 +2521,11 @@ function TeamPanel({ me, onToast }: { me: Me; onToast: (m: string) => void }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {rows.map((r) => (
-              <tr key={r.id} className={r.is_active ? "" : "opacity-60"}>
+            {rows.map((r) => {
+              const open = draft?.id === r.id;
+              return (
+              <React.Fragment key={r.id}>
+              <tr className={r.is_active ? "" : "opacity-60"}>
                 <td className="px-5 py-3">
                   <div className="font-medium">{r.full_name}</div>
                   <div className="text-xs text-muted-foreground">{r.job_title ?? r.email}</div>
@@ -2536,20 +2539,27 @@ function TeamPanel({ me, onToast }: { me: Me; onToast: (m: string) => void }) {
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() =>
-                        setDraft({
-                          id: r.id,
-                          email: r.email,
-                          full_name: r.full_name,
-                          job_title: r.job_title,
-                          role: r.role as StaffRole,
-                          is_active: r.is_active,
-                          permissions: r.permissions,
-                          pin: "",
-                        })
+                        setDraft(
+                          open
+                            ? null
+                            : {
+                                id: r.id,
+                                email: r.email,
+                                full_name: r.full_name,
+                                job_title: r.job_title,
+                                role: r.role as StaffRole,
+                                is_active: r.is_active,
+                                permissions: r.permissions,
+                                pin: "",
+                              },
+                        )
                       }
-                      className="rounded-full border border-border px-4 py-1.5 text-xs font-semibold uppercase tracking-wider"
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-wider ${
+                        open ? "border-foreground bg-foreground text-background" : "border-border"
+                      }`}
                     >
-                      Edit
+                      {open ? "Close" : "Edit"}
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
                     </button>
                     {me.staffId !== r.id && (
                       <button
@@ -2563,7 +2573,23 @@ function TeamPanel({ me, onToast }: { me: Me; onToast: (m: string) => void }) {
                   </div>
                 </td>
               </tr>
-            ))}
+              {open && draft && (
+                <tr>
+                  <td colSpan={5} className="bg-muted/40 px-5 py-6">
+                    <StaffEditor
+                      draft={draft}
+                      setDraft={setDraft}
+                      busy={busy}
+                      onSubmit={submit}
+                      onCancel={() => setDraft(null)}
+                    />
+                  </td>
+                </tr>
+              )}
+              </React.Fragment>
+              );
+            })}
+
           </tbody>
         </table>
         {rows.length === 0 && (
