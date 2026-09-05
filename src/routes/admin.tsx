@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Loader2,
   Plus,
@@ -2910,6 +2910,119 @@ function ProfilePanel({
           className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border py-3 text-xs font-semibold uppercase tracking-wider"
         >
           <LogOut className="h-4 w-4" /> Leave the studio
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ================= staff editor (shared by add + expanding row) =================
+
+function StaffEditor({
+  draft,
+  setDraft,
+  busy,
+  onSubmit,
+  onCancel,
+}: {
+  draft: StaffInput;
+  setDraft: (d: StaffInput | null) => void;
+  busy: boolean;
+  onSubmit: () => void | Promise<void>;
+  onCancel: () => void;
+}) {
+  return (
+    <div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <div className={panelLabel}>Full name</div>
+          <input
+            value={draft.full_name}
+            onChange={(e) => setDraft({ ...draft, full_name: e.target.value })}
+            className={panelInput}
+          />
+        </div>
+        <div>
+          <div className={panelLabel}>Email</div>
+          <input
+            value={draft.email}
+            onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+            className={panelInput}
+          />
+        </div>
+        <div>
+          <div className={panelLabel}>Job title</div>
+          <input
+            value={draft.job_title ?? ""}
+            onChange={(e) => setDraft({ ...draft, job_title: e.target.value })}
+            className={panelInput}
+          />
+        </div>
+        <div>
+          <div className={panelLabel}>Role</div>
+          <select
+            value={draft.role}
+            onChange={(e) => setDraft({ ...draft, role: e.target.value as StaffRole, permissions: {} })}
+            className={panelInput}
+          >
+            {ROLES.map((r) => (
+              <option key={r} value={r} className="capitalize">
+                {r}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <div className={panelLabel}>{draft.id ? "New PIN (leave blank to keep)" : "Six digit PIN"}</div>
+          <input
+            inputMode="numeric"
+            value={draft.pin ?? ""}
+            onChange={(e) => setDraft({ ...draft, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+            placeholder="******"
+            className={`${panelInput} tracking-[0.4em]`}
+          />
+        </div>
+        <div className="flex items-end">
+          <Chip on={draft.is_active} onClick={() => setDraft({ ...draft, is_active: !draft.is_active })}>
+            {draft.is_active ? "Active" : "Suspended"}
+          </Chip>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <div className={panelLabel}>What they can do</div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {CAPS.map((c) => {
+            const on = draft.permissions[c] ?? false;
+            return (
+              <Chip
+                key={c}
+                on={on}
+                onClick={() => setDraft({ ...draft, permissions: { ...draft.permissions, [c]: !on } })}
+              >
+                {CAP_LABELS[c]}
+              </Chip>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Anything left off here falls back to what the {draft.role} role normally allows.
+        </p>
+      </div>
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={onSubmit}
+          disabled={busy}
+          className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
+        </button>
+        <button
+          onClick={onCancel}
+          className="rounded-full border border-border px-6 py-2.5 text-xs font-semibold uppercase tracking-wider"
+        >
+          Cancel
         </button>
       </div>
     </div>
