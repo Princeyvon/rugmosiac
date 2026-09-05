@@ -2728,3 +2728,254 @@ function ChangePinDialog({ onClose, onToast }: { onClose: () => void; onToast: (
     </div>
   );
 }
+
+// ================= notifications =================
+
+function NotificationsPanel({
+  pending,
+  onClose,
+  onGo,
+}: {
+  pending: { count: number; changes: any[] } | null;
+  onClose: () => void;
+  onGo: (t: TabKey) => void;
+}) {
+  return (
+    <>
+      <button aria-label="Close notifications" onClick={onClose} className="fixed inset-0 z-40 cursor-default" />
+      <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-border bg-background p-4 shadow-xl">
+        <div className="flex items-center justify-between">
+          <h4 className="font-display text-sm font-medium">Notifications</h4>
+          <button onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {!pending || pending.count === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Everything is up to date. Nothing is waiting to go to the website.
+          </p>
+        ) : (
+          <>
+            <p className="mt-3 text-sm">
+              <span className="font-semibold">{pending.count}</span>{" "}
+              {pending.count === 1 ? "change is" : "changes are"} waiting to be pushed to the website.
+            </p>
+            <ul className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+              {pending.changes.map((c) => (
+                <li key={c.id} className="rounded-xl bg-muted/50 px-3 py-2 text-xs">
+                  <div className="text-muted-foreground">
+                    {c.actor_name ?? "Someone"} · {new Date(c.created_at).toLocaleString()}
+                  </div>
+                  <div className="mt-0.5">{c.summary}</div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        <button
+          onClick={() => onGo("activity")}
+          className="mt-4 w-full rounded-full border border-border py-2 text-xs font-semibold uppercase tracking-wider"
+        >
+          See full history
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ================= leaving the studio =================
+
+function ExitDialog({
+  count,
+  changes,
+  canPublish,
+  publishing,
+  onClose,
+  onPublishAndLeave,
+  onLeave,
+}: {
+  count: number;
+  changes: any[];
+  canPublish: boolean;
+  publishing: boolean;
+  onClose: () => void;
+  onPublishAndLeave: () => void | Promise<void>;
+  onLeave: () => void | Promise<void>;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 px-6">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-background p-6">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="font-display text-lg font-medium">
+            {count} {count === 1 ? "change has" : "changes have"} not been pushed yet
+          </h3>
+          <button onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Your work is saved, but the website will not show it until you publish.
+        </p>
+
+        {changes.length > 0 && (
+          <ul className="mt-4 max-h-40 space-y-1.5 overflow-y-auto text-xs text-muted-foreground">
+            {changes.map((c) => (
+              <li key={c.id}>• {c.summary}</li>
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-6 flex flex-col gap-2">
+          {canPublish && (
+            <button
+              onClick={onPublishAndLeave}
+              disabled={publishing}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+            >
+              {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+              Publish, then leave
+            </button>
+          )}
+          <button
+            onClick={onLeave}
+            className="h-11 rounded-full border border-border text-xs font-semibold uppercase tracking-wider"
+          >
+            Leave without publishing
+          </button>
+          <button onClick={onClose} className="h-11 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Stay in the dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ================= my profile =================
+
+function ProfilePanel({
+  me,
+  onToast,
+  onChangePin,
+  onExit,
+}: {
+  me: Me;
+  onToast: (m: string) => void;
+  onChangePin: () => void;
+  onExit: () => void | Promise<void>;
+}) {
+  const update = useServerFn(staffUpdateProfile);
+  const [fullName, setFullName] = useState(me.name);
+  const [jobTitle, setJobTitle] = useState("");
+  const [email, setEmail] = useState(me.email ?? "");
+  const [busy, setBusy] = useState(false);
+  const isOwnerSession = !me.staffId;
+
+  async function save() {
+    setBusy(true);
+    try {
+      await update({ data: { full_name: fullName, job_title: jobTitle, email } });
+      onToast("Your details have been saved.");
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : "Could not save your details.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const allowed = CAPS.filter((c) => me.perms[c]);
+
+  return (
+    <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="rounded-2xl border border-border bg-background p-6">
+        <h2 className="font-display text-xl font-medium">My profile</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isOwnerSession
+            ? "You are signed in as the studio owner with the password, so there is no personal profile to edit."
+            : "Change how your name appears to the rest of the team."}
+        </p>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div>
+            <div className={panelLabel}>Full name</div>
+            <input
+              value={fullName}
+              disabled={isOwnerSession}
+              onChange={(e) => setFullName(e.target.value)}
+              className={`${panelInput} disabled:opacity-60`}
+            />
+          </div>
+          <div>
+            <div className={panelLabel}>Job title</div>
+            <input
+              value={jobTitle}
+              disabled={isOwnerSession}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="Sales lead"
+              className={`${panelInput} disabled:opacity-60`}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <div className={panelLabel}>Email</div>
+            <input
+              value={email}
+              disabled={isOwnerSession}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`${panelInput} disabled:opacity-60`}
+            />
+          </div>
+        </div>
+
+        {!isOwnerSession && (
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={save}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save details
+            </button>
+            <button
+              onClick={onChangePin}
+              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-2.5 text-xs font-semibold uppercase tracking-wider"
+            >
+              <KeyRound className="h-4 w-4" /> Change my PIN
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-border bg-background p-6">
+          <div className="flex items-center gap-3">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-foreground text-base font-semibold uppercase text-background">
+              {me.name.slice(0, 1)}
+            </span>
+            <div>
+              <div className="font-display text-lg">{me.name}</div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{me.role}</div>
+            </div>
+          </div>
+          <div className={`${panelLabel} mt-6`}>What you can do</div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {allowed.map((c) => (
+              <span key={c} className="rounded-full border border-border px-3 py-1 text-xs">
+                {CAP_LABELS[c]}
+              </span>
+            ))}
+            {allowed.length === 0 && <span className="text-sm text-muted-foreground">Viewing only.</span>}
+          </div>
+        </div>
+
+        <button
+          onClick={onExit}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border py-3 text-xs font-semibold uppercase tracking-wider"
+        >
+          <LogOut className="h-4 w-4" /> Leave the studio
+        </button>
+      </div>
+    </div>
+  );
+}
