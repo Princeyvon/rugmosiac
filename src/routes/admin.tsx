@@ -2313,6 +2313,29 @@ function SalesPanel() {
 
 // ================= customers & mailing list =================
 
+const DEMO_CUSTOMERS = [
+  { name: "Aline Uwase", email: "aline.uwase@example.rw", phone: "+250 788 123 456", orders: 3, spent: 1470000 },
+  { name: "Jean-Paul Habimana", email: "jp.habimana@example.rw", phone: "+250 782 990 210", orders: 2, spent: 860000 },
+  { name: "Sarah Keza", email: "sarah.keza@example.com", phone: null, orders: 1, spent: 320000 },
+];
+
+const DEMO_SUBSCRIBERS = [
+  { id: "demo-1", email: "aline.uwase@example.rw", coupon_code: "WELCOME10", created_at: new Date(Date.now() - 864e5 * 3).toISOString() },
+  { id: "demo-2", email: "kigali.interiors@example.rw", coupon_code: null, created_at: new Date(Date.now() - 864e5 * 9).toISOString() },
+];
+
+const DEMO_MESSAGES = [
+  {
+    id: "demo-m1",
+    name: "Sarah Keza",
+    email: "sarah.keza@example.com",
+    subject: "Custom rug for a living room",
+    message: "Hello, I would love a 200 x 300 rug in deep green for our living room. What is the lead time?",
+    created_at: new Date(Date.now() - 864e5).toISOString(),
+  },
+];
+
+
 function CustomersPanel() {
   const load = useServerFn(adminCustomers);
   const [data, setData] = useState<Awaited<ReturnType<typeof adminCustomers>> | null>(null);
@@ -2330,8 +2353,19 @@ function CustomersPanel() {
     );
   }
 
+  // Nothing recorded yet: show examples so the layout is clear.
+  const empty = data.customers.length === 0 && data.subscribers.length === 0 && data.messages.length === 0;
+  const customers = empty ? DEMO_CUSTOMERS : data.customers;
+  const subscribers = empty ? DEMO_SUBSCRIBERS : data.subscribers;
+  const messages = empty ? DEMO_MESSAGES : data.messages;
+
   return (
     <div className="mt-8 space-y-6">
+      {empty && (
+        <p className="rounded-2xl border border-dashed border-border bg-background px-5 py-3 text-sm text-muted-foreground">
+          These are example people. Your real customers, mailing list and messages will replace them.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {(["customers", "subscribers", "messages"] as const).map((v) => (
           <button
@@ -2359,7 +2393,7 @@ function CustomersPanel() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {data.customers.map((c) => (
+              {customers.map((c) => (
                 <tr key={c.email}>
                   <td className="px-5 py-3">{c.name}</td>
                   <td className="px-5 py-3 text-muted-foreground">{c.email}</td>
@@ -2382,7 +2416,7 @@ function CustomersPanel() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {data.subscribers.map((s) => (
+              {subscribers.map((s) => (
                 <tr key={s.id}>
                   <td className="px-5 py-3">{s.email}</td>
                   <td className="px-5 py-3 text-muted-foreground">{s.coupon_code ?? "—"}</td>
@@ -2397,7 +2431,7 @@ function CustomersPanel() {
 
         {view === "messages" && (
           <ul className="divide-y divide-border">
-            {data.messages.map((m) => (
+            {messages.map((m) => (
               <li key={m.id} className="px-5 py-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">
@@ -2414,9 +2448,9 @@ function CustomersPanel() {
           </ul>
         )}
 
-        {((view === "customers" && data.customers.length === 0) ||
-          (view === "subscribers" && data.subscribers.length === 0) ||
-          (view === "messages" && data.messages.length === 0)) && (
+        {((view === "customers" && customers.length === 0) ||
+          (view === "subscribers" && subscribers.length === 0) ||
+          (view === "messages" && messages.length === 0)) && (
           <p className="px-5 py-10 text-sm text-muted-foreground">Nothing here yet.</p>
         )}
       </div>
