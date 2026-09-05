@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Loader2,
   Plus,
@@ -2149,8 +2149,57 @@ function SalesPanel() {
 
   const short = (iso: string) => iso.slice(5).replace("-", "/");
 
+  // Nothing sold yet: show example figures so the studio can see how this page reads.
+  const demo = data.orderCount === 0;
+  const series = demo
+    ? data.series.map((s, i) => {
+        const revenue = Math.round((260000 + Math.sin(i / 2.4) * 150000 + (i % 5) * 42000) / 1000) * 1000;
+        return { ...s, revenue, profit: Math.round(revenue * 0.42), orders: (i % 4) + 1, visits: 40 + ((i * 7) % 60) };
+      })
+    : data.series;
+  const totals = demo
+    ? {
+        revenue: series.reduce((a, s) => a + s.revenue, 0),
+        profit: series.reduce((a, s) => a + s.profit, 0),
+        orderCount: series.reduce((a, s) => a + s.orders, 0),
+        cost: series.reduce((a, s) => a + (s.revenue - s.profit), 0),
+        discounts: 180000,
+        visits: series.reduce((a, s) => a + s.visits, 0),
+      }
+    : {
+        revenue: data.revenue,
+        profit: data.profit,
+        orderCount: data.orderCount,
+        cost: data.cost,
+        discounts: data.discounts,
+        visits: data.visits,
+      };
+  const averageOrder = demo ? Math.round(totals.revenue / Math.max(1, totals.orderCount)) : data.averageOrder;
+  const conversion = demo
+    ? Math.round((totals.orderCount / Math.max(1, totals.visits)) * 1000) / 10
+    : data.conversion;
+  const topProducts = demo
+    ? [
+        { name: "Valencia hand-tufted rug", qty: 6, revenue: 2880000 },
+        { name: "Uzu circular rug", qty: 4, revenue: 1160000 },
+        { name: "Valley runner", qty: 3, revenue: 840000 },
+      ]
+    : data.topProducts;
+  const statusBreakdown = demo
+    ? [
+        { name: "delivered", value: 7 },
+        { name: "in_production", value: 3 },
+        { name: "confirmed", value: 2 },
+      ]
+    : data.statusBreakdown;
+
   return (
     <div className="mt-8 space-y-8">
+      {demo && (
+        <p className="rounded-2xl border border-dashed border-border bg-background px-5 py-3 text-sm text-muted-foreground">
+          These are example figures. Real numbers appear here as soon as your first order comes in.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {[7, 30, 90, 365].map((d) => (
           <button
@@ -2166,21 +2215,21 @@ function SalesPanel() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Revenue" value={money(data.revenue)} />
-        <StatCard label="Profit" value={money(data.profit)} />
-        <StatCard label="Orders" value={String(data.orderCount)} />
-        <StatCard label="Average order" value={money(data.averageOrder)} />
-        <StatCard label="Product cost" value={money(data.cost)} />
-        <StatCard label="Discounts given" value={money(data.discounts)} />
-        <StatCard label="Website visits" value={String(data.visits)} />
-        <StatCard label="Visits that ordered" value={`${data.conversion}%`} />
+        <StatCard label="Revenue" value={money(totals.revenue)} />
+        <StatCard label="Profit" value={money(totals.profit)} />
+        <StatCard label="Orders" value={String(totals.orderCount)} />
+        <StatCard label="Average order" value={money(averageOrder)} />
+        <StatCard label="Product cost" value={money(totals.cost)} />
+        <StatCard label="Discounts given" value={money(totals.discounts)} />
+        <StatCard label="Website visits" value={String(totals.visits)} />
+        <StatCard label="Visits that ordered" value={`${conversion}%`} />
       </div>
 
       <div className="rounded-2xl border border-border bg-background p-5">
         <div className="font-display text-sm font-medium">Revenue and profit</div>
         <div className="mt-4 h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data.series.map((s) => ({ ...s, label: short(s.date) }))}>
+            <AreaChart data={series.map((s) => ({ ...s, label: short(s.date) }))}>
               <defs>
                 <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="currentColor" stopOpacity={0.28} />
@@ -2219,7 +2268,7 @@ function SalesPanel() {
           <div className="font-display text-sm font-medium">Orders and visits per day</div>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.series.map((s) => ({ ...s, label: short(s.date) }))}>
+              <BarChart data={series.map((s) => ({ ...s, label: short(s.date) }))}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={24} />
                 <YAxis tick={{ fontSize: 11 }} width={40} />
@@ -2234,11 +2283,11 @@ function SalesPanel() {
 
         <div className="rounded-2xl border border-border bg-background p-5">
           <div className="font-display text-sm font-medium">Best sellers</div>
-          {data.topProducts.length === 0 ? (
+          {topProducts.length === 0 ? (
             <p className="mt-6 text-sm text-muted-foreground">No sales in this period yet.</p>
           ) : (
             <ul className="mt-4 space-y-3">
-              {data.topProducts.map((p) => (
+              {topProducts.map((p) => (
                 <li key={p.name} className="flex items-center justify-between gap-4 text-sm">
                   <span className="truncate">{p.name}</span>
                   <span className="shrink-0 text-muted-foreground">
@@ -2250,7 +2299,7 @@ function SalesPanel() {
           )}
           <div className="mt-8 font-display text-sm font-medium">Orders by status</div>
           <ul className="mt-3 flex flex-wrap gap-2">
-            {data.statusBreakdown.map((s) => (
+            {statusBreakdown.map((s) => (
               <li key={s.name} className="rounded-full border border-border px-3 py-1 text-xs capitalize">
                 {s.name}: {s.value}
               </li>
@@ -2263,6 +2312,29 @@ function SalesPanel() {
 }
 
 // ================= customers & mailing list =================
+
+const DEMO_CUSTOMERS = [
+  { name: "Aline Uwase", email: "aline.uwase@example.rw", phone: "+250 788 123 456", orders: 3, spent: 1470000 },
+  { name: "Jean-Paul Habimana", email: "jp.habimana@example.rw", phone: "+250 782 990 210", orders: 2, spent: 860000 },
+  { name: "Sarah Keza", email: "sarah.keza@example.com", phone: null, orders: 1, spent: 320000 },
+];
+
+const DEMO_SUBSCRIBERS = [
+  { id: "demo-1", email: "aline.uwase@example.rw", coupon_code: "WELCOME10", created_at: new Date(Date.now() - 864e5 * 3).toISOString() },
+  { id: "demo-2", email: "kigali.interiors@example.rw", coupon_code: null, created_at: new Date(Date.now() - 864e5 * 9).toISOString() },
+];
+
+const DEMO_MESSAGES = [
+  {
+    id: "demo-m1",
+    name: "Sarah Keza",
+    email: "sarah.keza@example.com",
+    subject: "Custom rug for a living room",
+    message: "Hello, I would love a 200 x 300 rug in deep green for our living room. What is the lead time?",
+    created_at: new Date(Date.now() - 864e5).toISOString(),
+  },
+];
+
 
 function CustomersPanel() {
   const load = useServerFn(adminCustomers);
@@ -2281,8 +2353,19 @@ function CustomersPanel() {
     );
   }
 
+  // Nothing recorded yet: show examples so the layout is clear.
+  const empty = data.customers.length === 0 && data.subscribers.length === 0 && data.messages.length === 0;
+  const customers = empty ? DEMO_CUSTOMERS : data.customers;
+  const subscribers = empty ? DEMO_SUBSCRIBERS : data.subscribers;
+  const messages = empty ? DEMO_MESSAGES : data.messages;
+
   return (
     <div className="mt-8 space-y-6">
+      {empty && (
+        <p className="rounded-2xl border border-dashed border-border bg-background px-5 py-3 text-sm text-muted-foreground">
+          These are example people. Your real customers, mailing list and messages will replace them.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {(["customers", "subscribers", "messages"] as const).map((v) => (
           <button
@@ -2310,7 +2393,7 @@ function CustomersPanel() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {data.customers.map((c) => (
+              {customers.map((c) => (
                 <tr key={c.email}>
                   <td className="px-5 py-3">{c.name}</td>
                   <td className="px-5 py-3 text-muted-foreground">{c.email}</td>
@@ -2333,7 +2416,7 @@ function CustomersPanel() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {data.subscribers.map((s) => (
+              {subscribers.map((s) => (
                 <tr key={s.id}>
                   <td className="px-5 py-3">{s.email}</td>
                   <td className="px-5 py-3 text-muted-foreground">{s.coupon_code ?? "—"}</td>
@@ -2348,7 +2431,7 @@ function CustomersPanel() {
 
         {view === "messages" && (
           <ul className="divide-y divide-border">
-            {data.messages.map((m) => (
+            {messages.map((m) => (
               <li key={m.id} className="px-5 py-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">
@@ -2365,9 +2448,9 @@ function CustomersPanel() {
           </ul>
         )}
 
-        {((view === "customers" && data.customers.length === 0) ||
-          (view === "subscribers" && data.subscribers.length === 0) ||
-          (view === "messages" && data.messages.length === 0)) && (
+        {((view === "customers" && customers.length === 0) ||
+          (view === "subscribers" && subscribers.length === 0) ||
+          (view === "messages" && messages.length === 0)) && (
           <p className="px-5 py-10 text-sm text-muted-foreground">Nothing here yet.</p>
         )}
       </div>
@@ -2502,102 +2585,12 @@ function TeamPanel({ me, onToast }: { me: Me; onToast: (m: string) => void }) {
         </button>
       </div>
 
-      {draft && (
+      {draft && !draft.id && (
         <div className="rounded-2xl border border-border bg-background p-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <div className={panelLabel}>Full name</div>
-              <input
-                value={draft.full_name}
-                onChange={(e) => setDraft({ ...draft, full_name: e.target.value })}
-                className={panelInput}
-              />
-            </div>
-            <div>
-              <div className={panelLabel}>Email</div>
-              <input
-                value={draft.email}
-                onChange={(e) => setDraft({ ...draft, email: e.target.value })}
-                className={panelInput}
-              />
-            </div>
-            <div>
-              <div className={panelLabel}>Job title</div>
-              <input
-                value={draft.job_title ?? ""}
-                onChange={(e) => setDraft({ ...draft, job_title: e.target.value })}
-                className={panelInput}
-              />
-            </div>
-            <div>
-              <div className={panelLabel}>Role</div>
-              <select
-                value={draft.role}
-                onChange={(e) => setDraft({ ...draft, role: e.target.value as StaffRole, permissions: {} })}
-                className={panelInput}
-              >
-                {ROLES.map((r) => (
-                  <option key={r} value={r} className="capitalize">
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <div className={panelLabel}>{draft.id ? "New PIN (leave blank to keep)" : "Six digit PIN"}</div>
-              <input
-                inputMode="numeric"
-                value={draft.pin ?? ""}
-                onChange={(e) => setDraft({ ...draft, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })}
-                placeholder="••••••"
-                className={`${panelInput} tracking-[0.4em]`}
-              />
-            </div>
-            <div className="flex items-end">
-              <Chip on={draft.is_active} onClick={() => setDraft({ ...draft, is_active: !draft.is_active })}>
-                {draft.is_active ? "Active" : "Suspended"}
-              </Chip>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className={panelLabel}>What they can do</div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {CAPS.map((c) => {
-                const on = draft.permissions[c] ?? false;
-                return (
-                  <Chip
-                    key={c}
-                    on={on}
-                    onClick={() => setDraft({ ...draft, permissions: { ...draft.permissions, [c]: !on } })}
-                  >
-                    {CAP_LABELS[c]}
-                  </Chip>
-                );
-              })}
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Anything left off here falls back to what the {draft.role} role normally allows.
-            </p>
-          </div>
-
-          <div className="mt-6 flex gap-3">
-            <button
-              onClick={submit}
-              disabled={busy}
-              className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
-            >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
-            </button>
-            <button
-              onClick={() => setDraft(null)}
-              className="rounded-full border border-border px-6 py-2.5 text-xs font-semibold uppercase tracking-wider"
-            >
-              Cancel
-            </button>
-          </div>
+          <StaffEditor draft={draft} setDraft={setDraft} busy={busy} onSubmit={submit} onCancel={() => setDraft(null)} />
         </div>
       )}
+
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-background">
         <table className="w-full min-w-[760px] text-sm">
@@ -2611,8 +2604,11 @@ function TeamPanel({ me, onToast }: { me: Me; onToast: (m: string) => void }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {rows.map((r) => (
-              <tr key={r.id} className={r.is_active ? "" : "opacity-60"}>
+            {rows.map((r) => {
+              const open = draft?.id === r.id;
+              return (
+              <React.Fragment key={r.id}>
+              <tr className={r.is_active ? "" : "opacity-60"}>
                 <td className="px-5 py-3">
                   <div className="font-medium">{r.full_name}</div>
                   <div className="text-xs text-muted-foreground">{r.job_title ?? r.email}</div>
@@ -2626,20 +2622,27 @@ function TeamPanel({ me, onToast }: { me: Me; onToast: (m: string) => void }) {
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() =>
-                        setDraft({
-                          id: r.id,
-                          email: r.email,
-                          full_name: r.full_name,
-                          job_title: r.job_title,
-                          role: r.role as StaffRole,
-                          is_active: r.is_active,
-                          permissions: r.permissions,
-                          pin: "",
-                        })
+                        setDraft(
+                          open
+                            ? null
+                            : {
+                                id: r.id,
+                                email: r.email,
+                                full_name: r.full_name,
+                                job_title: r.job_title,
+                                role: r.role as StaffRole,
+                                is_active: r.is_active,
+                                permissions: r.permissions,
+                                pin: "",
+                              },
+                        )
                       }
-                      className="rounded-full border border-border px-4 py-1.5 text-xs font-semibold uppercase tracking-wider"
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-wider ${
+                        open ? "border-foreground bg-foreground text-background" : "border-border"
+                      }`}
                     >
-                      Edit
+                      {open ? "Close" : "Edit"}
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
                     </button>
                     {me.staffId !== r.id && (
                       <button
@@ -2653,7 +2656,23 @@ function TeamPanel({ me, onToast }: { me: Me; onToast: (m: string) => void }) {
                   </div>
                 </td>
               </tr>
-            ))}
+              {open && draft && (
+                <tr>
+                  <td colSpan={5} className="bg-muted/40 px-5 py-6">
+                    <StaffEditor
+                      draft={draft}
+                      setDraft={setDraft}
+                      busy={busy}
+                      onSubmit={submit}
+                      onCancel={() => setDraft(null)}
+                    />
+                  </td>
+                </tr>
+              )}
+              </React.Fragment>
+              );
+            })}
+
           </tbody>
         </table>
         {rows.length === 0 && (
@@ -2725,6 +2744,370 @@ function ChangePinDialog({ onClose, onToast }: { onClose: () => void; onToast: (
           {busy ? "Saving" : "Save new PIN"}
         </button>
       </form>
+    </div>
+  );
+}
+
+// ================= notifications =================
+
+function NotificationsPanel({
+  pending,
+  onClose,
+  onGo,
+}: {
+  pending: { count: number; changes: any[] } | null;
+  onClose: () => void;
+  onGo: (t: TabKey) => void;
+}) {
+  return (
+    <>
+      <button aria-label="Close notifications" onClick={onClose} className="fixed inset-0 z-40 cursor-default" />
+      <div className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-border bg-background p-4 shadow-xl">
+        <div className="flex items-center justify-between">
+          <h4 className="font-display text-sm font-medium">Notifications</h4>
+          <button onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {!pending || pending.count === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Everything is up to date. Nothing is waiting to go to the website.
+          </p>
+        ) : (
+          <>
+            <p className="mt-3 text-sm">
+              <span className="font-semibold">{pending.count}</span>{" "}
+              {pending.count === 1 ? "change is" : "changes are"} waiting to be pushed to the website.
+            </p>
+            <ul className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+              {pending.changes.map((c) => (
+                <li key={c.id} className="rounded-xl bg-muted/50 px-3 py-2 text-xs">
+                  <div className="text-muted-foreground">
+                    {c.actor_name ?? "Someone"} · {new Date(c.created_at).toLocaleString()}
+                  </div>
+                  <div className="mt-0.5">{c.summary}</div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        <button
+          onClick={() => onGo("activity")}
+          className="mt-4 w-full rounded-full border border-border py-2 text-xs font-semibold uppercase tracking-wider"
+        >
+          See full history
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ================= leaving the studio =================
+
+function ExitDialog({
+  count,
+  changes,
+  canPublish,
+  publishing,
+  onClose,
+  onPublishAndLeave,
+  onLeave,
+}: {
+  count: number;
+  changes: any[];
+  canPublish: boolean;
+  publishing: boolean;
+  onClose: () => void;
+  onPublishAndLeave: () => void | Promise<void>;
+  onLeave: () => void | Promise<void>;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 px-6">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-background p-6">
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="font-display text-lg font-medium">
+            {count} {count === 1 ? "change has" : "changes have"} not been pushed yet
+          </h3>
+          <button onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Your work is saved, but the website will not show it until you publish.
+        </p>
+
+        {changes.length > 0 && (
+          <ul className="mt-4 max-h-40 space-y-1.5 overflow-y-auto text-xs text-muted-foreground">
+            {changes.map((c) => (
+              <li key={c.id}>• {c.summary}</li>
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-6 flex flex-col gap-2">
+          {canPublish && (
+            <button
+              onClick={onPublishAndLeave}
+              disabled={publishing}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-foreground text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+            >
+              {publishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+              Publish, then leave
+            </button>
+          )}
+          <button
+            onClick={onLeave}
+            className="h-11 rounded-full border border-border text-xs font-semibold uppercase tracking-wider"
+          >
+            Leave without publishing
+          </button>
+          <button onClick={onClose} className="h-11 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Stay in the dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ================= my profile =================
+
+function ProfilePanel({
+  me,
+  onToast,
+  onChangePin,
+  onExit,
+}: {
+  me: Me;
+  onToast: (m: string) => void;
+  onChangePin: () => void;
+  onExit: () => void | Promise<void>;
+}) {
+  const update = useServerFn(staffUpdateProfile);
+  const [fullName, setFullName] = useState(me.name);
+  const [jobTitle, setJobTitle] = useState("");
+  const [email, setEmail] = useState(me.email ?? "");
+  const [busy, setBusy] = useState(false);
+  const isOwnerSession = !me.staffId;
+
+  async function save() {
+    setBusy(true);
+    try {
+      await update({ data: { full_name: fullName, job_title: jobTitle, email } });
+      onToast("Your details have been saved.");
+    } catch (e) {
+      onToast(e instanceof Error ? e.message : "Could not save your details.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const allowed = CAPS.filter((c) => me.perms[c]);
+
+  return (
+    <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="rounded-2xl border border-border bg-background p-6">
+        <h2 className="font-display text-xl font-medium">My profile</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isOwnerSession
+            ? "You are signed in as the studio owner with the password, so there is no personal profile to edit."
+            : "Change how your name appears to the rest of the team."}
+        </p>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div>
+            <div className={panelLabel}>Full name</div>
+            <input
+              value={fullName}
+              disabled={isOwnerSession}
+              onChange={(e) => setFullName(e.target.value)}
+              className={`${panelInput} disabled:opacity-60`}
+            />
+          </div>
+          <div>
+            <div className={panelLabel}>Job title</div>
+            <input
+              value={jobTitle}
+              disabled={isOwnerSession}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="Sales lead"
+              className={`${panelInput} disabled:opacity-60`}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <div className={panelLabel}>Email</div>
+            <input
+              value={email}
+              disabled={isOwnerSession}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`${panelInput} disabled:opacity-60`}
+            />
+          </div>
+        </div>
+
+        {!isOwnerSession && (
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={save}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save details
+            </button>
+            <button
+              onClick={onChangePin}
+              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-2.5 text-xs font-semibold uppercase tracking-wider"
+            >
+              <KeyRound className="h-4 w-4" /> Change my PIN
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-border bg-background p-6">
+          <div className="flex items-center gap-3">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-foreground text-base font-semibold uppercase text-background">
+              {me.name.slice(0, 1)}
+            </span>
+            <div>
+              <div className="font-display text-lg">{me.name}</div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{me.role}</div>
+            </div>
+          </div>
+          <div className={`${panelLabel} mt-6`}>What you can do</div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {allowed.map((c) => (
+              <span key={c} className="rounded-full border border-border px-3 py-1 text-xs">
+                {CAP_LABELS[c]}
+              </span>
+            ))}
+            {allowed.length === 0 && <span className="text-sm text-muted-foreground">Viewing only.</span>}
+          </div>
+        </div>
+
+        <button
+          onClick={onExit}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border py-3 text-xs font-semibold uppercase tracking-wider"
+        >
+          <LogOut className="h-4 w-4" /> Leave the studio
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ================= staff editor (shared by add + expanding row) =================
+
+function StaffEditor({
+  draft,
+  setDraft,
+  busy,
+  onSubmit,
+  onCancel,
+}: {
+  draft: StaffInput;
+  setDraft: (d: StaffInput | null) => void;
+  busy: boolean;
+  onSubmit: () => void | Promise<void>;
+  onCancel: () => void;
+}) {
+  return (
+    <div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <div className={panelLabel}>Full name</div>
+          <input
+            value={draft.full_name}
+            onChange={(e) => setDraft({ ...draft, full_name: e.target.value })}
+            className={panelInput}
+          />
+        </div>
+        <div>
+          <div className={panelLabel}>Email</div>
+          <input
+            value={draft.email}
+            onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+            className={panelInput}
+          />
+        </div>
+        <div>
+          <div className={panelLabel}>Job title</div>
+          <input
+            value={draft.job_title ?? ""}
+            onChange={(e) => setDraft({ ...draft, job_title: e.target.value })}
+            className={panelInput}
+          />
+        </div>
+        <div>
+          <div className={panelLabel}>Role</div>
+          <select
+            value={draft.role}
+            onChange={(e) => setDraft({ ...draft, role: e.target.value as StaffRole, permissions: {} })}
+            className={panelInput}
+          >
+            {ROLES.map((r) => (
+              <option key={r} value={r} className="capitalize">
+                {r}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <div className={panelLabel}>{draft.id ? "New PIN (leave blank to keep)" : "Six digit PIN"}</div>
+          <input
+            inputMode="numeric"
+            value={draft.pin ?? ""}
+            onChange={(e) => setDraft({ ...draft, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+            placeholder="******"
+            className={`${panelInput} tracking-[0.4em]`}
+          />
+        </div>
+        <div className="flex items-end">
+          <Chip on={draft.is_active} onClick={() => setDraft({ ...draft, is_active: !draft.is_active })}>
+            {draft.is_active ? "Active" : "Suspended"}
+          </Chip>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <div className={panelLabel}>What they can do</div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {CAPS.map((c) => {
+            const on = draft.permissions[c] ?? false;
+            return (
+              <Chip
+                key={c}
+                on={on}
+                onClick={() => setDraft({ ...draft, permissions: { ...draft.permissions, [c]: !on } })}
+              >
+                {CAP_LABELS[c]}
+              </Chip>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Anything left off here falls back to what the {draft.role} role normally allows.
+        </p>
+      </div>
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={onSubmit}
+          disabled={busy}
+          className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-background disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
+        </button>
+        <button
+          onClick={onCancel}
+          className="rounded-full border border-border px-6 py-2.5 text-xs font-semibold uppercase tracking-wider"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
