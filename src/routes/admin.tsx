@@ -2149,8 +2149,57 @@ function SalesPanel() {
 
   const short = (iso: string) => iso.slice(5).replace("-", "/");
 
+  // Nothing sold yet: show example figures so the studio can see how this page reads.
+  const demo = data.orderCount === 0;
+  const series = demo
+    ? data.series.map((s, i) => {
+        const revenue = Math.round((260000 + Math.sin(i / 2.4) * 150000 + (i % 5) * 42000) / 1000) * 1000;
+        return { ...s, revenue, profit: Math.round(revenue * 0.42), orders: (i % 4) + 1, visits: 40 + ((i * 7) % 60) };
+      })
+    : data.series;
+  const totals = demo
+    ? {
+        revenue: series.reduce((a, s) => a + s.revenue, 0),
+        profit: series.reduce((a, s) => a + s.profit, 0),
+        orderCount: series.reduce((a, s) => a + s.orders, 0),
+        cost: series.reduce((a, s) => a + (s.revenue - s.profit), 0),
+        discounts: 180000,
+        visits: series.reduce((a, s) => a + s.visits, 0),
+      }
+    : {
+        revenue: data.revenue,
+        profit: data.profit,
+        orderCount: data.orderCount,
+        cost: data.cost,
+        discounts: data.discounts,
+        visits: data.visits,
+      };
+  const averageOrder = demo ? Math.round(totals.revenue / Math.max(1, totals.orderCount)) : data.averageOrder;
+  const conversion = demo
+    ? Math.round((totals.orderCount / Math.max(1, totals.visits)) * 1000) / 10
+    : data.conversion;
+  const topProducts = demo
+    ? [
+        { name: "Valencia hand-tufted rug", qty: 6, revenue: 2880000 },
+        { name: "Uzu circular rug", qty: 4, revenue: 1160000 },
+        { name: "Valley runner", qty: 3, revenue: 840000 },
+      ]
+    : data.topProducts;
+  const statusBreakdown = demo
+    ? [
+        { name: "delivered", value: 7 },
+        { name: "in_production", value: 3 },
+        { name: "confirmed", value: 2 },
+      ]
+    : data.statusBreakdown;
+
   return (
     <div className="mt-8 space-y-8">
+      {demo && (
+        <p className="rounded-2xl border border-dashed border-border bg-background px-5 py-3 text-sm text-muted-foreground">
+          These are example figures. Real numbers appear here as soon as your first order comes in.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {[7, 30, 90, 365].map((d) => (
           <button
@@ -2166,21 +2215,21 @@ function SalesPanel() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Revenue" value={money(data.revenue)} />
-        <StatCard label="Profit" value={money(data.profit)} />
-        <StatCard label="Orders" value={String(data.orderCount)} />
-        <StatCard label="Average order" value={money(data.averageOrder)} />
-        <StatCard label="Product cost" value={money(data.cost)} />
-        <StatCard label="Discounts given" value={money(data.discounts)} />
-        <StatCard label="Website visits" value={String(data.visits)} />
-        <StatCard label="Visits that ordered" value={`${data.conversion}%`} />
+        <StatCard label="Revenue" value={money(totals.revenue)} />
+        <StatCard label="Profit" value={money(totals.profit)} />
+        <StatCard label="Orders" value={String(totals.orderCount)} />
+        <StatCard label="Average order" value={money(averageOrder)} />
+        <StatCard label="Product cost" value={money(totals.cost)} />
+        <StatCard label="Discounts given" value={money(totals.discounts)} />
+        <StatCard label="Website visits" value={String(totals.visits)} />
+        <StatCard label="Visits that ordered" value={`${conversion}%`} />
       </div>
 
       <div className="rounded-2xl border border-border bg-background p-5">
         <div className="font-display text-sm font-medium">Revenue and profit</div>
         <div className="mt-4 h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data.series.map((s) => ({ ...s, label: short(s.date) }))}>
+            <AreaChart data={series.map((s) => ({ ...s, label: short(s.date) }))}>
               <defs>
                 <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="currentColor" stopOpacity={0.28} />
@@ -2219,7 +2268,7 @@ function SalesPanel() {
           <div className="font-display text-sm font-medium">Orders and visits per day</div>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.series.map((s) => ({ ...s, label: short(s.date) }))}>
+              <BarChart data={series.map((s) => ({ ...s, label: short(s.date) }))}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={24} />
                 <YAxis tick={{ fontSize: 11 }} width={40} />
@@ -2234,11 +2283,11 @@ function SalesPanel() {
 
         <div className="rounded-2xl border border-border bg-background p-5">
           <div className="font-display text-sm font-medium">Best sellers</div>
-          {data.topProducts.length === 0 ? (
+          {topProducts.length === 0 ? (
             <p className="mt-6 text-sm text-muted-foreground">No sales in this period yet.</p>
           ) : (
             <ul className="mt-4 space-y-3">
-              {data.topProducts.map((p) => (
+              {topProducts.map((p) => (
                 <li key={p.name} className="flex items-center justify-between gap-4 text-sm">
                   <span className="truncate">{p.name}</span>
                   <span className="shrink-0 text-muted-foreground">
@@ -2250,7 +2299,7 @@ function SalesPanel() {
           )}
           <div className="mt-8 font-display text-sm font-medium">Orders by status</div>
           <ul className="mt-3 flex flex-wrap gap-2">
-            {data.statusBreakdown.map((s) => (
+            {statusBreakdown.map((s) => (
               <li key={s.name} className="rounded-full border border-border px-3 py-1 text-xs capitalize">
                 {s.name}: {s.value}
               </li>
