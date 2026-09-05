@@ -446,7 +446,7 @@ export function Nav() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-transparent">
+      <header className="sticky top-0 z-[60] bg-transparent">
         <div className="container-x mx-auto grid max-w-[1400px] grid-cols-[1fr_auto_1fr] items-center py-4">
           {/* Left */}
           <div className="flex items-center gap-2">
@@ -467,7 +467,7 @@ export function Nav() {
                   Shop <ChevronDown className="h-3.5 w-3.5" />
                 </button>
                 {shopOpen && (
-                  <div className="absolute left-0 top-full z-[60] pt-3">
+                  <div className="absolute left-0 top-full z-[65] pt-3">
                     <div className="min-w-[200px] rounded-lg border border-border bg-card/95 p-2 shadow-lg backdrop-blur-md">
                       {SHOP_LINKS.map((l) => (
                         <Link
