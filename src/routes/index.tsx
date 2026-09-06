@@ -345,16 +345,16 @@ function Home() {
         {/* Featured rugs — sticky horizontal scroll-jack */}
         <FeaturedRugsSticky items={data.slider as Product[]} />
 
-        {/* Three category cards */}
-        <section className="pb-16 md:pb-24">
+        {/* Category cards — horizontal carousel on mobile, grid on desktop */}
+        <section className="pb-10 md:pb-24">
           <div className="container-x mx-auto max-w-[1400px]">
-            <div className="grid gap-4 md:grid-cols-3 md:gap-6">
+            <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
               {HOME_CATEGORIES.map((c) => (
                 <Link
                   key={c.slug}
                   to="/catalogue"
                   search={{ category: c.slug }}
-                  className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted"
+                  className="group relative aspect-[4/5] w-[76%] shrink-0 snap-start overflow-hidden rounded-2xl bg-muted md:w-auto"
                 >
                   <img
                     src={c.image}
@@ -372,6 +372,7 @@ function Home() {
             </div>
           </div>
         </section>
+
 
         {/* Heritage slideshow — 3 slides with paired controls */}
         <HeritageSlider />
