@@ -173,7 +173,7 @@ function HeritageSlider() {
                     {s.suffix ? ` ${s.suffix}` : ""}
                   </h2>
 
-                  <div className="mt-8">
+                  <div className="mt-5 mb-16 sm:mt-8 sm:mb-0">
                     <Link
                       to="/catalogue"
                       className="inline-flex items-center gap-2 rounded-full border border-white bg-white px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 hover:bg-transparent hover:text-white"
