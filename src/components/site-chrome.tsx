@@ -140,14 +140,36 @@ export function PromoBar() {
     >
       <div className="relative overflow-hidden rounded-2xl border border-white/30 shadow-sm" style={promo.style}>
 
-        <div className={`relative flex items-center gap-3 px-4 py-3 md:px-6 ${promo.fg}`}>
+        {/* Mobile: stacked layout with a full-width, unmissable CTA */}
+        <div className={`relative flex flex-col gap-3 px-4 py-4 sm:hidden ${promo.fg}`}>
+          <button
+            onClick={dismiss}
+            aria-label="Dismiss promotion"
+            className={`absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full transition-colors ${promo.close}`}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+          <div key={promo.id} className="animate-fade-in pr-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">{promo.sub}</p>
+            <p className="mt-1.5 text-[15px] font-semibold leading-tight">{promo.text}</p>
+          </div>
+          <Link
+            to={promo.to}
+            className={`flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 text-[12px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${promo.btn}`}
+          >
+            {promo.cta}
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div className={`relative hidden items-center gap-3 px-4 py-3 sm:flex md:px-6 ${promo.fg}`}>
           <div key={promo.id} className="min-w-0 flex-1 animate-fade-in">
             <p className="text-[13px] font-semibold leading-snug md:text-sm">{promo.text}</p>
             <p className="mt-0.5 text-[11px] opacity-70">{promo.sub}</p>
           </div>
           <Link
             to={promo.to}
-            className={`hidden whitespace-nowrap rounded-full border px-5 py-2 text-[11px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors sm:inline-block ${promo.btn}`}
+            className={`whitespace-nowrap rounded-full border px-5 py-2 text-[11px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${promo.btn}`}
           >
             {promo.cta}
           </Link>
@@ -160,6 +182,7 @@ export function PromoBar() {
           </button>
         </div>
       </div>
+
     </div>
   );
 }
@@ -500,7 +523,11 @@ export function Nav() {
             >
               <Search className="h-5 w-5" />
             </button>
-            <WishlistNavButton scrolled={scrolled} />
+            {/* Wishlist lives inside the mobile menu; header keeps it on desktop only */}
+            <div className="hidden md:block">
+              <WishlistNavButton scrolled={scrolled} />
+            </div>
+
             <CartNavButton scrolled={scrolled} />
           </div>
         </div>
@@ -537,26 +564,104 @@ export function Nav() {
   );
 }
 
-const MOBILE_SECTIONS: Array<{ label: string; to?: string; search?: { category: string }; children?: Array<{ label: string; to: string; search?: { category: string } }> }> = [
-  {
-    label: "Featured",
-    children: [
-      { label: "New Arrivals", to: "/catalogue" },
-      { label: "Best Sellers", to: "/catalogue" },
-      { label: "Heritage Collection", to: "/catalogue", search: { category: "heritage" } },
-    ],
-  },
-  { label: "Shop by size", to: "/catalogue" },
-  { label: "Shop by color", to: "/catalogue" },
-  { label: "Shop by style", to: "/catalogue" },
-  { label: "Shop by space", to: "/catalogue" },
-  { label: "Art & Decor", to: "/catalogue" },
-  { label: "Pricing", to: "/how-it-works" },
-  { label: "Trade Program", to: "/story" },
+/** Studio photography used for the mobile menu cards. */
+const MENU_PHOTO = {
+  shopAll: "/__l5e/assets-v1/2cbb95f3-b832-4e67-a626-6398c3ce7025/valencia-1.jpg",
+  explore: "/__l5e/assets-v1/10176d14-3299-443a-9708-a27203c5d214/hassan-1.jpg",
+  about: "/__l5e/assets-v1/12431968-acc8-4c32-a82e-2a0918a92e0b/hassan-2.jpg",
+};
+
+const FEATURED_CHILDREN: Array<{ label: string; to: string; search?: { category: string } }> = [
+  { label: "New Arrivals", to: "/catalogue" },
+  { label: "Best Sellers", to: "/catalogue" },
+  { label: "Heritage Collection", to: "/catalogue", search: { category: "heritage" } },
 ];
 
+const MOBILE_CATEGORIES: Array<{ label: string; to: string; search?: { category: string } }> = [
+  { label: "Wall Art", to: "/catalogue", search: { category: "wall-art" } },
+  { label: "Area Rugs", to: "/catalogue", search: { category: "area-rugs" } },
+  { label: "Custom Rugs", to: "/custom" },
+];
+
+/** Custom currency dropdown — no native select, so it matches the studio type. */
+function CurrencyPicker({ className = "" }: { className?: string }) {
+  const { currency, setCurrency } = useCurrency();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`relative ${className}`}>
+      <button
+        type="button"
+        aria-label="Change currency"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-full w-full items-center justify-center gap-1.5 rounded-full border border-border px-4 py-3 text-sm font-medium"
+      >
+        {currency}
+        <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <ul className="absolute right-0 top-full z-20 mt-2 min-w-[7.5rem] overflow-hidden rounded-2xl border border-border bg-card p-1 shadow-xl">
+            {CURRENCIES.map((c) => (
+              <li key={c}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrency(c as Currency);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                    c === currency ? "bg-muted font-semibold" : "hover:bg-muted"
+                  }`}
+                >
+                  {c}
+                  {c === currency && <Check className="h-4 w-4 text-accent" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+function MenuCard({
+  to,
+  label,
+  image,
+  onClose,
+  className = "",
+}: {
+  to: string;
+  label: string;
+  image: string;
+  onClose: () => void;
+  className?: string;
+}) {
+  return (
+    <Link
+      to={to}
+      onClick={onClose}
+      className={`group relative block overflow-hidden rounded-2xl bg-muted ${className}`}
+    >
+      <img src={image} alt="" loading="lazy" className="h-full w-full object-cover" />
+      <span className="absolute inset-0 bg-black/15" />
+      <span className="absolute inset-0 grid place-items-center px-3 text-center font-display text-3xl font-medium text-white drop-shadow-lg">
+        {label}
+      </span>
+    </Link>
+  );
+}
+
 function MobileMenu({ onClose }: { onClose: () => void }) {
-  const [expanded, setExpanded] = useState<string | null>("Featured");
+  const [featuredOpen, setFeaturedOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const cart = useCart();
+  const wishlist = useWishlist();
+  const { cartCount, wishCount } = useHydratedCounts();
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-background md:hidden">
       {/* Top bar */}
@@ -572,11 +677,38 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
           Mosiac<span className="text-accent">.</span>
         </Link>
         <div className="flex items-center gap-3">
-          <button aria-label="Search" className="p-1"><Search className="h-5 w-5" /></button>
-          <button aria-label="Wishlist" className="p-1"><Heart className="h-5 w-5" /></button>
-          <button aria-label="Cart" className="relative p-1">
+          <button aria-label="Search" onClick={() => setSearchOpen(true)} className="p-1">
+            <Search className="h-5 w-5" />
+          </button>
+          <button
+            aria-label="Wishlist"
+            onClick={() => {
+              onClose();
+              wishlist.setOpen(true);
+            }}
+            className="relative p-1"
+          >
+            <Heart className="h-5 w-5" />
+            {wishCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-foreground text-[9px] font-semibold text-background">
+                {wishCount}
+              </span>
+            )}
+          </button>
+          <button
+            aria-label="Cart"
+            onClick={() => {
+              onClose();
+              cart.setOpen(true);
+            }}
+            className="relative p-1"
+          >
             <ShoppingBag className="h-5 w-5" />
-            <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-foreground text-[9px] font-semibold text-background">0</span>
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-foreground text-[9px] font-semibold text-background">
+                {cartCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -592,74 +724,79 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
           <span>Shop All</span>
           <ShoppingBag className="h-4 w-4" />
         </Link>
-        <CurrencySelect className="rounded-full border border-border px-4 py-3 text-sm bg-transparent" />
-
-        <button aria-label="Account" className="grid h-11 w-11 place-items-center rounded-full border border-border">
+        <CurrencyPicker />
+        <Link
+          to="/contact"
+          onClick={onClose}
+          aria-label="Account"
+          className="grid h-11 w-11 place-items-center rounded-full border border-border"
+        >
           <User className="h-5 w-5" />
-        </button>
+        </Link>
       </div>
       <div className="border-t border-border" />
 
       {/* Nav list */}
-      <nav className="flex-1 overflow-y-auto px-6 pt-6">
-        <ul className="space-y-1">
-          {MOBILE_SECTIONS.map((s) => {
-            const isOpen = expanded === s.label;
-            const hasChildren = !!s.children?.length;
-            return (
-              <li key={s.label}>
-                {hasChildren ? (
-                  <>
-                    <button
-                      onClick={() => setExpanded(isOpen ? null : s.label)}
-                      className="flex w-full items-center justify-between py-4 text-left text-[22px] font-semibold"
-                    >
-                      <span>{s.label}</span>
-                      <ChevronDown className={`h-6 w-6 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {isOpen && (
-                      <ul className="pb-2 pl-2">
-                        {s.children!.map((c) => (
-                          <li key={c.label}>
-                            <Link
-                              to={c.to}
-                              search={c.search as never}
-                              onClick={onClose}
-                              className="block py-2 text-base text-muted-foreground"
-                            >
-                              {c.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
-                ) : (
-                  <Link
-                    to={s.to!}
-                    search={s.search as never}
-                    onClick={onClose}
-                    className="flex items-center justify-between py-4 text-[22px] font-semibold"
-                  >
-                    <span>{s.label}</span>
-                    <ChevronRight className="h-6 w-6" />
-                  </Link>
-                )}
+      <nav className="flex-1 overflow-y-auto px-5 pt-5">
+        <p className="eyebrow text-muted-foreground">Shop</p>
+
+        {/* Featured accordion — collapsed by default */}
+        <button
+          onClick={() => setFeaturedOpen((v) => !v)}
+          className="mt-2 flex w-full items-center justify-between py-3 text-left text-[26px] font-semibold tracking-tight"
+        >
+          <span>Featured</span>
+          <ChevronDown className={`h-6 w-6 transition-transform ${featuredOpen ? "rotate-180" : ""}`} />
+        </button>
+        {featuredOpen && (
+          <ul className="pb-2 pl-1">
+            {FEATURED_CHILDREN.map((c) => (
+              <li key={c.label}>
+                <Link
+                  to={c.to}
+                  search={c.search as never}
+                  onClick={onClose}
+                  className="block py-2 text-base text-muted-foreground"
+                >
+                  {c.label}
+                </Link>
               </li>
-            );
-          })}
+            ))}
+          </ul>
+        )}
+
+        {/* Category options */}
+        <ul>
+          {MOBILE_CATEGORIES.map((c) => (
+            <li key={c.label}>
+              <Link
+                to={c.to}
+                search={c.search as never}
+                onClick={onClose}
+                className="flex items-center justify-between py-3 text-[26px] font-semibold tracking-tight"
+              >
+                <span>{c.label}</span>
+                <ChevronRight className="h-6 w-6" />
+              </Link>
+            </li>
+          ))}
         </ul>
+
+        {/* Image cards */}
+        <div className="mt-6 space-y-3 pb-10">
+          <MenuCard to="/catalogue" label="Shop All" image={MENU_PHOTO.shopAll} onClose={onClose} className="aspect-[16/9]" />
+          <div className="grid grid-cols-2 gap-3">
+            <MenuCard to="/explore" label="Explore" image={MENU_PHOTO.explore} onClose={onClose} className="aspect-[3/4]" />
+            <MenuCard to="/how-it-works" label="About" image={MENU_PHOTO.about} onClose={onClose} className="aspect-[3/4]" />
+          </div>
+        </div>
       </nav>
 
-      {/* Bottom wordmark */}
-      <div className="flex items-end justify-center pb-8 pt-4">
-        <Link to="/" onClick={onClose} className="font-script text-6xl leading-none">
-          Mosiac<span className="text-accent">.</span>
-        </Link>
-      </div>
+      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
     </div>
   );
 }
+
 
 function FooterAccordion({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);

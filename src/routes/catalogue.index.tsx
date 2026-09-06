@@ -90,10 +90,15 @@ function CataloguePage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-3 md:gap-8">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-8">
             {products.map((p) => (
-              <Link key={p.id} to="/catalogue/$slug" params={{ slug: p.slug }} className="group block">
-                <div className="relative aspect-square overflow-hidden rounded-sm bg-muted">
+              <Link
+                key={p.id}
+                to="/catalogue/$slug"
+                params={{ slug: p.slug }}
+                className="group block overflow-hidden rounded-2xl bg-muted/40 p-3 md:rounded-none md:bg-transparent md:p-0"
+              >
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-background md:rounded-sm md:bg-muted">
                   <WishlistHeart product={{ productId: p.id, slug: p.slug, name: p.name, image: resolveImage(p.main_image_url) }} />
                   {resolveImage(p.main_image_url) && (
                     <img src={resolveImage(p.main_image_url)} alt={p.name} loading="lazy" className={`h-full w-full object-cover transition-all duration-700 group-hover:scale-105 ${p.hover_image_url ? "group-hover:opacity-0" : ""}`} />
@@ -114,13 +119,24 @@ function CataloguePage() {
                     )}
                   </div>
                 </div>
-                <div className="mt-5 flex items-start justify-between gap-4">
+
+                {/* Mobile card copy — name, colour, from-price */}
+                <div className="mt-3 md:hidden">
+                  <h3 className="truncate font-display text-[17px] font-medium leading-tight">{p.name}</h3>
+                  <p className="truncate text-[15px] text-muted-foreground">
+                    in {(p.color_palette ?? [])[0] ?? p.category?.name ?? "Wool"}
+                  </p>
+                  <p className="mt-1 text-[15px] font-medium">
+                    From {format({ rwf: p.base_price_rwf, usd: p.base_price_usd })}
+                  </p>
+                </div>
+
+                <div className="mt-5 hidden items-start justify-between gap-4 md:flex">
                   <div>
                     <div className="eyebrow text-muted-foreground">{p.category?.name ?? "Custom"}</div>
                     <h3 className="mt-1.5 font-serif text-2xl">{p.name}</h3>
                     <p className="mt-1 text-sm text-muted-foreground italic">
                       {format({ rwf: p.base_price_rwf, usd: p.base_price_usd })}
-
                     </p>
                   </div>
                   <span className="mt-2 text-sm transition-transform group-hover:translate-x-1">View →</span>
@@ -128,6 +144,7 @@ function CataloguePage() {
               </Link>
             ))}
           </div>
+
         )}
       </main>
       <Footer />

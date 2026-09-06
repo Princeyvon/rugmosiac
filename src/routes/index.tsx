@@ -148,10 +148,11 @@ function HeritageSlider() {
   const prev = () => setI((v) => (v - 1 + total) % total);
   const next = () => setI((v) => (v + 1) % total);
   return (
-    <section className="pb-20 md:pb-28">
+    <section className="pb-12 md:pb-28">
       <div className="container-x mx-auto max-w-[1400px]">
         <div className="group relative overflow-hidden rounded-2xl bg-muted">
-          <div className="relative aspect-[21/10] w-full md:aspect-[24/9]">
+          <div className="relative aspect-[4/5] w-full sm:aspect-[21/10] md:aspect-[24/9]">
+
             {HERITAGE_SLIDES.map((s, idx) => (
               <div
                 key={idx}
@@ -164,14 +165,15 @@ function HeritageSlider() {
                   loading={idx === 0 ? "eager" : "lazy"}
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/10" />
-                <div className="absolute inset-y-0 left-0 flex max-w-2xl flex-col justify-center p-6 text-white md:p-14">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10 sm:bg-gradient-to-r sm:from-black/70 sm:via-black/30 sm:to-black/10" />
+                <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end p-6 text-white sm:inset-y-0 sm:max-w-2xl sm:justify-center md:p-14">
                   <span className="eyebrow text-white/80">{s.kicker}</span>
-                  <h2 className="mt-3 font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-6xl">
+                  <h2 className="mt-3 font-display text-3xl font-medium leading-[1.02] tracking-tight sm:text-4xl md:text-6xl">
                     {s.title} <span className="italic">{s.italic}</span>
                     {s.suffix ? ` ${s.suffix}` : ""}
                   </h2>
-                  <div className="mt-8">
+
+                  <div className="mt-5 mb-16 sm:mt-8 sm:mb-0">
                     <Link
                       to="/catalogue"
                       className="inline-flex items-center gap-2 rounded-full border border-white bg-white px-7 py-3.5 text-xs font-semibold uppercase tracking-wider text-foreground transition-all duration-300 hover:bg-transparent hover:text-white"
@@ -310,7 +312,7 @@ function Home() {
       <main>
         {/* Hero card — top padding is tuned to the nav wordmark scroll range so the card
             rises directly beneath "Mosiac" with no dead whitespace mid-transition. */}
-        <section className="pt-[13rem] md:pt-[15rem]">
+        <section className="pt-[11rem] md:pt-[15rem]">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">
@@ -332,7 +334,7 @@ function Home() {
         </section>
 
         {/* Brand intro beneath hero — smaller, still visible */}
-        <section className="py-14 md:py-20">
+        <section className="py-8 md:py-20">
           <div className="container-x mx-auto max-w-[900px] text-center">
             <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
               Welcome to a new dimension of home decor — Mosiac blends intricate design, considered function, and luxury materials to transform your home and awaken your senses.
@@ -343,16 +345,16 @@ function Home() {
         {/* Featured rugs — sticky horizontal scroll-jack */}
         <FeaturedRugsSticky items={data.slider as Product[]} />
 
-        {/* Three category cards */}
-        <section className="pb-16 md:pb-24">
+        {/* Category cards — horizontal carousel on mobile, grid on desktop */}
+        <section className="pb-10 md:pb-24">
           <div className="container-x mx-auto max-w-[1400px]">
-            <div className="grid gap-4 md:grid-cols-3 md:gap-6">
+            <div className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-0 md:pb-0">
               {HOME_CATEGORIES.map((c) => (
                 <Link
                   key={c.slug}
                   to="/catalogue"
                   search={{ category: c.slug }}
-                  className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted"
+                  className="group relative aspect-[4/5] w-[76%] shrink-0 snap-start overflow-hidden rounded-2xl bg-muted md:w-auto"
                 >
                   <img
                     src={c.image}
@@ -370,6 +372,7 @@ function Home() {
             </div>
           </div>
         </section>
+
 
         {/* Heritage slideshow — 3 slides with paired controls */}
         <HeritageSlider />
