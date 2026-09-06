@@ -148,10 +148,11 @@ function HeritageSlider() {
   const prev = () => setI((v) => (v - 1 + total) % total);
   const next = () => setI((v) => (v + 1) % total);
   return (
-    <section className="pb-20 md:pb-28">
+    <section className="pb-12 md:pb-28">
       <div className="container-x mx-auto max-w-[1400px]">
         <div className="group relative overflow-hidden rounded-2xl bg-muted">
-          <div className="relative aspect-[21/10] w-full md:aspect-[24/9]">
+          <div className="relative aspect-[4/5] w-full sm:aspect-[21/10] md:aspect-[24/9]">
+
             {HERITAGE_SLIDES.map((s, idx) => (
               <div
                 key={idx}
@@ -164,13 +165,14 @@ function HeritageSlider() {
                   loading={idx === 0 ? "eager" : "lazy"}
                   className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-black/10" />
-                <div className="absolute inset-y-0 left-0 flex max-w-2xl flex-col justify-center p-6 text-white md:p-14">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10 sm:bg-gradient-to-r sm:from-black/70 sm:via-black/30 sm:to-black/10" />
+                <div className="absolute inset-x-0 bottom-0 flex flex-col justify-end p-6 text-white sm:inset-y-0 sm:max-w-2xl sm:justify-center md:p-14">
                   <span className="eyebrow text-white/80">{s.kicker}</span>
-                  <h2 className="mt-3 font-display text-4xl font-medium leading-[1.02] tracking-tight md:text-6xl">
+                  <h2 className="mt-3 font-display text-3xl font-medium leading-[1.02] tracking-tight sm:text-4xl md:text-6xl">
                     {s.title} <span className="italic">{s.italic}</span>
                     {s.suffix ? ` ${s.suffix}` : ""}
                   </h2>
+
                   <div className="mt-8">
                     <Link
                       to="/catalogue"
