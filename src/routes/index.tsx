@@ -312,7 +312,7 @@ function Home() {
       <main>
         {/* Hero card — top padding is tuned to the nav wordmark scroll range so the card
             rises directly beneath "Mosiac" with no dead whitespace mid-transition. */}
-        <section className="pt-[13rem] md:pt-[15rem]">
+        <section className="pt-[11rem] md:pt-[15rem]">
           <div className="container-x mx-auto max-w-[1400px]">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <div className="relative aspect-[16/12] w-full md:aspect-[16/9]">
@@ -334,7 +334,7 @@ function Home() {
         </section>
 
         {/* Brand intro beneath hero — smaller, still visible */}
-        <section className="py-14 md:py-20">
+        <section className="py-8 md:py-20">
           <div className="container-x mx-auto max-w-[900px] text-center">
             <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
               Welcome to a new dimension of home decor — Mosiac blends intricate design, considered function, and luxury materials to transform your home and awaken your senses.
