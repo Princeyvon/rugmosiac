@@ -140,14 +140,36 @@ export function PromoBar() {
     >
       <div className="relative overflow-hidden rounded-2xl border border-white/30 shadow-sm" style={promo.style}>
 
-        <div className={`relative flex items-center gap-3 px-4 py-3 md:px-6 ${promo.fg}`}>
+        {/* Mobile: stacked layout with a full-width, unmissable CTA */}
+        <div className={`relative flex flex-col gap-3 px-4 py-4 sm:hidden ${promo.fg}`}>
+          <button
+            onClick={dismiss}
+            aria-label="Dismiss promotion"
+            className={`absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full transition-colors ${promo.close}`}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+          <div key={promo.id} className="animate-fade-in pr-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">{promo.sub}</p>
+            <p className="mt-1.5 text-[15px] font-semibold leading-tight">{promo.text}</p>
+          </div>
+          <Link
+            to={promo.to}
+            className={`flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 text-[12px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${promo.btn}`}
+          >
+            {promo.cta}
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <div className={`relative hidden items-center gap-3 px-4 py-3 sm:flex md:px-6 ${promo.fg}`}>
           <div key={promo.id} className="min-w-0 flex-1 animate-fade-in">
             <p className="text-[13px] font-semibold leading-snug md:text-sm">{promo.text}</p>
             <p className="mt-0.5 text-[11px] opacity-70">{promo.sub}</p>
           </div>
           <Link
             to={promo.to}
-            className={`hidden whitespace-nowrap rounded-full border px-5 py-2 text-[11px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors sm:inline-block ${promo.btn}`}
+            className={`whitespace-nowrap rounded-full border px-5 py-2 text-[11px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${promo.btn}`}
           >
             {promo.cta}
           </Link>
@@ -160,6 +182,7 @@ export function PromoBar() {
           </button>
         </div>
       </div>
+
     </div>
   );
 }
