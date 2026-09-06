@@ -523,7 +523,11 @@ export function Nav() {
             >
               <Search className="h-5 w-5" />
             </button>
-            <WishlistNavButton scrolled={scrolled} />
+            {/* Wishlist lives inside the mobile menu; header keeps it on desktop only */}
+            <div className="hidden md:block">
+              <WishlistNavButton scrolled={scrolled} />
+            </div>
+
             <CartNavButton scrolled={scrolled} />
           </div>
         </div>
