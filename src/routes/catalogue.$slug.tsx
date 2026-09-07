@@ -5,7 +5,6 @@ import { Minus, Plus, Ruler, Heart, Truck, RotateCcw, ShieldCheck, Droplet, Scis
 import {
   Nav,
   Footer,
-  FloatingWhatsApp,
   resolveImage,
 } from "@/components/site-chrome";
 import { useCurrency, CURRENCIES, type Currency } from "@/lib/currency";
@@ -460,7 +459,6 @@ function ProductPage() {
         </section>
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
+import { Nav, Footer } from "@/components/site-chrome";
 import { submitCustomRequest } from "@/lib/forms.functions";
 
 export const Route = createFileRoute("/custom")({
@@ -86,7 +86,6 @@ function CustomPage() {
         )}
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }

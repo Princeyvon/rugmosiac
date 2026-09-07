@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { Nav, Footer, FloatingWhatsApp, resolveImage, WishlistHeart } from "@/components/site-chrome";
+import { Nav, Footer, resolveImage, WishlistHeart } from "@/components/site-chrome";
 import { NewsletterWeekly } from "@/components/blocks";
 import { useCurrency } from "@/lib/currency";
 import { listExploreShots } from "@/lib/catalogue.functions";
@@ -85,7 +85,6 @@ function ExplorePage() {
         <NewsletterWeekly />
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }

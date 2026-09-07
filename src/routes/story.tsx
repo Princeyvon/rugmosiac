@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
+import { Nav, Footer } from "@/components/site-chrome";
 import craft1 from "@/assets/craft-1.jpg";
 import craft2 from "@/assets/craft-2.jpg";
 
@@ -58,7 +58,6 @@ function StoryPage() {
         </section>
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }

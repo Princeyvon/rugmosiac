@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowLeft, ArrowUpRight } from "lucide-react";
-import { Nav, Footer, FloatingWhatsApp, resolveImage, WishlistHeart } from "@/components/site-chrome";
+import { Nav, Footer, resolveImage, WishlistHeart } from "@/components/site-chrome";
 import { useCurrency } from "@/lib/currency";
 import { listCategories, listFeatured, listProducts, listReviews, type Product } from "@/lib/catalogue.functions";
 /** Real studio photography (CDN) — no AI-generated imagery on the homepage. */
@@ -446,7 +446,6 @@ function Home() {
         </section>
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }
