@@ -21,92 +21,50 @@ export function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-const PROMOS = [
-  {
-    id: "december",
-    text: "December Sale is live — 120,000 RWF off every made-to-order rug.",
-    sub: "Ends when the studio calendar fills.",
-    cta: "Claim 120K off",
-    to: "/catalogue" as const,
-    style: { background: "linear-gradient(90deg, #1f1b16 0%, #3a2a18 55%, #c97d3a 100%)" },
-    fg: "text-white",
-    btn: "border-white/60 bg-white/15 text-white hover:bg-white/30",
-    close: "text-white/70 hover:bg-white/15 hover:text-white",
-  },
-  {
-    id: "newsletter",
-    text: "First rug? Take 10% off — join the list and your code lands instantly.",
-    sub: "One email a week. Unsubscribe any time.",
-    cta: "Get my 10%",
-    to: "/contact" as const,
-    style: { background: "linear-gradient(90deg, #f4ede2 0%, #e7d8c2 60%, #d9c3a5 100%)" },
-    fg: "text-foreground",
-    btn: "border-foreground/20 bg-white/60 text-foreground hover:bg-white",
-    close: "text-foreground/60 hover:bg-white/60 hover:text-foreground",
-  },
-];
-
 const PROMO_KEY = "mosiac.promo.dismiss";
 /** Snooze ladder: first dismiss hides it 2 minutes, second 10 minutes, then an hour. */
 const SNOOZE_MS = [2 * 60_000, 10 * 60_000, 60 * 60_000];
+/** The banner only appears once the page has finished loading, then waits. */
+const PROMO_DELAY_MS = 7_000;
 
 /**
- * The promo bar sits inside the sticky header, so its height shifts every
- * fixed-position element below it. Publish the measured height so the floating
- * wordmark rides up with the page the moment the bar is dismissed.
+ * Kept for layout compatibility: the promo is now a centred overlay, so it no
+ * longer pushes the sticky header down. Always reports zero height.
  */
-let promoHeight = 0;
-const promoListeners = new Set<(h: number) => void>();
-function publishPromoHeight(h: number) {
-  if (Math.abs(h - promoHeight) < 0.5) return;
-  promoHeight = h;
-  promoListeners.forEach((fn) => fn(h));
-}
 export function usePromoHeight() {
-  const [h, setH] = useState(0);
-  useEffect(() => {
-    setH(promoHeight);
-    promoListeners.add(setH);
-    return () => {
-      promoListeners.delete(setH);
-    };
-  }, []);
-  return h;
+  return 0;
 }
 
 export function PromoBar() {
-
   const [visible, setVisible] = useState(false);
-  const [i, setI] = useState(0);
+  const [step, setStep] = useState<"offer" | "form" | "done">("offer");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
-  // Read the shared snooze state so a dismissal on one page carries to the next.
   useEffect(() => {
-    const check = () => {
-      let count = 0;
-      let until = 0;
-      try {
-        const raw = localStorage.getItem(PROMO_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw) as { count: number; until: number };
-          count = parsed.count ?? 0;
-          until = parsed.until ?? 0;
-        }
-      } catch {
-        /* ignore */
-      }
-      void count;
-      setVisible(Date.now() >= until);
+    let until = 0;
+    try {
+      const raw = localStorage.getItem(PROMO_KEY);
+      if (raw) until = (JSON.parse(raw) as { until: number }).until ?? 0;
+    } catch {
+      /* ignore */
+    }
+    if (Date.now() < until) return;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const start = () => {
+      timer = setTimeout(() => setVisible(true), PROMO_DELAY_MS);
     };
-    check();
-    const t = setInterval(check, 5_000);
-    return () => clearInterval(t);
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("load", start);
+    };
   }, []);
-
-  useEffect(() => {
-    if (!visible) return;
-    const t = setInterval(() => setI((v) => (v + 1) % PROMOS.length), 6500);
-    return () => clearInterval(t);
-  }, [visible]);
 
   function dismiss() {
     let count = 0;
@@ -126,66 +84,130 @@ export function PromoBar() {
     setVisible(false);
   }
 
-  const promo = PROMOS[i];
-  return (
-    <div
-      ref={(node) => {
-        if (!node || !visible) {
-          publishPromoHeight(0);
-          return;
-        }
-        publishPromoHeight(node.getBoundingClientRect().height);
-      }}
-      className={`container-x mx-auto max-w-[1400px] ${visible ? "pb-3" : "hidden"}`}
-    >
-      <div className="relative overflow-hidden rounded-2xl border border-white/30 shadow-sm" style={promo.style}>
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setErr("");
+    setBusy(true);
+    try {
+      await claimPromo({ data: { name, phone, email, source: "sample-sale-banner" } });
+      setStep("done");
+    } catch (e: any) {
+      setErr(e?.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
-        {/* Mobile: stacked layout with a full-width, unmissable CTA */}
-        <div className={`relative flex flex-col gap-3 px-4 py-4 sm:hidden ${promo.fg}`}>
-          <button
-            onClick={dismiss}
-            aria-label="Dismiss promotion"
-            className={`absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full transition-colors ${promo.close}`}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-          <div key={promo.id} className="animate-fade-in pr-8">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">{promo.sub}</p>
-            <p className="mt-1.5 text-[15px] font-semibold leading-tight">{promo.text}</p>
-          </div>
-          <Link
-            to={promo.to}
-            className={`flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 text-[12px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${promo.btn}`}
-          >
-            {promo.cta}
-            <ChevronRight className="h-4 w-4" />
-          </Link>
+  if (!visible) return null;
+
+  return (
+    <div className="fixed inset-0 z-[90] grid place-items-center bg-black/50 p-4 animate-fade-in" onClick={dismiss}>
+      <div
+        role="dialog"
+        aria-label="Sample sale offer"
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-background shadow-2xl"
+      >
+        <button
+          onClick={dismiss}
+          aria-label="Close offer"
+          className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-background/70 text-foreground backdrop-blur-md transition-colors hover:bg-background"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+          <img src={promoRug.url} alt="A hand-tufted Mosiac rug in blues and stone" className="h-full w-full object-cover" />
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-center pb-4">
+            <span className="font-display text-3xl font-semibold tracking-tight text-foreground drop-shadow-[0_2px_10px_rgba(255,255,255,0.85)]">
+              sample sale
+            </span>
+          </span>
         </div>
 
-        <div className={`relative hidden items-center gap-3 px-4 py-3 sm:flex md:px-6 ${promo.fg}`}>
-          <div key={promo.id} className="min-w-0 flex-1 animate-fade-in">
-            <p className="text-[13px] font-semibold leading-snug md:text-sm">{promo.text}</p>
-            <p className="mt-0.5 text-[11px] opacity-70">{promo.sub}</p>
-          </div>
-          <Link
-            to={promo.to}
-            className={`whitespace-nowrap rounded-full border px-5 py-2 text-[11px] font-semibold uppercase tracking-wider backdrop-blur-md transition-colors ${promo.btn}`}
-          >
-            {promo.cta}
-          </Link>
-          <button
-            onClick={dismiss}
-            aria-label="Dismiss promotion"
-            className={`grid h-8 w-8 shrink-0 place-items-center rounded-full transition-colors ${promo.close}`}
-          >
-            <X className="h-4 w-4" />
-          </button>
+        <div className="bg-[#f4ede2] px-6 py-6">
+          {step === "offer" && (
+            <>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Online sample sale now live
+              </p>
+              <p className="mt-3 text-base font-semibold leading-snug text-foreground">
+                Shop up to 70% off select sample sale rugs.
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">Ends September 30th.</p>
+              <button
+                onClick={() => setStep("form")}
+                className="mt-5 rounded-full border border-foreground/20 bg-[#9c8a76] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-background transition-transform hover:scale-[1.02]"
+              >
+                Claim my discount
+              </button>
+            </>
+          )}
+
+          {step === "form" && (
+            <form onSubmit={submit}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Almost yours
+              </p>
+              <p className="mt-2 text-sm text-foreground">
+                Tell us where to send the code and the studio will be in touch.
+              </p>
+              <div className="mt-4 space-y-2.5">
+                <input
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Full name"
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-foreground"
+                />
+                <input
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Phone number"
+                  inputMode="tel"
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-foreground"
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email (optional)"
+                  className="w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-foreground"
+                />
+              </div>
+              {err && <p className="mt-2 text-xs text-destructive">{err}</p>}
+              <button
+                type="submit"
+                disabled={busy}
+                className="mt-4 w-full rounded-full bg-[#9c8a76] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-background transition-transform hover:scale-[1.01] disabled:opacity-60"
+              >
+                {busy ? "Sending…" : "Claim"}
+              </button>
+            </form>
+          )}
+
+          {step === "done" && (
+            <div className="py-2 text-center">
+              <Check className="mx-auto h-7 w-7 text-accent" />
+              <p className="mt-3 text-sm font-semibold text-foreground">You're on the list.</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                The studio will send your sample sale code shortly.
+              </p>
+              <button
+                onClick={dismiss}
+                className="mt-4 text-xs font-semibold uppercase tracking-wider underline underline-offset-4"
+              >
+                Keep browsing
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
     </div>
   );
 }
+
 
 /** Heart overlay for product cards. */
 export function WishlistHeart({
