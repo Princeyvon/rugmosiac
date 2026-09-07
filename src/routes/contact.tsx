@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Nav, Footer, FloatingWhatsApp, WhatsAppIcon, WHATSAPP_URL } from "@/components/site-chrome";
+import { Nav, Footer, WhatsAppIcon, WHATSAPP_URL } from "@/components/site-chrome";
 import { NewsletterWeekly } from "@/components/blocks";
 import { submitContact } from "@/lib/forms.functions";
 import contactHero from "@/assets/contact-hero.jpg";
@@ -165,7 +165,6 @@ function ContactPage() {
         <NewsletterWeekly />
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }

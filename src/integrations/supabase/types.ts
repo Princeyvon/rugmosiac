@@ -567,6 +567,7 @@ export type Database = {
       product_images: {
         Row: {
           alt: string | null
+          colorway_id: string | null
           id: string
           product_id: string
           sort_order: number
@@ -574,6 +575,7 @@ export type Database = {
         }
         Insert: {
           alt?: string | null
+          colorway_id?: string | null
           id?: string
           product_id: string
           sort_order?: number
@@ -581,6 +583,7 @@ export type Database = {
         }
         Update: {
           alt?: string | null
+          colorway_id?: string | null
           id?: string
           product_id?: string
           sort_order?: number
@@ -893,6 +896,33 @@ export type Database = {
           starts_at?: string | null
           usage_limit?: number | null
           used_count?: number
+        }
+        Relationships: []
+      }
+      promo_leads: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string
+          source?: string | null
         }
         Relationships: []
       }

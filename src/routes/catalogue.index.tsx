@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { Nav, Footer, FloatingWhatsApp, resolveImage, WishlistHeart } from "@/components/site-chrome";
+import { Nav, Footer, resolveImage, WishlistHeart } from "@/components/site-chrome";
 import { useCurrency } from "@/lib/currency";
 
 import { listCategories, listProducts } from "@/lib/catalogue.functions";
@@ -148,7 +148,6 @@ function CataloguePage() {
         )}
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }

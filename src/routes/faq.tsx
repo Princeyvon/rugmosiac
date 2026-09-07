@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
+import { Nav, Footer } from "@/components/site-chrome";
 import { NewsletterWeekly, RequestCallback } from "@/components/blocks";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -57,7 +57,6 @@ function FaqPage() {
       </main>
       <NewsletterWeekly />
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }

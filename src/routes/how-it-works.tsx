@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Nav, Footer, FloatingWhatsApp } from "@/components/site-chrome";
+import { Nav, Footer } from "@/components/site-chrome";
 import { FaqBlock, NewsletterWeekly } from "@/components/blocks";
 import { FAQ_SECTIONS, SUPPORT_EMAIL } from "@/lib/faq-content";
 
@@ -65,7 +65,6 @@ function HowPage() {
         <NewsletterWeekly />
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }
