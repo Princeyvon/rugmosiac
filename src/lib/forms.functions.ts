@@ -336,7 +336,7 @@ export const subscribeNewsletter = createServerFn({ method: "POST" })
           email: data.email,
           phone: "N/A",
           source: data.source,
-        }).catch(() => {});
+        }).then(undefined, () => {});
       }
 
       // Dispatch to CRM

@@ -76,7 +76,7 @@ export const Route = createFileRoute("/api/public/download/$")({
           cacheControl: "private, no-transform, max-age=3600",
         });
 
-        return new Response(buffer, { headers });
+        return new Response(new Uint8Array(buffer), { headers });
       },
     },
   },

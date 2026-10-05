@@ -655,7 +655,7 @@ export const adminDeleteStaff = createServerFn({ method: "POST" })
 
 // ---------------- activity, notifications, publishing ----------------
 
-export const adminActivity = createServerFn({ method: "GET" }).handler(async () => {
+export const adminActivity = createServerFn({ method: "GET" }).handler(async (): Promise<Array<Record<string, any>>> => {
   const { requireAdmin } = await import("@/lib/admin.server");
   await requireAdmin();
   try {
@@ -665,7 +665,7 @@ export const adminActivity = createServerFn({ method: "GET" }).handler(async () 
       .select("*")
       .order("created_at", { ascending: false })
       .limit(300);
-    if (data && data.length > 0) return data;
+    if (data && data.length > 0) return data as Array<Record<string, any>>;
   } catch {
     // fallback to local store below
   }
@@ -695,8 +695,8 @@ export const adminNotifications = createServerFn({ method: "GET" }).handler(asyn
       supabaseAdmin.from("contact_messages").select("id", { count: "exact", head: true }).gte("created_at", since),
       supabaseAdmin.from("custom_requests").select("id", { count: "exact", head: true }).gte("created_at", since),
       supabaseAdmin.from("site_settings").select("value").eq("key", "last_published_at").maybeSingle(),
-      supabaseAdmin.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", since).catch(() => ({ count: 0 })),
-      supabaseAdmin.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", today.toISOString()).catch(() => ({ count: 0 })),
+      supabaseAdmin.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", since).then(undefined, () => ({ count: 0 })),
+      supabaseAdmin.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", today.toISOString()).then(undefined, () => ({ count: 0 })),
     ]);
 
     let lastPublishedAt: string | null = (settings.data?.value as string | null) ?? null;
@@ -847,7 +847,7 @@ export const adminAnalytics = createServerFn({ method: "GET" })
           .from("site_visits")
           .select("id, created_at")
           .gte("created_at", since.toISOString())
-          .catch(() => ({ data: [] })),
+          .then(undefined, () => ({ data: [] })),
         listAllProducts().catch(() => []),
       ]);
 
@@ -1014,7 +1014,7 @@ export const adminPendingChanges = createServerFn({ method: "GET" }).handler(asy
   await requireAdmin();
   try {
     const { getStorePendingChanges } = await import("@/lib/studio-store.server");
-    return await getStorePendingChanges();
+    return JSON.parse(JSON.stringify(await getStorePendingChanges())) as { lastPublishedAt: string | null; count: number; changes: Array<Record<string, any>> };
   } catch {
     return { lastPublishedAt: null, count: 0, changes: [] };
   }

@@ -45,7 +45,7 @@
       '/sys/res/m-engine.js');
 
       try {
-        var savedPixelId = localStorage.getItem('mosiac_meta_pixel_id') || '147852369012345';
+        var savedPixelId = localStorage.getItem('mosiac_meta_pixel_id');
         if (savedPixelId) {
           fbq('init', savedPixelId, {}, { autoConfig: true });
         }

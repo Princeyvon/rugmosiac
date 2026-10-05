@@ -266,12 +266,10 @@ export async function handleCrmStageTransition(
       data: {
         eventName,
         eventId,
-        userData,
+        userData: { ...userData, fbp: payload.fbp ?? userData?.fbp, fbc: payload.fbc ?? userData?.fbc },
         customData,
         eventSourceUrl: "https://mosiac.rw/admin/crm",
         actionSource: "system_generated",
-        fbp: payload.fbp,
-        fbc: payload.fbc,
       },
     });
 

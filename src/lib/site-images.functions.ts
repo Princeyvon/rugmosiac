@@ -141,13 +141,9 @@ export const saveSiteImageSlot = createServerFn({ method: "POST" })
     try {
       const { logActivity } = await import("@/lib/admin.server");
       const targetSlot = DEFAULT_FEATURED_SLOTS.find((s) => s.id === slotId);
-      await logActivity(
-        "content",
-        customUrl
+      await logActivity((await import("@/integrations/supabase/client.server")).supabaseAdmin, { id: null, name: actorName, role: "admin" as any, email: null, perms: {} as any }, { action: "content.images", entity_type: "site_images", summary: customUrl
           ? `Updated featured image for "${targetSlot?.title || slotId}"`
-          : `Reset featured image to default for "${targetSlot?.title || slotId}"`,
-        actorName
-      );
+          : `Reset featured image to default for "${targetSlot?.title || slotId}"` });
     } catch {
       // Ignore
     }
@@ -188,11 +184,7 @@ export const resetAllSiteImages = createServerFn({ method: "POST" }).handler(
     }
 
     try {
-      await logActivity(
-        "content",
-        "Reset all website featured images to studio defaults",
-        actor.name || "Studio Admin"
-      );
+      await logActivity((await import("@/integrations/supabase/client.server")).supabaseAdmin, { id: null, name: actor.name || "Studio Admin", role: "admin" as any, email: null, perms: {} as any }, { action: "content.images", entity_type: "site_images", summary: "Reset all website featured images to studio defaults" });
     } catch {
       // Ignore
     }

@@ -25,7 +25,7 @@ export interface TouchAttribution {
   site_source_name?: string;
   referrer?: string;
   landing_page_url?: string;
-  timestamp: number;
+  timestamp?: number;
 }
 
 export interface CompleteAttributionPayload {

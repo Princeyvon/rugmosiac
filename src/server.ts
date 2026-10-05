@@ -139,7 +139,7 @@ export default {
         }
 
         if (cachedScriptBuffer) {
-          return new Response(cachedScriptBuffer, {
+          return new Response(new Uint8Array(cachedScriptBuffer), {
             status: 200,
             headers: {
               "Content-Type": "application/javascript; charset=utf-8",

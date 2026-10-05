@@ -179,8 +179,8 @@ export const savePopupBannerSettings = createServerFn({ method: "POST" })
     // 3. Log activity in studio-store activity stream
     try {
       const { logActivity } = await import("@/lib/admin.server");
-      await logActivity({
-        actor: { id: null, name: actorName, role: actorRole as any, email: null, perms: {} as any },
+      const { supabaseAdmin: logDb } = await import("@/integrations/supabase/client.server");
+      await logActivity(logDb, { id: null, name: actorName, role: actorRole as any, email: null, perms: {} as any }, {
         action: "banner.update",
         entity_type: "banner",
         summary: `${actorName} published updated pop-up banner settings (${cachedBannerConfig.enabled ? "Active" : "Disabled"})`,

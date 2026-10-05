@@ -172,7 +172,13 @@ type SizeRow = {
 
 function ProductPage() {
   const { slug } = Route.useParams();
-  const { data: p } = useSuspenseQuery(productQO(slug));
+  const { data: productData } = useSuspenseQuery(productQO(slug));
+  const p = productData as NonNullable<typeof productData> & {
+    sku?: string | null;
+    dimensions?: string | null;
+    story?: string | null;
+    collection_name?: string | null;
+  };
   const { data: related } = useQuery(relatedQO(slug));
   const { format, currency, setCurrency } = useCurrency();
   const cart = useCart();
@@ -459,7 +465,7 @@ function ProductPage() {
           contentName: p.name,
           contentIds: [p.id],
           contentType: "product",
-          value: (chosen?.price_rwf ?? p.base_price_rwf) * qty,
+          value: (chosen?.price_rwf ?? p.base_price_rwf ?? 0) * qty,
           currency: "RWF",
           numItems: qty,
         });
@@ -506,7 +512,7 @@ function ProductPage() {
         });
 
         // If product is at or above atelier minimum threshold, signal high-intent Lead
-        if (itemPriceRwf >= 320000) {
+        if ((itemPriceRwf ?? 0) >= 320000) {
           trackMetaEvent("Lead", {
             contentName: `WhatsApp Rug Lead: ${p.name}`,
             leadType: "whatsapp_product_inquiry",
@@ -533,9 +539,9 @@ function ProductPage() {
           id: p.id,
           name: p.name,
           slug: p.slug,
-          description: p.short_description || p.story,
+          description: p.short_description || p.story || undefined,
           image: resolveImage(mainImage),
-          category: p.collection_name,
+          category: p.collection_name || undefined,
           price: unitRwf ?? undefined,
           currency: "RWF",
           ratingValue: reviewsData.totalCount > 0 ? reviewsData.averageRating : 4.9,
@@ -585,7 +591,7 @@ function ProductPage() {
                   ) : (
                     galleryItems.map((item, i) => (
                       <div
-                        key={item.url + i}
+                        key={`${item.url ?? ""}${i}`}
                         className="relative aspect-[4/4.8] w-full shrink-0 snap-center snap-always overflow-hidden"
                       >
                         <img
@@ -607,7 +613,7 @@ function ProductPage() {
                     const active = currentSlide === i;
                     return (
                       <button
-                        key={item.url + i}
+                        key={`${item.url ?? ""}${i}`}
                         type="button"
                         onClick={() => goToSlide(i)}
                         aria-label={`Go to slide ${i + 1}`}
@@ -879,7 +885,7 @@ function ProductPage() {
             ) : (
               galleryItems.map((item, i) => (
                 <div
-                  key={item.url + i}
+                  key={`${item.url ?? ""}${i}`}
                   id={`desktop-gallery-item-${i}`}
                   className="overflow-hidden rounded-3xl bg-[#f4efe8] shadow-xs"
                 >

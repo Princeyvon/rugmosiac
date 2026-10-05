@@ -51,6 +51,7 @@ function ensureDirs() {
 }
 
 let inMemoryStore: StudioStoreData | null = null;
+let inMemoryLoadedAt = 0;
 
 const USD_PER_RWF = 1 / 1460;
 
@@ -70,9 +71,27 @@ function generateSlug(name: string): string {
 export async function getStore(): Promise<StudioStoreData> {
   ensureDirs();
 
-  if (inMemoryStore) {
+  // Database is the source of truth (server workers are stateless); short in-memory cache only.
+  if (inMemoryStore && Date.now() - inMemoryLoadedAt < 10_000) {
     return inMemoryStore;
   }
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: cloud } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "studio_catalogue_store")
+      .maybeSingle();
+    const v = cloud?.value as any;
+    if (v && typeof v === "object" && Array.isArray(v.products) && v.products.length > 0) {
+      inMemoryStore = v as StudioStoreData;
+      inMemoryLoadedAt = Date.now();
+      return inMemoryStore;
+    }
+  } catch {
+    // fall through to local cache
+  }
+  if (inMemoryStore) return inMemoryStore;
 
   if (fs.existsSync(STORE_FILE)) {
     try {
@@ -107,7 +126,7 @@ export async function getStore(): Promise<StudioStoreData> {
       Array.isArray((cloudStore.value as any).products) &&
       (cloudStore.value as any).products.length > 0
     ) {
-      inMemoryStore = cloudStore.value as StudioStoreData;
+      inMemoryStore = cloudStore.value as unknown as StudioStoreData;
       // Write to local disk cache for fast offline reads
       const tmpFile = `${STORE_FILE}.${Date.now()}.init.tmp`;
       try {
@@ -160,16 +179,17 @@ export async function getStore(): Promise<StudioStoreData> {
   };
 
   inMemoryStore = initialStore;
-  persistStore(initialStore);
+  await persistStore(initialStore);
   return initialStore;
 }
 
 /**
  * Atomically writes the store to disk using a temporary file.
  */
-export function persistStore(store: StudioStoreData): void {
+export async function persistStore(store: StudioStoreData): Promise<void> {
   ensureDirs();
   inMemoryStore = store;
+  inMemoryLoadedAt = Date.now();
   const tmpFile = `${STORE_FILE}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
   try {
     fs.writeFileSync(tmpFile, JSON.stringify(store, null, 2), "utf8");
@@ -183,24 +203,17 @@ export function persistStore(store: StudioStoreData): void {
     }
   }
 
-  // Backup to Supabase cloud database to survive container restarts & multi-instance scaling
-  import("@/integrations/supabase/client.server")
-    .then(({ supabaseAdmin }) => {
-      supabaseAdmin
-        .from("site_settings")
-        .upsert(
-          {
-            key: "studio_catalogue_store",
-            value: store,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "key" }
-        )
-        .catch((err) => {
-          console.warn("[studio-store] Supabase cloud sync warning:", err);
-        });
-    })
-    .catch(() => {});
+  // Save to the database and wait for it, so changes survive across server instances.
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("site_settings").upsert(
+      { key: "studio_catalogue_store", value: store as never, updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    );
+    if (error) console.warn("[studio-store] Cloud save warning:", error.message);
+  } catch (err) {
+    console.warn("[studio-store] Cloud save warning:", err);
+  }
 }
 
 // ---------------- Catalogue Accessors ----------------
@@ -377,12 +390,12 @@ export async function saveProductToStore(
     });
   }
 
-  persistStore(store);
+  await persistStore(store);
 
   // Background sync to Supabase if available (fire-and-forget, ignore RLS errors)
-  syncProductToSupabaseAsync(productData).catch(() => {});
+  await syncProductToSupabaseAsync(productData).catch(() => {});
 
-  return { id: productId, slug };
+  return { id: productId as string, slug };
 }
 
 export async function quickUpdateStoreProduct(
@@ -438,7 +451,7 @@ export async function quickUpdateStoreProduct(
     })`,
   });
 
-  persistStore(store);
+  await persistStore(store);
   syncProductToSupabaseAsync(product).catch(() => {});
   return product;
 }
@@ -460,14 +473,14 @@ export async function deleteStoreProduct(
     summary: `${actor.name} deleted piece "${target?.name || id}"`,
   });
 
-  persistStore(store);
+  await persistStore(store);
 
   // Background Supabase cleanup
   import("@/integrations/supabase/client.server")
     .then(({ supabaseAdmin }) => {
-      supabaseAdmin.from("product_images").delete().eq("product_id", id).catch(() => {});
-      supabaseAdmin.from("product_sizes").delete().eq("product_id", id).catch(() => {});
-      supabaseAdmin.from("products").delete().eq("id", id).catch(() => {});
+      supabaseAdmin.from("product_images").delete().eq("product_id", id).then(undefined, () => {});
+      supabaseAdmin.from("product_sizes").delete().eq("product_id", id).then(undefined, () => {});
+      supabaseAdmin.from("products").delete().eq("id", id).then(undefined, () => {});
     })
     .catch(() => {});
 
@@ -510,7 +523,7 @@ export async function duplicateStoreProduct(
     summary: `${actor.name} duplicated "${source.name}" as "${newName}"`,
   });
 
-  persistStore(store);
+  await persistStore(store);
   return { id: newId, slug: newSlug };
 }
 
@@ -555,7 +568,7 @@ export async function bulkUpdateStoreProducts(
     summary: `${actor.name} updated ${count} piece(s) in bulk`,
   });
 
-  persistStore(store);
+  await persistStore(store);
   return { count };
 }
 
@@ -576,7 +589,7 @@ export async function publishStore(
     summary: `${actor.name} published the latest changes to the live website`,
   });
 
-  persistStore(store);
+  await persistStore(store);
 
   // Background attempt to update Supabase site_settings
   import("@/integrations/supabase/client.server")
@@ -584,7 +597,7 @@ export async function publishStore(
       supabaseAdmin
         .from("site_settings")
         .upsert({ key: "last_published_at", value: at } as never, { onConflict: "key" })
-        .catch(() => {});
+        .then(undefined, () => {});
     })
     .catch(() => {});
 
