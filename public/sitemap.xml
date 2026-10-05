@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
+  <url>
+    <loc>https://mosiac.rw/</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <!-- Catalogue Gallery -->
+  <url>
+    <loc>https://mosiac.rw/catalogue</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <!-- Custom Tufted Rug Studio -->
+  <url>
+    <loc>https://mosiac.rw/custom</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <!-- Our Craft & Process -->
+  <url>
+    <loc>https://mosiac.rw/craft</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- Brand Story -->
+  <url>
+    <loc>https://mosiac.rw/story</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- Lookbook & Editorial Collection -->
+  <url>
+    <loc>https://mosiac.rw/lookbook</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- How It Works & FAQ -->
+  <url>
+    <loc>https://mosiac.rw/how-it-works</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <!-- Contact & Studio Visit -->
+  <url>
+    <loc>https://mosiac.rw/contact</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <!-- Terms & Privacy -->
+  <url>
+    <loc>https://mosiac.rw/terms</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://mosiac.rw/privacy</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

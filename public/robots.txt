@@ -1,0 +1,14 @@
+# Rug Mosaic robots.txt
+User-agent: *
+Allow: /
+Allow: /google-feed.xml
+Allow: /meta-catalog.xml
+Allow: /meta-catalog.csv
+Allow: /api/public/
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/
+
+# Feeds & Sitemap index
+Sitemap: https://mosiac.rw/sitemap.xml
+

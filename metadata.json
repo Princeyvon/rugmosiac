@@ -1,0 +1,6 @@
+{
+  "name": "Rug Mosaic",
+  "description": "Handmade custom rugs, tufted to order in Kigali. Any design, any size, yours forever.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

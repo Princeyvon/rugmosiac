@@ -1,0 +1,12 @@
+node_modules/
+build/
+dist/
+.output/
+.vinxi/
+.wrangler/
+.tanstack/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
