@@ -655,7 +655,7 @@ export const adminDeleteStaff = createServerFn({ method: "POST" })
 
 // ---------------- activity, notifications, publishing ----------------
 
-export const adminActivity = createServerFn({ method: "GET" }).handler(async () => {
+export const adminActivity = createServerFn({ method: "GET" }).handler(async (): Promise<Array<Record<string, any>>> => {
   const { requireAdmin } = await import("@/lib/admin.server");
   await requireAdmin();
   try {
@@ -665,7 +665,7 @@ export const adminActivity = createServerFn({ method: "GET" }).handler(async () 
       .select("*")
       .order("created_at", { ascending: false })
       .limit(300);
-    if (data && data.length > 0) return data;
+    if (data && data.length > 0) return data as Array<Record<string, any>>;
   } catch {
     // fallback to local store below
   }
