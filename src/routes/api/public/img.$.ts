@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/img/$")({
               filename: p.basename(rawPath),
               isDownload: false,
             });
-            return new Response(localImg.buffer, { headers });
+            return new Response(new Uint8Array(localImg.buffer), { headers });
           }
         } catch {
           // ignore

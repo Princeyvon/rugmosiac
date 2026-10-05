@@ -1014,7 +1014,7 @@ export const adminPendingChanges = createServerFn({ method: "GET" }).handler(asy
   await requireAdmin();
   try {
     const { getStorePendingChanges } = await import("@/lib/studio-store.server");
-    return await getStorePendingChanges();
+    return JSON.parse(JSON.stringify(await getStorePendingChanges())) as { lastPublishedAt: string | null; count: number; changes: Array<Record<string, any>> };
   } catch {
     return { lastPublishedAt: null, count: 0, changes: [] };
   }

@@ -153,7 +153,7 @@ export const uploadLookbookPdfServerFn = createServerFn({ method: "POST" })
       await supabaseAdmin.from("site_settings").upsert(
         {
           key: "lookbook_config",
-          value: updatedConfig,
+          value: updatedConfig as never,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "key" }

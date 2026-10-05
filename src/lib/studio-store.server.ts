@@ -393,9 +393,9 @@ export async function saveProductToStore(
   await persistStore(store);
 
   // Background sync to Supabase if available (fire-and-forget, ignore RLS errors)
-  syncProductToSupabaseAsync(productData).catch(() => {});
+  await syncProductToSupabaseAsync(productData).catch(() => {});
 
-  return { id: productId, slug };
+  return { id: productId as string, slug };
 }
 
 export async function quickUpdateStoreProduct(

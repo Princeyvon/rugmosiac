@@ -61,7 +61,7 @@ export function ProductReviewsSection({
           </p>
           <Link
             to="/track-order"
-            search={{ review: true }}
+            search={{ review: true } as never}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground hover:underline pt-0.5"
           >
             <span>Access Verified Review Portal</span>
