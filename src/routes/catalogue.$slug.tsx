@@ -172,7 +172,13 @@ type SizeRow = {
 
 function ProductPage() {
   const { slug } = Route.useParams();
-  const { data: p } = useSuspenseQuery(productQO(slug));
+  const { data: productData } = useSuspenseQuery(productQO(slug));
+  const p = productData as NonNullable<typeof productData> & {
+    sku?: string | null;
+    dimensions?: string | null;
+    story?: string | null;
+    collection_name?: string | null;
+  };
   const { data: related } = useQuery(relatedQO(slug));
   const { format, currency, setCurrency } = useCurrency();
   const cart = useCart();
