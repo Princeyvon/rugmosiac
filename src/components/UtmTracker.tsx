@@ -3,6 +3,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { initUtmTracking, injectMetaPixel, injectGoogleTag, trackMetaEvent } from "@/lib/meta-client";
 import { getMetaClientConfig } from "@/lib/meta-capi";
+import { supabase } from "@/integrations/supabase/client";
 
 export function UtmTracker() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -50,6 +51,22 @@ export function UtmTracker() {
     const currentUrl = pathname + (search || "");
     if (lastTrackedUrlRef.current === currentUrl) return;
     lastTrackedUrlRef.current = currentUrl;
+
+    // Record the visit for the Studio dashboard (skip the dashboard itself)
+    if (!pathname.startsWith("/admin")) {
+      let sid = "";
+      try {
+        sid = sessionStorage.getItem("mosiac_sid") || "";
+        if (!sid) {
+          sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+          sessionStorage.setItem("mosiac_sid", sid);
+        }
+      } catch {}
+      supabase
+        .from("site_visits")
+        .insert({ path: pathname, referrer: document.referrer || null, session_id: sid || null })
+        .then(undefined, () => {});
+    }
 
     // Fire omnichannel PageView (Browser Pixel, Server CAPI, Google Analytics 4)
     trackMetaEvent("PageView", {
