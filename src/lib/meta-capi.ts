@@ -39,7 +39,7 @@ export interface MetaSettings {
 
 export const DEFAULT_META_SETTINGS: MetaSettings = {
   enabled: true,
-  pixelId: process.env.META_PIXEL_ID || "147852369012345",
+  pixelId: process.env.META_PIXEL_ID || "",
   accessToken: process.env.META_CONVERSIONS_API_ACCESS_TOKEN || "",
   testEventCode: "",
   googleEnabled: true,
@@ -195,7 +195,7 @@ export const adminSaveMetaSettings = createServerFn({ method: "POST" })
       await supabaseAdmin.from("site_settings").upsert(
         {
           key: "meta_capi_settings",
-          value: cachedMetaSettings,
+          value: cachedMetaSettings as never,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "key" }
@@ -294,17 +294,40 @@ export function getCapiAuditLogs(): CapiAuditLogEntry[] {
  * Can be called from server functions, REST endpoints, CRM webhooks, or background tasks.
  * Includes exponential backoff retry on transient failures and structured PII-free logging.
  */
+let metaSettingsLoadedAt = 0;
+async function ensureMetaSettingsLoaded() {
+  // Server workers are stateless: refresh Studio-saved settings from the database (cached 60s).
+  if (Date.now() - metaSettingsLoadedAt < 60_000) return;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "meta_capi_settings")
+      .maybeSingle();
+    if (data?.value && typeof data.value === "object") {
+      cachedMetaSettings = { ...DEFAULT_META_SETTINGS, ...(data.value as any) };
+    }
+    metaSettingsLoadedAt = Date.now();
+  } catch {
+    // keep cached/env fallback
+  }
+}
+
 export async function processMetaConversionEvent(data: MetaConversionPayload) {
+  await ensureMetaSettingsLoaded();
   const pixelId =
+    cachedMetaSettings.pixelId ||
     process.env.META_PIXEL_ID ||
     process.env.VITE_META_PIXEL_ID ||
-    cachedMetaSettings.pixelId;
+    "";
 
   const accessToken =
+    cachedMetaSettings.accessToken ||
     process.env.META_CAPI_TOKEN ||
     process.env.META_CONVERSIONS_API_ACCESS_TOKEN ||
     process.env.META_ACCESS_TOKEN ||
-    cachedMetaSettings.accessToken;
+    "";
 
   const testCode =
     data.testEventCode ||
