@@ -1813,8 +1813,8 @@ export function SiteImagesControlPanel({
                       (item) =>
                         !modalLibSearch ||
                         item.title.toLowerCase().includes(modalLibSearch.toLowerCase()) ||
-                        (item.productName &&
-                          item.productName.toLowerCase().includes(modalLibSearch.toLowerCase()))
+                        ((item as { productName?: string }).productName &&
+                          ((item as { productName?: string }).productName as string).toLowerCase().includes(modalLibSearch.toLowerCase()))
                     )
                     .map((s) => (
                       <button
