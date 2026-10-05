@@ -196,7 +196,7 @@ export function persistStore(store: StudioStoreData): void {
           },
           { onConflict: "key" }
         )
-        .catch((err) => {
+        .then(undefined, (err) => {
           console.warn("[studio-store] Supabase cloud sync warning:", err);
         });
     })
@@ -465,9 +465,9 @@ export async function deleteStoreProduct(
   // Background Supabase cleanup
   import("@/integrations/supabase/client.server")
     .then(({ supabaseAdmin }) => {
-      supabaseAdmin.from("product_images").delete().eq("product_id", id).catch(() => {});
-      supabaseAdmin.from("product_sizes").delete().eq("product_id", id).catch(() => {});
-      supabaseAdmin.from("products").delete().eq("id", id).catch(() => {});
+      supabaseAdmin.from("product_images").delete().eq("product_id", id).then(undefined, () => {});
+      supabaseAdmin.from("product_sizes").delete().eq("product_id", id).then(undefined, () => {});
+      supabaseAdmin.from("products").delete().eq("id", id).then(undefined, () => {});
     })
     .catch(() => {});
 
@@ -584,7 +584,7 @@ export async function publishStore(
       supabaseAdmin
         .from("site_settings")
         .upsert({ key: "last_published_at", value: at } as never, { onConflict: "key" })
-        .catch(() => {});
+        .then(undefined, () => {});
     })
     .catch(() => {});
 

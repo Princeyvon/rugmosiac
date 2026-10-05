@@ -695,8 +695,8 @@ export const adminNotifications = createServerFn({ method: "GET" }).handler(asyn
       supabaseAdmin.from("contact_messages").select("id", { count: "exact", head: true }).gte("created_at", since),
       supabaseAdmin.from("custom_requests").select("id", { count: "exact", head: true }).gte("created_at", since),
       supabaseAdmin.from("site_settings").select("value").eq("key", "last_published_at").maybeSingle(),
-      supabaseAdmin.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", since).catch(() => ({ count: 0 })),
-      supabaseAdmin.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", today.toISOString()).catch(() => ({ count: 0 })),
+      supabaseAdmin.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", since).then(undefined, () => ({ count: 0 })),
+      supabaseAdmin.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", today.toISOString()).then(undefined, () => ({ count: 0 })),
     ]);
 
     let lastPublishedAt: string | null = (settings.data?.value as string | null) ?? null;
@@ -847,7 +847,7 @@ export const adminAnalytics = createServerFn({ method: "GET" })
           .from("site_visits")
           .select("id, created_at")
           .gte("created_at", since.toISOString())
-          .catch(() => ({ data: [] })),
+          .then(undefined, () => ({ data: [] })),
         listAllProducts().catch(() => []),
       ]);
 
