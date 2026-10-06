@@ -316,8 +316,8 @@ function HeritageSlider() {
             ))}
           </div>
 
-          {/* Controls - bottom left arrows, counter removed on mobile */}
-          <div className="absolute bottom-5 left-5 z-10 flex items-center gap-2 md:bottom-8 md:left-8">
+          {/* Controls - bottom right arrows, clear of the slide text */}
+          <div className="absolute bottom-5 right-5 z-10 flex items-center gap-2 md:bottom-8 md:right-8">
             <button
               onClick={prev}
               aria-label="Previous slide"
@@ -332,16 +332,10 @@ function HeritageSlider() {
             >
               <ArrowRight className="h-4 w-4" />
             </button>
-            {/* 01/03 counter - hidden on mobile, visible on desktop */}
-            <div className="hidden md:block ml-3 text-xs font-semibold uppercase tracking-wider text-white/80">
-              {String(i + 1).padStart(2, "0")}
-              <span className="mx-1.5 opacity-50">/</span>
-              {String(total).padStart(2, "0")}
-            </div>
           </div>
 
-          {/* Mobile Explore Heritage button - compact size, positioned on bottom right directly across from navigation arrows */}
-          <div className="absolute bottom-5 right-5 z-10 sm:hidden">
+          {/* Mobile Explore Heritage button - bottom left, across from the arrows */}
+          <div className="absolute bottom-5 left-5 z-10 sm:hidden">
             <Link
               to="/catalogue"
               className="inline-flex items-center gap-1.5 rounded-full border border-white bg-white px-3.5 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-foreground shadow-lg backdrop-blur-sm transition-all active:scale-95"
