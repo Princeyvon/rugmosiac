@@ -1,11 +1,24 @@
 import "./lib/error-capture";
-import fs from "node:fs";
-import path from "node:path";
-import crypto from "node:crypto";
-import { initSupabaseKeepAliveScheduler } from "./lib/supabase-keepalive.server";
+import { pingSupabaseKeepAlive } from "./lib/supabase-keepalive.server";
 
-// Start Supabase Inactivity Prevention Heartbeat
-initSupabaseKeepAliveScheduler();
+// Database keep-alive: the edge runtime forbids timers and I/O at module scope,
+// so the heartbeat runs lazily from inside a request at most every 12 hours.
+let lastKeepAliveAt = 0;
+const KEEPALIVE_INTERVAL_MS = 12 * 60 * 60 * 1000;
+function maybeRunKeepAlive(ctx: unknown) {
+  const now = Date.now();
+  if (now - lastKeepAliveAt < KEEPALIVE_INTERVAL_MS) return;
+  lastKeepAliveAt = now;
+  const p = pingSupabaseKeepAlive().catch(() => undefined);
+  const waitUntil = (ctx as { waitUntil?: (p: Promise<unknown>) => void } | null)?.waitUntil;
+  if (typeof waitUntil === "function") {
+    try {
+      waitUntil.call(ctx, p);
+    } catch {
+      // ignore
+    }
+  }
+}
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
@@ -30,7 +43,7 @@ async function getServerEntry(): Promise<ServerEntry> {
 }
 
 // In-memory cache for first-party proxied tracking script
-let cachedScriptBuffer: Buffer | null = null;
+let cachedScriptText: string | null = null;
 let cachedScriptTime = 0;
 const SCRIPT_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -91,38 +104,17 @@ export default {
     try {
       const url = new URL(request.url);
 
-      // 1. Static asset serving for local rug media
-      if (url.pathname.startsWith("/__l5e/")) {
-        const localPath = path.resolve(process.cwd(), "public", url.pathname.replace(/^\//, ""));
-        if (fs.existsSync(localPath)) {
-          const fileBuffer = fs.readFileSync(localPath);
-          const ext = path.extname(localPath).toLowerCase();
-          const mime =
-            ext === ".jpg" || ext === ".jpeg"
-              ? "image/jpeg"
-              : ext === ".png"
-              ? "image/png"
-              : ext === ".webp"
-              ? "image/webp"
-              : "application/octet-stream";
-          return new Response(fileBuffer, {
-            status: 200,
-            headers: {
-              "Content-Type": mime,
-              "Cache-Control": "public, max-age=31536000, immutable",
-              "X-Content-Type-Options": "nosniff",
-            },
-          });
-        }
-        return Response.redirect(`https://rugmosiac.lovable.app${url.pathname}${url.search}`, 302);
-      }
+      maybeRunKeepAlive(ctx);
+
+      // 1. Local rug media (/__l5e/) is served directly from the public folder
+      // by the hosting layer, so no special handling is needed here.
 
       // 2. FIRST-PARTY TRACKING REVERSE PROXY: /sys/res/m-engine.js
       // Serves the client-side Meta engine from our own domain with neutral naming
       // Bypasses list-based ad blockers (uBlock, Brave Shields) and CNAME cloaking penalties
       if (url.pathname === "/sys/res/m-engine.js" || url.pathname === "/assets/m-client.js") {
         const now = Date.now();
-        if (!cachedScriptBuffer || now - cachedScriptTime > SCRIPT_CACHE_TTL_MS) {
+        if (!cachedScriptText || now - cachedScriptTime > SCRIPT_CACHE_TTL_MS) {
           try {
             const upstream = await fetch("https://connect.facebook.net/en_US/fbevents.js", {
               headers: { "User-Agent": request.headers.get("user-agent") || "Mozilla/5.0" },
@@ -130,7 +122,7 @@ export default {
             });
             if (upstream.ok) {
               const text = await upstream.text();
-              cachedScriptBuffer = Buffer.from(text, "utf8");
+              cachedScriptText = text;
               cachedScriptTime = now;
             }
           } catch (fetchErr) {
@@ -138,8 +130,8 @@ export default {
           }
         }
 
-        if (cachedScriptBuffer) {
-          return new Response(new Uint8Array(cachedScriptBuffer), {
+        if (cachedScriptText) {
+          return new Response(cachedScriptText, {
             status: 200,
             headers: {
               "Content-Type": "application/javascript; charset=utf-8",
@@ -264,7 +256,7 @@ export default {
 
         // C. Generate first-party persistent visitor ID if missing
         if (!incomingCookies.mosiac_vid) {
-          const vid = crypto.randomUUID();
+          const vid = globalThis.crypto.randomUUID();
           secureHeaders.append(
             "Set-Cookie",
             `mosiac_vid=${encodeURIComponent(vid)}; Path=/; Max-Age=${cookieMaxAge}; SameSite=Lax; Secure`
