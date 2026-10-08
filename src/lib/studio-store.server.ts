@@ -631,88 +631,26 @@ export async function getStorePendingChanges(): Promise<{
 
 export async function saveUploadedImageFile(
   filename: string,
-  buffer: Buffer,
+  buffer: Uint8Array,
 ): Promise<string> {
-  ensureDirs();
-  const validated = validateUploadBuffer(buffer, ["image"], { filename });
-  const uniqueName = `${Date.now()}-${validated.sanitizedFilename}`;
-  const filePath = path.join(UPLOADS_DIR, uniqueName);
-
-  // Always write locally for fast offline access and image fallback
-  fs.writeFileSync(filePath, buffer);
-
-  // Attempt upload to Supabase Storage for permanent persistence across container revisions
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin.storage
-      .from("product-images")
-      .upload(`catalogue/${uniqueName}`, buffer, {
-        contentType: validated.mimeType || "image/jpeg",
-        upsert: true,
-      });
-
-    if (!error && data?.path) {
-      const { data: pubData } = supabaseAdmin.storage
-        .from("product-images")
-        .getPublicUrl(data.path);
-      if (pubData?.publicUrl) {
-        return pubData.publicUrl;
-      }
-    }
-  } catch {
-    // If Supabase Storage bucket is not available, gracefully use local route
-  }
-
-  return `/api/public/img/${uniqueName}`;
+  const validated = validateUploadBuffer(buffer as Buffer, ["image", "pdf"], { filename });
+  const { storeUpload } = await import("@/lib/media-storage.server");
+  const name = await storeUpload(
+    validated.sanitizedFilename,
+    buffer,
+    validated.mimeType || "image/jpeg",
+  );
+  return `/api/public/img/${name}`;
 }
 
-export function getUploadedImageBuffer(
-  splatPath: string,
-): { buffer: Buffer; contentType: string } | null {
-  ensureDirs();
-
-  // Strict path traversal defense
-  if (!splatPath || splatPath.includes("\0")) return null;
-  const normalized = path.normalize(splatPath);
-  if (normalized.startsWith("..") || path.isAbsolute(normalized)) return null;
-
-  const filePath = path.resolve(UPLOADS_DIR, normalized);
-  if (!filePath.startsWith(path.resolve(UPLOADS_DIR))) return null;
-  if (!fs.existsSync(filePath)) return null;
-
-  const buffer = fs.readFileSync(filePath);
-
-  // Determine content type from magic bytes or trusted extension
-  const ext = path.extname(filePath).toLowerCase();
-  let contentType = "image/jpeg";
-  if (ext === ".png") contentType = "image/png";
-  else if (ext === ".webp") contentType = "image/webp";
-  else if (ext === ".gif") contentType = "image/gif";
-  else if (ext === ".pdf") contentType = "application/pdf";
-
-  return { buffer, contentType };
-}
-
-export function saveUploadedPdfFile(
+export async function saveUploadedPdfFile(
   filename: string,
-  buffer: Buffer,
-): string {
-  ensureDirs();
-  const validated = validateUploadBuffer(buffer, ["pdf"], { filename });
-  const uniqueName = `lookbook-${Date.now()}-${validated.sanitizedFilename}`;
-  const filePath = path.join(UPLOADS_DIR, uniqueName);
-
-  fs.writeFileSync(filePath, buffer);
-
-  // Also sync to public directory for direct static serving fallback
-  try {
-    const publicPdf = path.join(process.cwd(), "public", "Mosiac-Lookbook-2026.pdf");
-    fs.writeFileSync(publicPdf, buffer);
-  } catch {
-    // Non-fatal
-  }
-
-  return `/api/public/img/${uniqueName}`;
+  buffer: Uint8Array,
+): Promise<string> {
+  const validated = validateUploadBuffer(buffer as Buffer, ["pdf"], { filename });
+  const { storeUpload } = await import("@/lib/media-storage.server");
+  const name = await storeUpload(validated.sanitizedFilename, buffer, "application/pdf", "lookbook-");
+  return `/api/public/img/${name}`;
 }
 
 // ---------------- Helpers ----------------
