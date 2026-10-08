@@ -401,7 +401,7 @@ function LoginGate({ onDone }: { onDone: (me?: Me) => void }) {
         <h1 className="mt-6 font-display text-2xl font-medium">Studio dashboard</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "pin"
-            ? "Enter your six digit access PIN (e.g. 111111)."
+            ? "Enter your six digit access PIN."
             : "Enter the studio owner password."}
         </p>
 
