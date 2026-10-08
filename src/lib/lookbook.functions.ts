@@ -1,115 +1,90 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
 import { createServerFn } from "@tanstack/react-start";
 import { DEFAULT_LOOKBOOK_CONFIG, type LookbookConfig } from "./lookbook-config";
 
-let cachedLookbookConfig: LookbookConfig = { ...DEFAULT_LOOKBOOK_CONFIG };
+// The database (site_settings "lookbook_config") is the single source of truth.
+// A short in-memory cache only speeds up repeat reads on a warm worker.
+let cache: { value: LookbookConfig; at: number } | null = null;
+const CACHE_MS = 30_000;
 
-function getLocalConfigPath(): string {
-  return path.join(process.cwd(), "data", "lookbook-config.json");
+async function readConfig(fresh = false): Promise<LookbookConfig> {
+  if (!fresh && cache && Date.now() - cache.at < CACHE_MS) return cache.value;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("site_settings")
+    .select("value")
+    .eq("key", "lookbook_config")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const value: LookbookConfig = {
+    ...DEFAULT_LOOKBOOK_CONFIG,
+    ...((data?.value && typeof data.value === "object" ? data.value : {}) as Partial<LookbookConfig>),
+  };
+  cache = { value, at: Date.now() };
+  return value;
 }
 
-function readDiskConfig(): LookbookConfig | null {
-  try {
-    const p = getLocalConfigPath();
-    if (fs.existsSync(p)) {
-      const raw = fs.readFileSync(p, "utf-8");
-      return JSON.parse(raw);
-    }
-  } catch {
-    // Ignore
-  }
-  return null;
-}
-
-function writeDiskConfig(config: LookbookConfig): void {
-  try {
-    const p = getLocalConfigPath();
-    const dir = path.dirname(p);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(p, JSON.stringify(config, null, 2), "utf-8");
-  } catch {
-    // Ignore
-  }
+async function writeConfig(config: LookbookConfig): Promise<LookbookConfig> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.from("site_settings").upsert(
+    { key: "lookbook_config", value: config as never, updated_at: new Date().toISOString() },
+    { onConflict: "key" },
+  );
+  if (error) throw new Error(`The lookbook could not be saved: ${error.message}`);
+  cache = { value: config, at: Date.now() };
+  return config;
 }
 
 export const getLookbookSettings = createServerFn({ method: "GET" }).handler(
   async (): Promise<LookbookConfig> => {
-    // 1. Try Supabase
     try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data } = await supabaseAdmin
-        .from("site_settings")
-        .select("value")
-        .eq("key", "lookbook_config")
-        .maybeSingle();
-
-      if (data?.value && typeof data.value === "object") {
-        cachedLookbookConfig = {
-          ...DEFAULT_LOOKBOOK_CONFIG,
-          ...(data.value as Partial<LookbookConfig>),
-        };
-        writeDiskConfig(cachedLookbookConfig);
-        return cachedLookbookConfig;
-      }
-    } catch {
-      // Fallback to disk
+      return await readConfig();
+    } catch (err) {
+      console.error("[lookbook] read failed:", err);
+      return cache?.value ?? { ...DEFAULT_LOOKBOOK_CONFIG };
     }
-
-    // 2. Try disk
-    const disk = readDiskConfig();
-    if (disk) {
-      cachedLookbookConfig = { ...DEFAULT_LOOKBOOK_CONFIG, ...disk };
-      return cachedLookbookConfig;
-    }
-
-    return cachedLookbookConfig;
-  }
+  },
 );
 
 export const saveLookbookSettings = createServerFn({ method: "POST" })
-  .validator((data: unknown): LookbookConfig => {
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid lookbook data");
+  .validator((data: unknown): Partial<LookbookConfig> => {
+    if (!data || typeof data !== "object") throw new Error("Invalid lookbook data");
+    const c = data as Record<string, unknown>;
+    const out: Partial<LookbookConfig> = {};
+    for (const k of ["pdfUrl", "fileName", "fileSize", "volumeTitle", "editionName", "subtitle", "notes"] as const) {
+      if (typeof c[k] === "string") (out as Record<string, string>)[k] = c[k] as string;
     }
-    const c = data as Partial<LookbookConfig>;
-    return {
-      pdfUrl: typeof c.pdfUrl === "string" ? c.pdfUrl : DEFAULT_LOOKBOOK_CONFIG.pdfUrl,
-      fileName: typeof c.fileName === "string" ? c.fileName : DEFAULT_LOOKBOOK_CONFIG.fileName,
-      fileSize: typeof c.fileSize === "string" ? c.fileSize : DEFAULT_LOOKBOOK_CONFIG.fileSize,
-      volumeTitle: typeof c.volumeTitle === "string" ? c.volumeTitle : DEFAULT_LOOKBOOK_CONFIG.volumeTitle,
-      editionName: typeof c.editionName === "string" ? c.editionName : DEFAULT_LOOKBOOK_CONFIG.editionName,
-      subtitle: typeof c.subtitle === "string" ? c.subtitle : DEFAULT_LOOKBOOK_CONFIG.subtitle,
-      updatedAt: new Date().toISOString().split("T")[0],
-      notes: typeof c.notes === "string" ? c.notes : DEFAULT_LOOKBOOK_CONFIG.notes,
-    };
+    return out;
   })
   .handler(async ({ data }): Promise<{ ok: boolean; config: LookbookConfig }> => {
-    cachedLookbookConfig = { ...data };
-    writeDiskConfig(cachedLookbookConfig);
-
+    const { requireAdmin, logActivity } = await import("@/lib/admin.server");
+    const actor = await requireAdmin("content");
+    const current = await readConfig(true);
+    const next: LookbookConfig = {
+      ...current,
+      ...data,
+      updatedAt: new Date().toISOString().split("T")[0],
+    };
+    const config = await writeConfig(next);
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("site_settings").upsert(
-        {
-          key: "lookbook_config",
-          value: data,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "key" }
-      );
+      await logActivity(supabaseAdmin as never, actor, {
+        action: "lookbook.update",
+        entity_type: "lookbook",
+        entity_id: "lookbook_config",
+        summary: `${actor.name} updated the lookbook details`,
+      });
     } catch {
-      // Memory + disk fallback persisted
+      // logging is best effort
     }
-    return { ok: true, config: cachedLookbookConfig };
+    return { ok: true, config };
   });
 
 export const uploadLookbookPdfServerFn = createServerFn({ method: "POST" })
   .validator((data: unknown): { filename: string; base64: string; fileSize?: string; volumeTitle?: string } => {
     if (!data || typeof data !== "object") throw new Error("Invalid upload payload");
-    const d = data as any;
+    const d = data as Record<string, unknown>;
     if (typeof d.filename !== "string" || !d.filename) throw new Error("Missing filename");
-    if (typeof d.base64 !== "string" || !d.base64) throw new Error("Missing base64 data");
+    if (typeof d.base64 !== "string" || !d.base64) throw new Error("Missing file data");
     return {
       filename: d.filename,
       base64: d.base64,
@@ -118,49 +93,42 @@ export const uploadLookbookPdfServerFn = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }): Promise<{ ok: boolean; pdfUrl: string; config: LookbookConfig }> => {
-    // 1. Strict Admin Authentication Check
-    const { requireAdmin } = await import("@/lib/admin.server");
-    await requireAdmin();
+    const { requireAdmin, logActivity } = await import("@/lib/admin.server");
+    const actor = await requireAdmin("content");
 
-    // 2. Decode and Clean Buffer
-    const cleanBase64 = data.base64.replace(/^data:application\/pdf;base64,/, "").replace(/^data:.*?;base64,/, "");
-    const buffer = Buffer.from(cleanBase64, "base64");
+    const clean = data.base64.replace(/^data:.*?;base64,/, "");
+    const bin = atob(clean);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
 
-    // 3. Strict Security & Malware Inspection (Magic bytes, exploit scanning, 35MB cap)
     const { validateUploadBuffer } = await import("@/lib/security.server");
-    const { sanitizedFilename } = validateUploadBuffer(buffer, ["pdf"], {
+    const { sanitizedFilename } = validateUploadBuffer(bytes as never, ["pdf"], {
       filename: data.filename,
       maxBytes: 35_000_000,
     });
 
     const { saveUploadedPdfFile } = await import("@/lib/studio-store.server");
-    const pdfUrl = saveUploadedPdfFile(sanitizedFilename, buffer);
+    const pdfUrl = await saveUploadedPdfFile(sanitizedFilename, bytes);
 
-    const updatedConfig: LookbookConfig = {
-      ...cachedLookbookConfig,
+    const current = await readConfig(true);
+    const config = await writeConfig({
+      ...current,
       pdfUrl,
       fileName: sanitizedFilename,
-      fileSize: data.fileSize || `${(buffer.length / (1024 * 1024)).toFixed(1)} MB`,
-      volumeTitle: data.volumeTitle || cachedLookbookConfig.volumeTitle || "Volume I · 2026 Edition",
+      fileSize: data.fileSize || `${(bytes.length / (1024 * 1024)).toFixed(1)} MB`,
+      volumeTitle: data.volumeTitle || current.volumeTitle,
       updatedAt: new Date().toISOString().split("T")[0],
-    };
-
-    cachedLookbookConfig = updatedConfig;
-    writeDiskConfig(updatedConfig);
-
+    });
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin.from("site_settings").upsert(
-        {
-          key: "lookbook_config",
-          value: updatedConfig as never,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "key" }
-      );
+      await logActivity(supabaseAdmin as never, actor, {
+        action: "lookbook.upload",
+        entity_type: "lookbook",
+        entity_id: "lookbook_config",
+        summary: `${actor.name} uploaded a new lookbook PDF`,
+      });
     } catch {
-      // Ignored, disk + cache saved
+      // best effort
     }
-
-    return { ok: true, pdfUrl, config: updatedConfig };
+    return { ok: true, pdfUrl, config };
   });
