@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/public/img/$")({
         if (!file) return new Response("Not found", { status: 404 });
         const { getSecurityHeaders, detectFileSignature } = await import("@/lib/security.server");
         const sig = detectFileSignature(file.bytes as never);
-        return new Response(file.bytes, {
+        return new Response(file.bytes as unknown as BodyInit, {
           headers: getSecurityHeaders({
             contentType: sig?.mimeType || file.contentType,
             filename: file.name,
