@@ -3,8 +3,6 @@ import {
   DEFAULT_LOOKBOOK_CONFIG,
   getClientLookbookConfig,
   saveClientLookbookConfig,
-  storePdfBlobLocally,
-  getLocalPdfBlob,
   type LookbookConfig,
 } from "@/lib/lookbook-config";
 import {
@@ -65,14 +63,6 @@ export function LookbookControlPanel({
   useEffect(() => {
     let active = true;
     async function loadPdf() {
-      const localBlob = await getLocalPdfBlob();
-      if (localBlob && active) {
-        const doc = await loadPdfDocument(localBlob);
-        if (doc && active) {
-          setPdfDoc(doc);
-          return;
-        }
-      }
       const targetUrl = config.pdfUrl || "/Mosiac-Lookbook-2026.pdf";
       const doc = await loadPdfDocument(targetUrl);
       if (doc && active) {
@@ -98,66 +88,26 @@ export function LookbookControlPanel({
     setUploadedFileName(file.name);
 
     try {
-      // 1. Store in client IndexedDB immediately for instant offline reactivity
-      await storePdfBlobLocally(file);
-
-      // Parse immediately for instant live preview
-      const arrayBuffer = await file.arrayBuffer();
-      const doc = await loadPdfDocument(arrayBuffer);
-      if (doc) {
-        setPdfDoc(doc);
-      }
-
-      // 2. Read as base64 and upload to server storage
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const base64Data = reader.result as string;
-          const uploadRes = await uploadLookbookPdfServerFn({
-            data: {
-              filename: file.name,
-              base64: base64Data,
-              fileSize: readableSize,
-              volumeTitle: config.volumeTitle,
-            },
-          });
-
-          if (uploadRes?.config) {
-            setConfig(uploadRes.config);
-            saveClientLookbookConfig(uploadRes.config);
-            onToast?.(`Successfully uploaded & published "${file.name}" (${readableSize}) to /lookbook!`);
-          } else {
-            // Local fallback
-            const localFallback: LookbookConfig = {
-              ...config,
-              fileName: file.name,
-              fileSize: readableSize,
-              updatedAt: new Date().toISOString().split("T")[0],
-            };
-            setConfig(localFallback);
-            saveClientLookbookConfig(localFallback);
-            onToast?.(`Lookbook PDF "${file.name}" saved in browser!`);
-          }
-        } catch (err: any) {
-          console.error("PDF upload server error:", err);
-          const localFallback: LookbookConfig = {
-            ...config,
-            fileName: file.name,
-            fileSize: readableSize,
-            updatedAt: new Date().toISOString().split("T")[0],
-          };
-          setConfig(localFallback);
-          saveClientLookbookConfig(localFallback);
-          onToast?.(`Saved "${file.name}" locally in studio cache.`);
-        } finally {
-          setUploadingPdf(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err: any) {
-      console.error("File processing error:", err);
+      if (file.size > 35_000_000) throw new Error("PDF must be smaller than 35 MB.");
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => typeof reader.result === "string"
+          ? resolve(reader.result) : reject(new Error("Could not read PDF."));
+        reader.onerror = () => reject(new Error("Could not read PDF."));
+        reader.readAsDataURL(file);
+      });
+      const result = await uploadLookbookPdfServerFn({ data: {
+        filename: file.name, base64, fileSize: readableSize, volumeTitle: config.volumeTitle,
+      } });
+      if (!result.ok) throw new Error("The PDF could not be published.");
+      setConfig(result.config);
+      saveClientLookbookConfig(result.config);
+      onToast?.(`Successfully uploaded & published "${file.name}" (${readableSize}) to /lookbook!`);
+    } catch (err: unknown) {
+      setUploadedFileName(null);
+      onToast?.(err instanceof Error ? `Upload failed: ${err.message}` : "PDF upload failed. Please try again.");
+    } finally {
       setUploadingPdf(false);
-      onToast?.("Failed to process PDF file. Please try again.");
     }
   };
 
@@ -172,18 +122,13 @@ export function LookbookControlPanel({
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Save locally first
-      saveClientLookbookConfig(config);
-
-      // Save to server
-      await saveLookbookSettings({ data: config });
-
+      const result = await saveLookbookSettings({ data: config });
+      setConfig(result.config);
+      saveClientLookbookConfig(result.config);
       onToast?.("Lookbook configuration & PDF successfully updated and published live!");
     } catch (err) {
       console.error("Save lookbook error:", err);
-      // Even if server fails, client storage updated
-      saveClientLookbookConfig(config);
-      onToast?.("Lookbook settings updated in studio cache!");
+      onToast?.("Lookbook changes were not saved. Please try again.");
     } finally {
       setSaving(false);
     }

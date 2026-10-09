@@ -41,7 +41,6 @@ import {
 import {
   getClientLookbookConfig,
   DEFAULT_LOOKBOOK_CONFIG,
-  getLocalPdfBlob,
   saveClientLookbookConfig,
   type LookbookConfig,
 } from "@/lib/lookbook-config";
@@ -77,6 +76,7 @@ export const Route = createFileRoute("/lookbook")({
           "Browse or download the Mosiac 2026 Atelier Lookbook. Discover hand-tufted Rwandan floor art.",
       },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LookbookPage,
@@ -234,22 +234,7 @@ export function LookbookPage() {
 
     async function loadActivePdf() {
       try {
-        // 1. Check local IndexedDB blob first (fastest, offline-safe, handles custom uploads)
-        const localBlob = await getLocalPdfBlob();
-        if (localBlob && active) {
-          const doc = await loadPdfDocument(localBlob);
-          if (doc && active) {
-            setPdfDoc(doc);
-            const { views } = await analyzeDocAndBuildViews(doc);
-            if (active) {
-              setSpreadViews(views);
-              setPdfLoading(false);
-              return;
-            }
-          }
-        }
-
-        // 2. Load from config.pdfUrl or default fallback
+        // Always render the published source, never a stale browser-only upload.
         const targetUrl = config.pdfUrl || "/Mosiac-Lookbook-2026.pdf";
         const doc = await loadPdfDocument(targetUrl);
         if (doc && active) {
@@ -428,29 +413,16 @@ export function LookbookPage() {
   }, []);
 
   const handleDownloadPdf = async () => {
-    try {
-      const localBlob = await getLocalPdfBlob();
-      if (localBlob) {
-        const blobUrl = URL.createObjectURL(localBlob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = config.fileName || "Mosiac-Lookbook-2026.pdf";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-        setIsPdfModalOpen(true);
-        return;
-      }
-    } catch (err) {
-      console.warn("Lookbook local blob download fallback:", err);
-    }
-
     const targetFilename =
       config.fileName ||
       (config.pdfUrl ? config.pdfUrl.split("/").pop() : "Mosiac-Lookbook-2026.pdf") ||
       "Mosiac-Lookbook-2026.pdf";
-    const downloadUrl = `/api/public/download/${targetFilename}`;
+    const storedName = config.pdfUrl.startsWith("/api/public/img/")
+      ? config.pdfUrl.split("/").pop()
+      : null;
+    const downloadUrl = storedName
+      ? `/api/public/download/${storedName}`
+      : config.pdfUrl || `/api/public/download/${targetFilename}`;
 
     const link = document.createElement("a");
     link.href = downloadUrl;
@@ -494,27 +466,9 @@ export function LookbookPage() {
 
               <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 md:p-12 text-white z-10">
                 <div className="max-w-3xl space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/50 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-amber-300 backdrop-blur-md">
-                      <Lock className="h-3 w-3 stroke-[2.5]" />
-                      <span>{config.editionName || "Atelier Monograph · Volume I"}</span>
-                    </span>
-                    <span className="inline-block rounded-full bg-white/10 px-2.5 py-1 text-[9px] font-mono text-white/80 backdrop-blur-md uppercase tracking-wider">
-                      {totalPages > 0 ? `${totalPages} Document Plates` : "Archival Plates"}
-                    </span>
-                    <span className="hidden sm:inline-block rounded-full bg-amber-500/20 border border-amber-400/30 px-2.5 py-1 text-[9px] font-mono text-amber-200 backdrop-blur-md uppercase tracking-wider">
-                      Highland Pure Wool
-                    </span>
-                  </div>
-
                   <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-[1.08] tracking-tight text-white">
                     Mosiac Lookbook <span className="font-serif italic font-light text-amber-200">Monograph</span>.
                   </h1>
-
-                  <p className="text-xs sm:text-sm md:text-base text-white/80 leading-relaxed font-light max-w-2xl">
-                    {config.subtitle ||
-                      "A curated physical compendium of bespoke hand-tufted Highland wool rugs, studio archive plates, and architectural commissions. Turn the pages below or download the archival PDF."}
-                  </p>
 
                   <div className="pt-3 flex flex-wrap items-center gap-3">
                     {/* Download PDF button */}
