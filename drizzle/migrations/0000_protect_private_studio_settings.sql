@@ -1,0 +1,2 @@
+ALTER POLICY "Settings public read" ON public.site_settings USING (key IN ('homepage', 'store', 'last_published_at', 'lookbook_config', 'site_featured_images', 'popup_banner_config'));
+GRANT ALL ON public.site_settings TO service_role;

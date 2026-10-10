@@ -24,6 +24,7 @@ export const Route = createFileRoute("/craft")({
       },
       { property: "og:url", content: "https://mosiac.rw/craft" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://mosiac.rw/craft" }],
   }),

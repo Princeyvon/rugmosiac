@@ -787,7 +787,7 @@
           "colorway_id": null
         }
       ],
-      "notes": "{\"romanSequence\":\"VOL. I\",\"atelierSku\":\"MOS-UZU-001\",\"capsuleSeries\":\"Highland Heritage\",\"provenanceBackstory\":\"Handcrafted in the hills of Kigali utilizing centuries-old weaving knowledge passed down through generations of Rwandan textile masters.\",\"inspirationStatement\":\"Sculptural topography and geometric basalt formations found along the Albertine Rift.\",\"masterWeaver\":\"Marie Mukamana — Master Weaver\",\"workshopId\":\"Kigali Atelier 01\",\"constructionTechnique\":\"hand_tufted\",\"fiberComposition\":\"80% Rwandan Highland Wool / 20% Botanical Bamboo Silk\",\"dyeFormulation\":\"vegetable_botanical\",\"pileHeightMm\":12,\"shearingFinish\":\"hand_sheared_bevelled\",\"knotDensityPerSqm\":88000,\"backingFinish\":\"100% Cotton Herringbone binding, natural organic latex seal\",\"rawMaterials\":{\"woolKg\":8.5,\"woolRateRwfPerKg\":14000,\"foundationClothRwf\":25000,\"latexRwf\":18000,\"edgeBindingRwf\":12000},\"labor\":{\"weavingHours\":48,\"hourlyRateRwf\":4500},\"atelierMarkupPercent\":40,\"logisticsRwf\":20000,\"compareAtPriceRwf\":null,\"rushFeePercent\":25}",
+      "notes": "{\"romanSequence\":\"VOL. I\",\"atelierSku\":\"MOS-UZU-001\",\"capsuleSeries\":\"Highland Heritage\",\"provenanceBackstory\":\"Handcrafted in the hills of Kigali utilizing centuries-old weaving knowledge passed down through generations of Rwandan textile masters.\",\"inspirationStatement\":\"Sculptural topography and geometric basalt formations found along the Albertine Rift.\",\"masterWeaver\":\"Marie Mukamana \u2014 Master Weaver\",\"workshopId\":\"Kigali Atelier 01\",\"constructionTechnique\":\"hand_tufted\",\"fiberComposition\":\"80% Rwandan Highland Wool / 20% Botanical Bamboo Silk\",\"dyeFormulation\":\"vegetable_botanical\",\"pileHeightMm\":12,\"shearingFinish\":\"hand_sheared_bevelled\",\"knotDensityPerSqm\":88000,\"backingFinish\":\"100% Cotton Herringbone binding, natural organic latex seal\",\"rawMaterials\":{\"woolKg\":8.5,\"woolRateRwfPerKg\":14000,\"foundationClothRwf\":25000,\"latexRwf\":18000,\"edgeBindingRwf\":12000},\"labor\":{\"weavingHours\":48,\"hourlyRateRwf\":4500},\"atelierMarkupPercent\":40,\"logisticsRwf\":20000,\"compareAtPriceRwf\":null,\"rushFeePercent\":25}",
       "archived_at": null,
       "category": {
         "slug": "area-rugs",
@@ -1191,16 +1191,6 @@
       "summary": "Studio Owner updated piece \"Tai\""
     },
     {
-      "id": "41944867-3cdb-430c-8d02-7147b10483ac",
-      "created_at": "2026-09-18T20:48:53.572Z",
-      "actor_name": "Admin Staff",
-      "actor_role": "owner",
-      "action": "product.delete",
-      "entity_type": "product",
-      "entity_id": "47466d67-b4b1-4262-8ce4-a43ea77f2835",
-      "summary": "Admin Staff deleted piece \"Verification Test Rug\""
-    },
-    {
       "id": "17853aa0-af5c-4daf-90a9-965307ee62cc",
       "created_at": "2026-09-18T20:48:53.279Z",
       "actor_name": "Admin Staff",
@@ -1208,16 +1198,6 @@
       "action": "site.publish",
       "entity_type": "site",
       "summary": "Admin Staff published the latest changes to the live website"
-    },
-    {
-      "id": "954f640f-e03a-464d-b723-906ed11c14dd",
-      "created_at": "2026-09-18T20:48:53.241Z",
-      "actor_name": "Admin Staff",
-      "actor_role": "owner",
-      "action": "product.create",
-      "entity_type": "product",
-      "entity_id": "47466d67-b4b1-4262-8ce4-a43ea77f2835",
-      "summary": "Admin Staff created artisanal piece \"Verification Test Rug\""
     },
     {
       "id": "66f6cd31-0509-4d6a-a75c-8457d9e7c000",
