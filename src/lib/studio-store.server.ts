@@ -210,9 +210,11 @@ export async function persistStore(store: StudioStoreData): Promise<void> {
       { key: "studio_catalogue_store", value: store as never, updated_at: new Date().toISOString() },
       { onConflict: "key" },
     );
-    if (error) console.warn("[studio-store] Cloud save warning:", error.message);
+    if (error) throw new Error(error.message);
   } catch (err) {
-    console.warn("[studio-store] Cloud save warning:", err);
+    inMemoryStore = null;
+    inMemoryLoadedAt = 0;
+    throw new Error("The catalogue could not be saved. Please try again.", { cause: err });
   }
 }
 

@@ -583,16 +583,6 @@ on conflict (id) do nothing;
 insert into public.product_images (id, product_id, url, alt, sort_order)
 values ('c9fd6eff-bf79-4936-87a8-e67492382a9f', '63fe983d-bb36-4705-bd61-40bdc63f425b', '/__l5e/assets-v1/58cfc153-48d5-4aab-9fd0-e5367ce56886/geometric-4.jpg', 'Close up of the Geometric rug wool pile', 3)
 on conflict (id) do nothing;
-insert into public.reviews (id, customer_name, location, rating, quote, sort_order, is_visible)
-values ('1e5473c8-dc8a-42cd-a11f-a10816e4968f', 'Aline M.', 'Kigali', 5, 'I brought them a doodle of my dog and they turned it into a rug that stops every guest in their tracks. Unreal craftsmanship.', 1, true)
-on conflict (id) do nothing;
-insert into public.reviews (id, customer_name, location, rating, quote, sort_order, is_visible)
-values ('a17b9f45-0f90-45ca-86a3-5527ec3b539a', 'David K.', 'Kimihurura', 5, 'The colours are richer than I imagined, and it feels dense and heavy in the best way. Worth every franc.', 2, true)
-on conflict (id) do nothing;
-insert into public.reviews (id, customer_name, location, rating, quote, sort_order, is_visible)
-values ('b168fe48-6089-443b-a0b5-8d104487e937', 'Sarah B.', 'Nyarutarama', 5, 'From the first WhatsApp to delivery was three weeks. They confirmed every detail. Genuinely thoughtful people.', 3, true)
-on conflict (id) do nothing;
-
 -- =========================================================
 -- Performance Indexes (Prevents sequential scans and speeds up high-traffic queries)
 -- =========================================================

@@ -16,6 +16,8 @@ export const Route = createFileRoute("/how-it-works")({
       { name: "description", content: "Discover how Mosiac hand-tufts one-of-one rugs in Kigali. Pure Highland wool, artisanal hand-carving, and bespoke delivery in 3 to 4 weeks." },
       { property: "og:title", content: "About & Atelier Method | Mosiac" },
       { property: "og:description", content: "From sketch to doorstep: the craft of Rwandan hand-tufted floor art." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: HowPage,

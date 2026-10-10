@@ -136,7 +136,7 @@ export function ReviewsPanel({ onToast }: { onToast: (m: string) => void }) {
             approvedCount) *
             10,
         ) / 10
-      : 5.0;
+      : null;
 
   return (
     <section className="mt-8 space-y-8">
@@ -157,10 +157,10 @@ export function ReviewsPanel({ onToast }: { onToast: (m: string) => void }) {
         <div className="rounded-2xl border border-border bg-background p-5">
           <span className="text-xs uppercase tracking-wider text-muted-foreground">Average Rating</span>
           <div className="mt-2 flex items-baseline gap-2">
-            <p className="text-3xl font-display font-medium text-foreground">{avgRating}</p>
-            <div className="flex items-center text-amber-500">
+            <p className="text-3xl font-display font-medium text-foreground">{avgRating ?? "—"}</p>
+            {avgRating !== null && <div className="flex items-center text-amber-500">
               <Star className="h-4 w-4 fill-amber-500" />
-            </div>
+            </div>}
           </div>
         </div>
       </div>
@@ -185,7 +185,7 @@ export function ReviewsPanel({ onToast }: { onToast: (m: string) => void }) {
             <input
               type="text"
               required
-              placeholder="e.g. MSC-8921"
+              placeholder="Customer order number"
               value={inviteOrder}
               onChange={(e) => setInviteOrder(e.target.value)}
               className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs font-mono"

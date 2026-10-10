@@ -41,6 +41,8 @@ export const Route = createFileRoute("/custom")({
         property: "og:description",
         content: "From concept sketch to your doorstep: hand-tufted to order in Rwanda.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CustomPage,

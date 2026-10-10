@@ -35,6 +35,8 @@ export const Route = createFileRoute("/terms")({
         content:
           "Official terms of service, privacy policy, shipping, bespoke commission agreements, and artisan warranties for Mosiac handcrafted rugs in Kigali, Rwanda.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: TermsPage,

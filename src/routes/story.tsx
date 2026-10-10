@@ -21,6 +21,8 @@ export const Route = createFileRoute("/story")({
         content:
           "The Kigali atelier hand-tufting one-of-one rugs: pure Highland fleece, vertical looms, botanical vulcanization, and sculptural duckbill hand-carving.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: StoryPage,

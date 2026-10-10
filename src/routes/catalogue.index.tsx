@@ -42,6 +42,8 @@ export const Route = createFileRoute("/catalogue/")({
       { name: "description", content: "Browse our hand-tufted rug catalogue: sports, cartoon, animals, art, and fully custom pieces." },
       { property: "og:title", content: "Catalogue | Mosiac" },
       { property: "og:description", content: "Hand-tufted rugs made to order in Kigali." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: CataloguePage,

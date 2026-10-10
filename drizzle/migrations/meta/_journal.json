@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791590802465,
+      "tag": "0000_protect_private_studio_settings",
+      "breakpoints": true
+    }
+  ]
+}
