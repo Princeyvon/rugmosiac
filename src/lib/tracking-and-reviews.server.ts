@@ -1,53 +1,25 @@
-import fs from "node:fs";
-import path from "node:path";
+import { matchesOrderContact } from "./order-contact";
 import type { VerifiedReview } from "./tracking-and-reviews.types";
 
 export type { VerifiedReview };
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const REVIEWS_FILE = path.join(DATA_DIR, "studio-reviews.json");
-
-function ensureDirs() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-}
-
 /**
- * Loads reviews from persistent JSON storage, seeding with initial high-quality verified reviews if needed.
+ * Cloud storage is authoritative; never seed synthetic verified purchasers.
  */
-export function getReviewsStore(): VerifiedReview[] {
-  ensureDirs();
-  if (fs.existsSync(REVIEWS_FILE)) {
-    try {
-      const raw = fs.readFileSync(REVIEWS_FILE, "utf8");
-      const list = JSON.parse(raw);
-      if (Array.isArray(list)) return list;
-    } catch (e) {
-      console.error("[reviews.server] Failed to parse reviews file:", e);
-    }
-  }
-
-  return [];
+export async function getReviewsStore(): Promise<VerifiedReview[]> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.from("site_settings")
+    .select("value").eq("key", "verified_reviews").maybeSingle();
+  if (error) throw new Error("Reviews could not be loaded.");
+  return Array.isArray(data?.value) ? data.value as unknown as VerifiedReview[] : [];
 }
 
-export function saveReviewsStore(reviews: VerifiedReview[]) {
-  ensureDirs();
-  fs.writeFileSync(REVIEWS_FILE, JSON.stringify(reviews, null, 2), "utf8");
-}
-
-/**
- * Normalizes email strings for safe case-insensitive comparison
- */
-function normEmail(email: string): string {
-  return email.toLowerCase().trim();
-}
-
-/**
- * Normalizes phone numbers (removes spaces, dashes, parentheses)
- */
-function normPhone(phone: string): string {
-  return phone.replace(/[^\d+]/g, "").trim();
+export async function saveReviewsStore(reviews: VerifiedReview[]) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.from("site_settings").upsert({
+    key: "verified_reviews", value: reviews as never, updated_at: new Date().toISOString(),
+  }, { onConflict: "key" });
+  if (error) throw new Error("Reviews could not be saved.");
 }
 
 /**
@@ -56,8 +28,6 @@ function normPhone(phone: string): string {
 export async function findOrder(orderNumber: string, emailOrPhone: string) {
   const cleanOrder = orderNumber.trim().toUpperCase();
   const searchInput = emailOrPhone.trim();
-  const searchEmail = normEmail(searchInput);
-  const searchPhone = normPhone(searchInput);
 
   // 1. Try Supabase
   try {
@@ -69,14 +39,7 @@ export async function findOrder(orderNumber: string, emailOrPhone: string) {
       .maybeSingle();
 
     if (order && !error) {
-      const orderEmail = normEmail(order.email || "");
-      const orderPhone = normPhone(order.phone || "");
-
-      const matches =
-        (searchEmail && (orderEmail === searchEmail || orderEmail.includes(searchEmail))) ||
-        (searchPhone && (orderPhone.endsWith(searchPhone) || searchPhone.endsWith(orderPhone)));
-
-      if (matches) {
+      if (matchesOrderContact(searchInput, order.email || "", order.phone || "")) {
         return order;
       }
     }

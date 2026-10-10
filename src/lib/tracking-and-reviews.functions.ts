@@ -113,7 +113,7 @@ export const getProductReviews = createServerFn({ method: "GET" })
   .inputValidator((d: { productSlug: string }) => d)
   .handler(async ({ data }): Promise<PublicReviewsResult> => {
     const { getReviewsStore } = await import("./tracking-and-reviews.server");
-    const all = getReviewsStore();
+    const all = await getReviewsStore();
     const approved = all.filter(
       (r) => r.product_slug === data.productSlug && r.status === "approved",
     );
@@ -124,7 +124,7 @@ export const getProductReviews = createServerFn({ method: "GET" })
         ? Math.round(
             (approved.reduce((acc, r) => acc + (r.rating || 5), 0) / count) * 10,
           ) / 10
-        : 5.0;
+        : 0;
 
     const distribution: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     for (const r of approved) {
@@ -183,7 +183,7 @@ export const submitVerifiedReview = createServerFn({ method: "POST" })
       throw new Error("Please share a few words about your rug craftsmanship (minimum 10 characters).");
     }
 
-    const reviews = getReviewsStore();
+    const reviews = await getReviewsStore();
 
     // Check if review already submitted for this order and product
     const existing = reviews.find(
@@ -217,7 +217,7 @@ export const submitVerifiedReview = createServerFn({ method: "POST" })
     };
 
     reviews.unshift(newReview);
-    saveReviewsStore(reviews);
+    await saveReviewsStore(reviews);
 
     return {
       success: true,
@@ -256,7 +256,7 @@ export const adminModerateReview = createServerFn({ method: "POST" })
     const { getReviewsStore, saveReviewsStore } = await import(
       "./tracking-and-reviews.server"
     );
-    const reviews = getReviewsStore();
+    const reviews = await getReviewsStore();
     const idx = reviews.findIndex((r) => r.id === data.id);
     if (idx === -1) throw new Error("Review not found.");
 
@@ -264,7 +264,7 @@ export const adminModerateReview = createServerFn({ method: "POST" })
     if (data.adminReply !== undefined) {
       reviews[idx].admin_reply = data.adminReply;
     }
-    saveReviewsStore(reviews);
+    await saveReviewsStore(reviews);
 
     return { success: true, review: reviews[idx] };
   });
@@ -281,9 +281,9 @@ export const adminDeleteReview = createServerFn({ method: "POST" })
     const { getReviewsStore, saveReviewsStore } = await import(
       "./tracking-and-reviews.server"
     );
-    let reviews = getReviewsStore();
+    let reviews = await getReviewsStore();
     reviews = reviews.filter((r) => r.id !== data.id);
-    saveReviewsStore(reviews);
+    await saveReviewsStore(reviews);
 
     return { success: true };
   });
