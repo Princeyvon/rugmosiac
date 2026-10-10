@@ -2691,57 +2691,15 @@ function SalesPanel() {
 
   const short = (iso: string) => iso.slice(5).replace("-", "/");
 
-  // Nothing sold yet: show example figures so the studio can see how this page reads.
-  const demo = data.orderCount === 0;
-  const series = demo
-    ? data.series.map((s, i) => {
-        const revenue = Math.round((260000 + Math.sin(i / 2.4) * 150000 + (i % 5) * 42000) / 1000) * 1000;
-        return { ...s, revenue, profit: Math.round(revenue * 0.42), orders: (i % 4) + 1, visits: 40 + ((i * 7) % 60) };
-      })
-    : data.series;
-  const totals = demo
-    ? {
-        revenue: series.reduce((a, s) => a + s.revenue, 0),
-        profit: series.reduce((a, s) => a + s.profit, 0),
-        orderCount: series.reduce((a, s) => a + s.orders, 0),
-        cost: series.reduce((a, s) => a + (s.revenue - s.profit), 0),
-        discounts: 180000,
-        visits: series.reduce((a, s) => a + s.visits, 0),
-      }
-    : {
-        revenue: data.revenue,
-        profit: data.profit,
-        orderCount: data.orderCount,
-        cost: data.cost,
-        discounts: data.discounts,
-        visits: data.visits,
-      };
-  const averageOrder = demo ? Math.round(totals.revenue / Math.max(1, totals.orderCount)) : data.averageOrder;
-  const conversion = demo
-    ? Math.round((totals.orderCount / Math.max(1, totals.visits)) * 1000) / 10
-    : data.conversion;
-  const topProducts = demo
-    ? [
-        { name: "Valencia hand-tufted rug", qty: 6, revenue: 2880000 },
-        { name: "Uzu circular rug", qty: 4, revenue: 1160000 },
-        { name: "Valley runner", qty: 3, revenue: 840000 },
-      ]
-    : data.topProducts;
-  const statusBreakdown = demo
-    ? [
-        { name: "delivered", value: 7 },
-        { name: "in_production", value: 3 },
-        { name: "confirmed", value: 2 },
-      ]
-    : data.statusBreakdown;
+  const series = data.series;
+  const totals = data;
+  const averageOrder = data.averageOrder;
+  const conversion = data.conversion;
+  const topProducts = data.topProducts;
+  const statusBreakdown = data.statusBreakdown;
 
   return (
     <div className="mt-8 space-y-8">
-      {demo && (
-        <p className="rounded-2xl border border-dashed border-border bg-background px-5 py-3 text-sm text-muted-foreground">
-          These are example figures. Real numbers appear here as soon as your first order comes in.
-        </p>
-      )}
       <div className="flex flex-wrap gap-2">
         {[7, 30, 90, 365].map((d) => (
           <button
@@ -2855,29 +2813,6 @@ function SalesPanel() {
 
 // ================= customers & mailing list =================
 
-const DEMO_CUSTOMERS = [
-  { name: "Aline Uwase", email: "aline.uwase@example.rw", phone: "+250 788 123 456", orders: 3, spent: 1470000 },
-  { name: "Jean-Paul Habimana", email: "jp.habimana@example.rw", phone: "+250 782 990 210", orders: 2, spent: 860000 },
-  { name: "Sarah Keza", email: "sarah.keza@example.com", phone: null, orders: 1, spent: 320000 },
-];
-
-const DEMO_SUBSCRIBERS = [
-  { id: "demo-1", email: "aline.uwase@example.rw", coupon_code: "WELCOME10", created_at: new Date(Date.now() - 864e5 * 3).toISOString() },
-  { id: "demo-2", email: "kigali.interiors@example.rw", coupon_code: null, created_at: new Date(Date.now() - 864e5 * 9).toISOString() },
-];
-
-const DEMO_MESSAGES = [
-  {
-    id: "demo-m1",
-    name: "Sarah Keza",
-    email: "sarah.keza@example.com",
-    subject: "Custom rug for a living room",
-    message: "Hello, I would love a 200 x 300 rug in deep green for our living room. What is the lead time?",
-    created_at: new Date(Date.now() - 864e5).toISOString(),
-  },
-];
-
-
 function CustomersPanel() {
   const load = useServerFn(adminCustomers);
   const [data, setData] = useState<Awaited<ReturnType<typeof adminCustomers>> | null>(null);
@@ -2895,19 +2830,10 @@ function CustomersPanel() {
     );
   }
 
-  // Nothing recorded yet: show examples so the layout is clear.
-  const empty = data.customers.length === 0 && data.subscribers.length === 0 && data.messages.length === 0;
-  const customers = empty ? DEMO_CUSTOMERS : data.customers;
-  const subscribers = empty ? DEMO_SUBSCRIBERS : data.subscribers;
-  const messages = empty ? DEMO_MESSAGES : data.messages;
+  const { customers, subscribers, messages } = data;
 
   return (
     <div className="mt-8 space-y-6">
-      {empty && (
-        <p className="rounded-2xl border border-dashed border-border bg-background px-5 py-3 text-sm text-muted-foreground">
-          These are example people. Your real customers, mailing list and messages will replace them.
-        </p>
-      )}
       <div className="flex flex-wrap gap-2">
         {(["customers", "subscribers", "messages"] as const).map((v) => (
           <button

@@ -1291,35 +1291,4 @@ export const fallbackProducts: Product[] = [
   }
 ] as unknown as Product[];
 
-export const fallbackReviews = [
-  {
-    "id": "1e5473c8-dc8a-42cd-a11f-a10816e4968f",
-    "customer_name": "Aline M.",
-    "location": "Kigali",
-    "rating": 5,
-    "quote": "I brought them a doodle of my dog and they turned it into a rug that stops every guest in their tracks. Unreal craftsmanship.",
-    "is_visible": true,
-    "sort_order": 1,
-    "created_at": "2026-07-20T22:24:44.94876+00:00"
-  },
-  {
-    "id": "a17b9f45-0f90-45ca-86a3-5527ec3b539a",
-    "customer_name": "David K.",
-    "location": "Kimihurura",
-    "rating": 5,
-    "quote": "The colours are richer than I imagined, and it feels dense and heavy in the best way. Worth every franc.",
-    "is_visible": true,
-    "sort_order": 2,
-    "created_at": "2026-07-20T22:24:44.94876+00:00"
-  },
-  {
-    "id": "b168fe48-6089-443b-a0b5-8d104487e937",
-    "customer_name": "Sarah B.",
-    "location": "Nyarutarama",
-    "rating": 5,
-    "quote": "From the first WhatsApp to delivery was three weeks. They confirmed every detail. Genuinely thoughtful people.",
-    "is_visible": true,
-    "sort_order": 3,
-    "created_at": "2026-07-20T22:24:44.94876+00:00"
-  }
-];
+export const fallbackReviews: Array<{ id: string; customer_name: string; location: string | null; rating: number; quote: string }> = [];

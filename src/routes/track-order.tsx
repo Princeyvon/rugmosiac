@@ -226,7 +226,7 @@ function TrackOrderPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. MSC-8921"
+                    placeholder="Your order number"
                     value={orderNumberInput}
                     onChange={(e) => setOrderNumberInput(e.target.value)}
                     className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-mono focus:border-foreground focus:outline-hidden"
@@ -243,7 +243,7 @@ function TrackOrderPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. claire.h@gmail.com or +250..."
+                    placeholder="Your checkout email or phone"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm focus:border-foreground focus:outline-hidden"
@@ -262,33 +262,6 @@ function TrackOrderPage() {
               )}
 
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Quick demo lookup:</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOrderNumberInput("MSC-8921");
-                      setEmailInput("claire.h@gmail.com");
-                      doLookup("MSC-8921", "claire.h@gmail.com");
-                    }}
-                    className="underline hover:text-foreground font-mono"
-                  >
-                    MSC-8921
-                  </button>
-                  <span>·</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOrderNumberInput("MSC-7821");
-                      setEmailInput("aline.m@kigalidesign.rw");
-                      doLookup("MSC-7821", "aline.m@kigalidesign.rw");
-                    }}
-                    className="underline hover:text-foreground font-mono"
-                  >
-                    MSC-7821
-                  </button>
-                </div>
-
                 <button
                   type="submit"
                   disabled={loading}
