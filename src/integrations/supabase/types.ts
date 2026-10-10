@@ -1076,6 +1076,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_fresh_guest_order: { Args: { _order_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "customer"

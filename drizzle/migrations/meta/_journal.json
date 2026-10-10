@@ -8,6 +8,13 @@
       "when": 1791590802465,
       "tag": "0000_protect_private_studio_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791591362796,
+      "tag": "0001_tighten_public_rls_predicates",
+      "breakpoints": true
     }
   ]
 }
